@@ -1300,21 +1300,58 @@
     .hero-announce-title, .hero-announce li, .hero-announce-text, .hero-announce-note{ line-height: 2.0 !important; }
   }
 
+
+  .hero-credit-badge{
+    position:absolute;
+    top:14px;
+    left:18px;
+    z-index:3;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(13,148,136,.18);
+    color:#0f766e;
+    font-weight:800;
+    font-size:14px;
+    line-height:1.35;
+    box-shadow:0 8px 20px rgba(15,118,110,.10);
+    backdrop-filter: blur(4px);
+    max-width:min(92%, 440px);
+    white-space:normal;
+  }
+  @media (max-width: 900px){
+    .hero-credit-badge{
+      top:10px;
+      right:12px;
+      left:12px;
+      justify-content:center;
+      font-size:13px;
+      padding:7px 12px;
+    }
+    .hero{
+      padding-top: 52px !important;
+    }
+  }
+
+
+  .hero{
+    padding-top: 58px !important;
+  }
+  @media (max-width: 900px){
+    .hero{
+      padding-top: 62px !important;
+    }
+  }
+
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div style="margin:12px 0 10px; display:flex; justify-content:flex-start;">
-      <div style="
-        display:inline-flex; align-items:center; gap:8px;
-        padding:8px 14px; border-radius:999px;
-        background:rgba(255,255,255,.82);
-        border:1px solid rgba(13,148,136,.22);
-        color:#0f766e; font-weight:700; font-size:15px;
-        box-shadow:0 6px 18px rgba(15,118,110,.08);
-      ">✍️ إعداد وتصميم: وفاء أبوقديري ورزان محمد</div>
-    </div>
-    <section class="hero">
+<section class="hero">
+      <div class="hero-credit-badge">✍️ إعداد وتصميم: وفاء أبوقديري ورزان محمد</div>
       <h1>القرآنُ ربيعُ القلوب ونورُ الدروب 🌿✨</h1>
       <p>
         ابدؤوا رحلتكم مع التلاوة والذِّكر، واغتنموا هذه الأيام المباركة بالطاعة وابتغاء الأجر من الله تعالى 💚
@@ -1640,6 +1677,13 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
+          window.__firebaseSync.pushState(state);
+        }
+      } catch (e) {
+        console.warn('Firebase sync push skipped:', e);
+      }
     }
 
     function cryptoRandomId() {
@@ -2925,6 +2969,41 @@ function renderQuranPageControls() {
     })();
 
 
+    // Bridge for optional cloud sync (Firebase)
+    window.__quranAppBridge = {
+      getState() {
+        try { return JSON.parse(JSON.stringify(state)); }
+        catch (_) { return structuredClone(state); }
+      },
+      normalizeState(raw) {
+        try {
+          const parsed = (raw && typeof raw === 'object') ? raw : {};
+          const normalized = {
+            ...structuredClone(defaultState),
+            ...parsed,
+            settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+            users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
+          };
+          normalized.settings.dailyPoints = 5;
+          normalized.settings.pagePoints = 5;
+          return normalized;
+        } catch (e) {
+          console.warn('normalizeState fallback:', e);
+          return structuredClone(defaultState);
+        }
+      },
+      applyRemoteState(remoteState) {
+        try {
+          state = this.normalizeState(remoteState);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          render();
+        } catch (e) {
+          console.error('Failed applying remote state:', e);
+        }
+      },
+      rerender() { try { render(); } catch (_) {} }
+    };
+
     // First render
     render();
   </script>
@@ -2981,7 +3060,43 @@ function renderQuranPageControls() {
       display: none;
     }
     body.admin-master-unlocked .admin-master-pill{ display: block; border-color:#fcd34d; background:#fffbeb; color:#92400e; }
-  </style>
+  
+  .hero-credit-badge{
+    position:absolute;
+    top:14px;
+    left:18px;
+    z-index:3;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(13,148,136,.18);
+    color:#0f766e;
+    font-weight:800;
+    font-size:14px;
+    line-height:1.35;
+    box-shadow:0 8px 20px rgba(15,118,110,.10);
+    backdrop-filter: blur(4px);
+    max-width:min(92%, 440px);
+    white-space:normal;
+  }
+  @media (max-width: 900px){
+    .hero-credit-badge{
+      top:10px;
+      right:12px;
+      left:12px;
+      justify-content:center;
+      font-size:13px;
+      padding:7px 12px;
+    }
+    .hero{
+      padding-top: 52px !important;
+    }
+  }
+
+</style>
 
   <script id="adminMasterControlsScript">
   (() => {
@@ -3165,6 +3280,133 @@ function renderQuranPageControls() {
       initAdminMasterControls();
     }
   })();
+  </script>
+
+  <!-- Firebase shared sync (Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script id="firebaseSharedSyncScript">
+    (function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyAsam8wactjTxuGrHmzXyrbTkIFymZ7CMU",
+        authDomain: "quran-khatma-live.firebaseapp.com",
+        projectId: "quran-khatma-live",
+        storageBucket: "quran-khatma-live.firebasestorage.app",
+        messagingSenderId: "306161636819",
+        appId: "1:306161636819:web:9fe89c1267bf7899278b26",
+        measurementId: "G-H9PSJLBR5W"
+      };
+
+      const FIREBASE_SYNC_ENABLED = true;
+      if (!FIREBASE_SYNC_ENABLED) return;
+
+      function getBridge() {
+        return window.__quranAppBridge || null;
+      }
+
+      function toast(msg) {
+        try {
+          const t = document.getElementById('toast');
+          if (t) {
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+            return;
+          }
+        } catch (_) {}
+        console.log(msg);
+      }
+
+      let ready = false;
+      let applyingRemote = false;
+      let pushTimer = null;
+      let lastCloudJson = null;
+      let lastPushedJson = null;
+      const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
+
+      const COLLECTION_PATH = 'shared_state';
+      const DOC_ID = 'quran_khatma_main';
+
+      try {
+        if (!window.firebase || !firebase.apps) return;
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        try { db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (_) {}
+
+        const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
+
+        window.__firebaseSync = window.__firebaseSync || {};
+        window.__firebaseSync.pushState = function (stateObj) {
+          if (!ready || applyingRemote) return;
+          const bridge = getBridge();
+          if (!bridge) return;
+          clearTimeout(pushTimer);
+          pushTimer = setTimeout(async () => {
+            try {
+              const normalized = bridge.normalizeState(stateObj);
+              const json = JSON.stringify(normalized);
+              if (json === lastPushedJson) return;
+              lastPushedJson = json;
+              await docRef.set({
+                state: normalized,
+                meta: {
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  updatedBy: clientId,
+                  version: 1
+                }
+              }, { merge: true });
+            } catch (e) {
+              console.error('Firebase push failed:', e);
+            }
+          }, 350);
+        };
+
+        docRef.onSnapshot((snap) => {
+          const bridge = getBridge();
+          if (!bridge) return;
+
+          if (!snap.exists) {
+            ready = true;
+            window.__firebaseSync.pushState(bridge.getState());
+            toast('☁️ تم تفعيل المزامنة المباشرة');
+            return;
+          }
+
+          const data = snap.data() || {};
+          if (!data.state) {
+            ready = true;
+            window.__firebaseSync.pushState(bridge.getState());
+            return;
+          }
+
+          const remoteNormalized = bridge.normalizeState(data.state);
+          const remoteJson = JSON.stringify(remoteNormalized);
+          if (remoteJson === lastCloudJson) {
+            ready = true;
+            return;
+          }
+          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
+          lastCloudJson = remoteJson;
+          ready = true;
+
+          if (remoteJson === localJson) return;
+
+          applyingRemote = true;
+          try {
+            bridge.applyRemoteState(remoteNormalized);
+          } finally {
+            setTimeout(() => { applyingRemote = false; }, 150);
+          }
+        }, (err) => {
+          console.error('Firebase onSnapshot error:', err);
+          toast('⚠️ فشل ربط المزامنة. افحصي قواعد Firestore');
+        });
+      } catch (e) {
+        console.error('Firebase init failed:', e);
+      }
+    })();
   </script>
 
 </body>
