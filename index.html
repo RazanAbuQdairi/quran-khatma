@@ -1,0 +1,3171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تحدّي ختم القرآن المبارك | لوحة التلاوة والمتابعة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --brand: #0f766e;
+      --brand-2: #14b8a6;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --line: #e5e7eb;
+      --shadow: 0 10px 25px rgba(15, 118, 110, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Amiri", "Amiri Quran", "Scheherazade New", serif;
+      background: linear-gradient(180deg, #ecfeff 0%, var(--bg) 35%, #f8fafc 100%);
+      color: var(--ink);
+    }
+
+    /* توحيد الخط في الواجهة كلها بخط عربي بطابع ديني */
+    body, input, select, button, textarea, table, th, td {
+      font-family: "Amiri", "Amiri Quran", "Scheherazade New", serif;
+    }
+
+    .hero h1,
+    .hero-announce-title,
+    .card h2,
+    .card h3,
+    #prayerTodayHeading,
+    #selectedSummaryCard h2,
+    #leaderboardCard h2,
+    #mushafViewerCard h2 {
+      font-family: "Amiri", "Amiri Quran", "Scheherazade New", serif;
+      letter-spacing: 0;
+      line-height: 1.35;
+    }
+
+    .hero h1 {
+      font-weight: 700;
+      font-size: clamp(1.65rem, 3vw, 2.5rem);
+      text-wrap: balance;
+    }
+
+    .hero-announce-title, .card h2, .card h3 {
+      font-weight: 700;
+    }
+
+    /* تحسين وضوح النصوص العربية داخل الأزرار والجدول */
+    .btn, th, td, .sub, .small, .pill, .tag {
+      letter-spacing: 0;
+      line-height: 1.45;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .hero {
+      background: radial-gradient(circle at 85% 20%, rgba(20,184,166,0.18), transparent 40%),
+                  radial-gradient(circle at 20% 30%, rgba(245,158,11,0.12), transparent 35%),
+                  #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+      color: #0b5d56;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: .95rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+        .viewer-toolbar-bottom { justify-content: space-between; gap:12px; }
+    .viewer-toolbar-bottom #viewerPrevBtn, .viewer-toolbar-bottom #viewerNextBtn { flex:1 1 calc(50% - 6px); min-width:220px; }
+
+@media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .card h2, .card h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: #0f172a;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: .88rem;
+      margin-top: -4px;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    .stack { display: grid; gap: 10px; }
+    .row { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+    .row-3 { display: grid; gap: 8px; grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 600px) {
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+
+    label {
+      font-size: .85rem;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink);
+      font-size: .95rem;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--brand-2);
+      box-shadow: 0 0 0 4px rgba(20,184,166,0.12);
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: .15s ease;
+      background: #f3f4f6;
+      color: #111827;
+      width: 100%;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn.primary {
+      background: linear-gradient(180deg, var(--brand-2), var(--brand));
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .btn.warn {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+    }
+
+    .btn.danger {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .btn.ghost {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0fdfa;
+      color: #115e59;
+      border: 1px solid #ccfbf1;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .82rem;
+      margin-top: 6px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 860px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .stats { grid-template-columns: 1fr; }
+    }
+
+    .stat {
+      background: #fbfdff;
+      border: 1px solid #e6edf5;
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .stat .k {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .stat .v {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0b5d56;
+    }
+
+    .progress {
+      height: 12px;
+      background: #ecfeff;
+      border: 1px solid #bae6fd;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+      transition: width .25s ease;
+    }
+
+    .khatma-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 16px 16px 14px !important;
+      border-radius: 22px !important;
+      border: 1px solid rgba(59,130,246,.28) !important;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(20,184,166,.28), transparent 38%),
+        radial-gradient(circle at 88% 14%, rgba(59,130,246,.26), transparent 42%),
+        radial-gradient(circle at 55% 110%, rgba(245,158,11,.24), transparent 45%),
+        linear-gradient(135deg, #f0fdfa 0%, #eefcff 32%, #eff6ff 66%, #f5f3ff 100%);
+      box-shadow:
+        0 16px 38px rgba(2,132,199,.12),
+        0 6px 18px rgba(20,184,166,.08),
+        inset 0 1px 0 rgba(255,255,255,.95) !important;
+      isolation: isolate;
+    }
+    .khatma-hero::before,
+    .khatma-hero::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .khatma-hero::before {
+      inset: -30% auto auto -25%;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(20,184,166,.22) 0%, rgba(20,184,166,.08) 45%, transparent 70%);
+      animation: khPulse 4.2s ease-in-out infinite;
+    }
+    .khatma-hero::after {
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(255,255,255,.82) 0 2px, transparent 3px),
+        radial-gradient(circle at 72% 20%, rgba(255,255,255,.75) 0 2px, transparent 3px),
+        radial-gradient(circle at 84% 64%, rgba(255,255,255,.68) 0 1.6px, transparent 2.8px),
+        radial-gradient(circle at 30% 78%, rgba(255,255,255,.65) 0 1.8px, transparent 2.8px);
+      opacity: .7;
+      animation: khSparkle 6s linear infinite;
+    }
+    @keyframes khPulse {
+      0%,100% { transform: scale(1) translate(0,0); opacity: .75; }
+      50% { transform: scale(1.12) translate(10px,8px); opacity: 1; }
+    }
+    @keyframes khSparkle {
+      0%,100% { transform: translateX(0); opacity: .55; }
+      50% { transform: translateX(8px); opacity: .9; }
+    }
+
+    .khatma-hero > * { position: relative; z-index: 1; }
+
+    .khatma-hero-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .khatma-hero-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .khatma-hero-title strong {
+      font-size: 1.12rem;
+      font-weight: 900;
+      letter-spacing: .1px;
+      color: #0f172a;
+      text-shadow: 0 1px 0 rgba(255,255,255,.8);
+    }
+    .khatma-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: .78rem;
+      font-weight: 800;
+      border: 1px solid rgba(245,158,11,.35);
+      background: linear-gradient(180deg, rgba(255,251,235,.95), rgba(254,243,199,.9));
+      color: #92400e;
+      box-shadow: 0 6px 14px rgba(245,158,11,.12);
+      animation: badgePulse 2.8s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-1px); }
+    }
+    .khatma-percent {
+      font-weight: 900;
+      color: #fff;
+      font-size: 1.04rem;
+      min-width: 86px;
+      text-align: center;
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 55%, #7c3aed 100%);
+      border: 1px solid rgba(255,255,255,.5);
+      border-radius: 14px;
+      padding: 7px 12px;
+      box-shadow:
+        0 12px 22px rgba(37,99,235,.22),
+        inset 0 1px 0 rgba(255,255,255,.35);
+      animation: percentPop 2.2s ease-in-out infinite;
+    }
+    @keyframes percentPop {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.035); }
+    }
+    .khatma-hero .progress {
+      height: 20px;
+      margin-top: 11px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.95), rgba(239,246,255,.92));
+      border: 1px solid rgba(59,130,246,.22);
+      box-shadow:
+        inset 0 2px 6px rgba(15,23,42,.06),
+        0 4px 12px rgba(14,165,233,.08);
+      padding: 2px;
+    }
+    .khatma-hero .progress > span {
+      position: relative;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #14b8a6 0%, #06b6d4 38%, #3b82f6 70%, #7c3aed 100%);
+      box-shadow:
+        0 0 18px rgba(14,165,233,.32),
+        inset 0 -2px 6px rgba(255,255,255,.18);
+      animation: barGlow 2s ease-in-out infinite;
+      overflow: hidden;
+    }
+    .khatma-hero .progress > span::before {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      transform: translate(35%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff 0%, #dbeafe 45%, rgba(255,255,255,0) 75%);
+      box-shadow: 0 0 14px rgba(255,255,255,.95);
+    }
+    .khatma-hero .progress > span::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          rgba(255,255,255,.08) 0 9px,
+          rgba(255,255,255,.24) 9px 18px
+        );
+      animation: stripesMove .95s linear infinite;
+      mix-blend-mode: screen;
+    }
+    @keyframes stripesMove { from { background-position: 0 0; } to { background-position: 34px 0; } }
+    @keyframes barGlow {
+      0%,100% { filter: saturate(1) brightness(1); }
+      50% { filter: saturate(1.2) brightness(1.08); }
+    }
+
+    .khatma-hero-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+    }
+    @media (max-width: 760px) {
+      .khatma-hero-grid { grid-template-columns: 1fr; }
+    }
+    .khatma-mini {
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(219,234,254,.95);
+      border-radius: 14px;
+      padding: 9px 10px;
+      line-height: 1.45;
+      min-height: 56px;
+      box-shadow: 0 6px 14px rgba(15,23,42,.04);
+      transition: transform .2s ease, box-shadow .2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .khatma-mini::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: linear-gradient(180deg, #14b8a6, #0ea5e9);
+      opacity: .85;
+    }
+    .khatma-mini:nth-child(2)::before { background: linear-gradient(180deg, #f59e0b, #f97316); }
+    .khatma-mini:nth-child(3)::before { background: linear-gradient(180deg, #8b5cf6, #6366f1); }
+    .khatma-mini:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(14,165,233,.08);
+    }
+    .khatma-mini .k {
+      color: #64748b;
+      font-size: .76rem;
+      margin-bottom: 2px;
+      font-weight: 700;
+    }
+    .khatma-mini .v {
+      color: #0f172a;
+      font-weight: 800;
+      font-size: .95rem;
+    }
+    .khatma-cheer {
+      margin-top: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(16,185,129,.28);
+      background:
+        linear-gradient(180deg, rgba(236,253,245,.95), rgba(220,252,231,.86));
+      color: #065f46;
+      padding: 10px 12px;
+      font-size: .92rem;
+      font-weight: 800;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+      position: relative;
+    }
+    .khatma-cheer::before {
+      content: "🔥";
+      margin-inline-end: 6px;
+      display: inline-block;
+      animation: flameBounce 1.2s ease-in-out infinite;
+    }
+    @keyframes flameBounce {
+      0%,100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-1px) scale(1.08); }
+    }
+
+    .muted { color: var(--muted); font-size: .85rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: right;
+      font-size: .9rem;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    .rank {
+      width: 72px;
+      white-space: nowrap;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 38px;
+      height: 38px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #0b5d56;
+      background: linear-gradient(180deg, #ecfeff, #cffafe);
+      border: 1px solid #99f6e4;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 4px 12px rgba(20,184,166,.15);
+    }
+    .rank-badge.top1 {
+      color: #92400e;
+      background: linear-gradient(180deg, #fff7cc, #fde68a);
+      border-color: #fbbf24;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 6px 14px rgba(245,158,11,.22);
+    }
+    .rank-badge.top2 {
+      color: #334155;
+      background: linear-gradient(180deg, #f8fafc, #e2e8f0);
+      border-color: #cbd5e1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 6px 14px rgba(100,116,139,.15);
+    }
+    .rank-badge.top3 {
+      color: #9a3412;
+      background: linear-gradient(180deg, #ffedd5, #fdba74);
+      border-color: #fb923c;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 6px 14px rgba(251,146,60,.18);
+    }
+    .name-cell { font-weight: 600; }
+
+    .table-wrap {
+      max-height: 430px;
+      overflow: auto;
+      border-radius: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 18px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+
+    .tasbeeh {
+      text-align: center;
+      background: linear-gradient(180deg, #fffbeb, #ffffff);
+      border: 1px solid #fde68a;
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .tasbeeh .count {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #92400e;
+      margin: 6px 0 4px;
+    }
+    .tasbeeh .hint { color: #92400e; opacity: 0.85; font-size: .85rem; }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: .84rem;
+      color: #64748b;
+      line-height: 1.7;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: .74rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #d1fae5;
+      background: #ecfdf5;
+      color: #065f46;
+      margin-inline-start: 6px;
+    }
+
+    .actions-inline {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .actions-inline .btn { width: auto; }
+
+    .success-flash {
+      animation: pop .35s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.98); }
+      50% { transform: scale(1.01); }
+      100% { transform: scale(1); }
+    }
+
+    .viewer-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .viewer-toolbar .btn { width: auto; }
+
+    .viewer-frame-wrap {
+      margin-top: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      overflow-x: hidden;
+      overflow-y: auto; /* السماح بالصعود/النزول داخل نفس الصفحة فقط */
+      background: #fff;
+      position: relative;
+      max-height: 63vh; /* أقصر قليلًا لإخفاء الزائد أسفل الصفحة داخل العارض */
+      scroll-behavior: smooth;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* إخفاء شريط عارض الـ PDF قدر الإمكان وجعل التنقل فقط من الأزرار */
+    .viewer-frame-wrap::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 18px; /* يغطي شريط التمرير الظاهر داخل بعض عارِضات PDF */
+      height: 100%;
+      background: #fff;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .viewer-frame-wrap::before { content: none; }
+
+    .viewer-page-pill {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      z-index: 4;
+      pointer-events: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      font-weight: 800;
+      color: #0f172a;
+      background: rgba(255,255,255,.94);
+      border: 1px solid #dbeafe;
+      border-radius: 999px;
+      padding: 5px 10px;
+      box-shadow: 0 6px 18px rgba(15,23,42,.08);
+    }
+    .viewer-page-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #14b8a6, #3b82f6);
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+    .viewer-page-pill .pts {
+      color: #0f766e;
+    }
+    #mushafFrame {
+      display: block;
+      width: calc(100% + 18px); /* ندفع شريط عارض الـPDF الداخلي خارج الإطار */
+      margin-right: -18px;
+      height: 1120px; /* أقصر قليلًا لإخفاء الجزء الزائد أسفل الصفحة */
+      min-height: 860px;
+      border: 0;
+      background: #f8fafc;
+      pointer-events: none; /* نمنع التفاعل داخل العارض ونسمح بالتمرير من الحاوية الخارجية فقط */
+      user-select: none;
+    }
+    @media (max-width: 768px) {
+      .viewer-frame-wrap { max-height: 56vh; }
+      #mushafFrame { height: 940px; min-height: 700px; }
+    }
+
+    .small {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+  
+
+  /* ===== Creative v29 Patch ===== */
+  :root {
+    --accent-a: #14b8a6;
+    --accent-b: #0ea5e9;
+    --accent-c: #22c55e;
+    --gold: #f59e0b;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 500px at 10% -10%, rgba(20,184,166,.10), transparent 60%),
+      radial-gradient(900px 420px at 100% 0%, rgba(14,165,233,.10), transparent 55%),
+      #edf3f7;
+  }
+
+  .wrap { position: relative; }
+
+  #scrollProgressBar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 4px;
+    width: 0%;
+    z-index: 3000;
+    background: linear-gradient(90deg, var(--accent-c), var(--accent-b), #8b5cf6);
+    box-shadow: 0 0 12px rgba(14,165,233,.35);
+    transition: width .1s linear;
+  }
+
+  #backToTopBtn {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent-a), #0f766e);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(15,118,110,.22);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: .25s ease;
+    z-index: 2200;
+  }
+  #backToTopBtn.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  #toastWrap {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    display: grid;
+    gap: 10px;
+    z-index: 3500;
+    pointer-events: none;
+    max-width: min(92vw, 360px);
+  }
+  .app-toast {
+    background: rgba(15,23,42,.95);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 14px 28px rgba(2,6,23,.25);
+    transform: translateY(-8px);
+    opacity: 0;
+    transition: .22s ease;
+    line-height: 1.5;
+    font-size: .92rem;
+  }
+  .app-toast.show { opacity: 1; transform: translateY(0); }
+  .app-toast.success { background: rgba(6,95,70,.96); }
+  .app-toast.warn { background: rgba(146,64,14,.96); }
+  .app-toast.error { background: rgba(127,29,29,.96); }
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(20,184,166,.15);
+    background:
+      radial-gradient(600px 240px at 5% 10%, rgba(20,184,166,.14), transparent 60%),
+      radial-gradient(700px 280px at 100% 0%, rgba(14,165,233,.12), transparent 60%),
+      rgba(255,255,255,.85);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 16px 40px rgba(2,6,23,.06);
+  }
+  .hero h1 {
+    background: linear-gradient(90deg, #0f172a 0%, #0f766e 45%, #0369a1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero::after {
+    content: "✨";
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-size: 22px;
+    opacity: .7;
+    animation: heroFloat 2.8s ease-in-out infinite;
+  }
+  @keyframes heroFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .hero-stats-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px;
+  }
+  .hero-stat {
+    border-radius: 14px;
+    background: rgba(255,255,255,.92);
+    border: 1px solid rgba(148,163,184,.25);
+    padding: 10px 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+  }
+  .hero-stat .k {
+    color: #64748b;
+    font-size: .82rem;
+    margin-bottom: 3px;
+    font-weight: 700;
+  }
+  .hero-stat .v {
+    color: #0f172a;
+    font-weight: 900;
+    font-size: .9rem;
+      white-space: nowrap;
+  }
+
+  .card {
+    border-radius: 18px !important;
+    box-shadow: 0 8px 24px rgba(15,23,42,.05), 0 1px 0 rgba(255,255,255,.8) inset !important;
+    border: 1px solid rgba(148,163,184,.20) !important;
+    background: rgba(255,255,255,.92) !important;
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px rgba(15,23,42,.09), 0 1px 0 rgba(255,255,255,.85) inset !important;
+  }
+
+  .reveal-card {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .45s ease, transform .45s ease;
+  }
+  .reveal-card.show {
+    opacity: 1;
+    transform: none;
+  }
+
+  .btn {
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  }
+  .btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 18px rgba(15,23,42,.10);
+    filter: saturate(1.05);
+  }
+  .btn.primary:not(:disabled) {
+    background-image: linear-gradient(135deg, #14b8a6, #0f766e) !important;
+    border-color: rgba(13,148,136,.35) !important;
+    box-shadow: 0 10px 22px rgba(13,148,136,.18);
+  }
+  .btn.ghost {
+    background: linear-gradient(180deg, #fff, #f8fafc) !important;
+  }
+
+  .viewer-frame-wrap {
+    border-radius: 20px !important;
+    border: 1px solid rgba(148,163,184,.24) !important;
+    background: linear-gradient(180deg, #f8fafc, #eef2f7) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+  }
+  #mushafFrame {
+    border-radius: 14px;
+    background: #fff;
+  }
+  .viewer-toolbar-bottom {
+    margin-top: 10px;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .viewer-toolbar-bottom .btn {
+    width: 100%;
+    min-height: 50px;
+    font-weight: 800;
+  }
+
+  #leaderboardCard h2 {
+    padding-left: 124px;
+  }
+  #leaderboardCard .table-wrap {
+    border-radius: 16px;
+    overflow: auto;
+    border: 1px solid rgba(148,163,184,.18);
+    background: #fff;
+  }
+  #leaderboardCard table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, #f8fafc, #edf3f7);
+    backdrop-filter: blur(4px);
+  }
+  #leaderboardCard tbody tr:first-child td.rank {
+    color: #a16207;
+    font-weight: 900;
+  }
+  #leaderboardCard tbody tr:first-child {
+    box-shadow: inset 4px 0 0 #f59e0b;
+  }
+  #leaderboardCard tbody tr:hover {
+    background: #f8fafc !important;
+  }
+
+  .confetti-piece {
+    position: fixed;
+    top: -20px;
+    z-index: 3600;
+    pointer-events: none;
+    font-size: 20px;
+    will-change: transform, opacity;
+    transition: transform 1.5s linear, opacity 1.5s linear;
+  }
+
+  /* تخصيص بسيط لشريط التمرير */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+  @media (max-width: 900px) {
+    .hero-stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    #leaderboardCard h2 { padding-left: 0; }
+    #participantsCountBadge { position: static !important; margin: 10px 0 0 auto !important; }
+    #toastWrap { left: 10px; right: 10px; max-width: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+
+  .hero-announce {
+    margin-top: 12px;
+    border: 1px solid rgba(20,184,166,.18);
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(240,253,250,.82));
+    border-radius: 16px;
+    padding: 12px 13px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .hero-announce-title {
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 6px;
+    font-size: .98rem;
+  }
+  .hero-announce ul {
+    margin: 0;
+    padding: 0 18px 0 0;
+    color: #1f2937;
+    line-height: 1.9;
+    font-size: .92rem;
+  }
+  .hero-announce li { margin: 1px 0; }
+  .hero-announce-text {
+    margin: 8px 0 0;
+    color: #475569;
+    line-height: 1.85;
+    font-size: .9rem;
+  }
+  .hero-announce-note {
+    margin-top: 8px;
+    font-size: .84rem;
+    color: #0f766e;
+    background: rgba(240,253,250,.9);
+    border: 1px dashed rgba(20,184,166,.35);
+    border-radius: 12px;
+    padding: 8px 10px;
+    line-height: 1.7;
+  }
+
+
+  /* ===== تحسين نهائي للتصميم وتكبير الخط (v73) ===== */
+  html { font-size: 18px; }
+  body {
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background:
+      radial-gradient(circle at 8% 8%, rgba(20,184,166,.08), transparent 34%),
+      radial-gradient(circle at 92% 6%, rgba(59,130,246,.07), transparent 30%),
+      linear-gradient(180deg, #eefafc 0%, #f5f7fb 42%, #f8fafc 100%);
+  }
+
+  .wrap { max-width: 1240px; padding: 20px; }
+
+  .hero {
+    border-radius: 28px;
+    padding: 20px;
+    box-shadow: 0 14px 30px rgba(15,118,110,.10), 0 3px 10px rgba(15,23,42,.04);
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 3.4vw, 2.9rem) !important;
+    line-height: 1.25;
+    margin-bottom: 10px !important;
+  }
+
+  .hero p,
+  .hero-announce-text,
+  .hero-announce ul {
+    font-size: 1rem !important;
+    line-height: 1.95 !important;
+  }
+
+  .hero-announce {
+    border-radius: 18px;
+    padding: 14px 15px;
+  }
+  .hero-announce-title {
+    font-size: 1.08rem !important;
+    margin-bottom: 7px;
+  }
+  .hero-announce-note {
+    font-size: .94rem !important;
+    line-height: 1.9 !important;
+    border-radius: 14px;
+  }
+
+  .card {
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 12px 24px rgba(15,118,110,.08), 0 2px 8px rgba(15,23,42,.03);
+  }
+
+  .card h2, .card h3 {
+    font-size: 1.18rem !important;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+
+  .sub {
+    font-size: .98rem !important;
+    line-height: 1.8 !important;
+  }
+
+  label {
+    font-size: .96rem !important;
+    margin-bottom: 6px;
+  }
+
+  input, select {
+    min-height: 48px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    font-size: 1rem !important;
+  }
+
+  .btn {
+    min-height: 48px;
+    padding: 11px 14px;
+    font-size: 1rem !important;
+    border-radius: 14px;
+    font-weight: 700;
+  }
+
+  .pill, .tag {
+    font-size: .95rem !important;
+    padding: 7px 12px;
+    border-radius: 999px;
+  }
+
+  .stat {
+    border-radius: 16px;
+    padding: 12px;
+  }
+  .stat .k {
+    font-size: .95rem !important;
+    line-height: 1.55;
+  }
+  .stat .v {
+    font-size: 1.45rem !important;
+    line-height: 1.25;
+    font-weight: 800;
+  }
+
+  .progress { height: 14px; border-radius: 999px; }
+
+  /* جدول الترتيب */
+  #leaderboardCard table {
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+  #leaderboardCard th {
+    font-size: 1rem !important;
+    line-height: 1.35;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    background: linear-gradient(180deg, #f8fbff, #eef5fb) !important;
+  }
+  #leaderboardCard td {
+    font-size: 1.02rem !important;
+    line-height: 1.55;
+    padding-top: 11px !important;
+    padding-bottom: 11px !important;
+  }
+
+  /* بطاقات المتابعة والعدادات */
+  #selectedSummaryCard .stat .v,
+  #khatmaCard .stat .v,
+  #tasbeehCard .big-number,
+  #tasbeehCount {
+    font-size: 1.6rem !important;
+    font-weight: 800;
+  }
+
+  /* عنوان الصلوات وحقله */
+  #prayerTodayHeading {
+    font-size: 1.35rem !important;
+    line-height: 1.35;
+  }
+  #prayerTodayHeading .date-chip,
+  #prayerTodayHeading small,
+  #prayerTodayHeading .prayer-date-chip {
+    font-size: 1rem !important;
+    padding: 5px 12px !important;
+    border-radius: 999px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* أزرار الصلوات */
+  .prayer-grid button,
+  .prayer-btn,
+  [data-prayer] {
+    min-height: 52px !important;
+    font-size: 1.02rem !important;
+    border-radius: 15px !important;
+    font-weight: 700 !important;
+  }
+
+  /* عارض المصحف */
+  .mushaf-viewer-wrap,
+  .mushaf-frame,
+  #mushafViewerWrap {
+    border-radius: 18px !important;
+  }
+  #mushafPageInfoBadge,
+  .mushaf-page-badge {
+    font-size: 1rem !important;
+    padding: 7px 14px !important;
+    border-radius: 999px !important;
+    font-weight: 700 !important;
+  }
+  .viewer-toolbar-bottom .btn {
+    min-height: 50px !important;
+    font-size: 1.02rem !important;
+  }
+
+  /* حقل التسبيح */
+  #tasbeehCard .btn.primary,
+  #tasbeehIncrementBtn {
+    min-height: 54px !important;
+    font-size: 1.08rem !important;
+    border-radius: 16px !important;
+  }
+
+  /* زر للمشرف - أوضح وأجمل */
+  #adminMasterBtn, #adminToolsBtn {
+    font-size: .96rem !important;
+    min-height: 42px !important;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 14px rgba(15,118,110,.15);
+  }
+
+  /* تحسين الفراغات العامة */
+  .stack { gap: 12px; }
+  .row, .row-3 { gap: 10px; }
+
+  @media (max-width: 900px) {
+    html { font-size: 17px; }
+    .hero h1 { font-size: 1.85rem !important; }
+    .card { padding: 14px; }
+    #leaderboardCard th, #leaderboardCard td {
+      font-size: .95rem !important;
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+    }
+  }
+
+  @media (max-width: 560px) {
+    html { font-size: 16px; }
+    .wrap { padding: 12px; }
+    .hero { padding: 14px; border-radius: 20px; }
+    .hero h1 { font-size: 1.55rem !important; }
+    .card { padding: 12px; border-radius: 16px; }
+    .btn { min-height: 46px; }
+    #leaderboardCard th, #leaderboardCard td { font-size: .9rem !important; }
+  }
+  /* ===== نهاية تحسين v73 ===== */
+
+
+  /* ===== v74: تصغير نص صندوق الجوائز/الإعلان في الهيدر ===== */
+  .hero-announce{
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    margin-top: 10px !important;
+  }
+  .hero-announce-title{
+    font-size: 0.82rem !important;
+    margin-bottom: 4px !important;
+    line-height: 1.45 !important;
+  }
+  .hero-announce ul{
+    font-size: 0.74rem !important;
+    line-height: 1.65 !important;
+    padding-right: 16px !important;
+  }
+  .hero-announce li{
+    margin: 0 !important;
+  }
+  .hero-announce-text{
+    font-size: 0.72rem !important;
+    line-height: 1.65 !important;
+    margin-top: 5px !important;
+  }
+  .hero-announce-note{
+    font-size: 0.68rem !important;
+    line-height: 1.55 !important;
+    padding: 6px 9px !important;
+    margin-top: 6px !important;
+    border-radius: 10px !important;
+  }
+  @media (max-width: 900px){
+    .hero-announce-title{font-size:0.78rem !important;}
+    .hero-announce ul{font-size:0.70rem !important;}
+    .hero-announce-text{font-size:0.69rem !important;}
+    .hero-announce-note{font-size:0.66rem !important;}
+  }
+
+
+
+  /* ===== v75: إصلاح قصّ الأحرف العربية في الهيدر ===== */
+  .hero h1{
+    line-height: 1.42 !important;
+    padding-top: .10em !important;
+    padding-bottom: .08em !important;
+    overflow: visible !important;
+  }
+  .hero p{
+    line-height: 2.05 !important;
+    padding-top: .04em;
+    overflow: visible !important;
+  }
+  .hero-announce-title,
+  .hero-announce li,
+  .hero-announce-text,
+  .hero-announce-note{
+    line-height: 1.9 !important;
+    overflow: visible !important;
+  }
+  .hero-announce-title{
+    padding-top: .03em;
+  }
+  @media (max-width: 900px){
+    .hero h1{ line-height: 1.48 !important; }
+    .hero p{ line-height: 2.1 !important; }
+    .hero-announce-title, .hero-announce li, .hero-announce-text, .hero-announce-note{ line-height: 2.0 !important; }
+  }
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="margin:12px 0 10px; display:flex; justify-content:flex-start;">
+      <div style="
+        display:inline-flex; align-items:center; gap:8px;
+        padding:8px 14px; border-radius:999px;
+        background:rgba(255,255,255,.82);
+        border:1px solid rgba(13,148,136,.22);
+        color:#0f766e; font-weight:700; font-size:15px;
+        box-shadow:0 6px 18px rgba(15,118,110,.08);
+      ">✍️ إعداد وتصميم: وفاء أبوقديري ورزان محمد</div>
+    </div>
+    <section class="hero">
+      <h1>القرآنُ ربيعُ القلوب ونورُ الدروب 🌿✨</h1>
+      <p>
+        ابدؤوا رحلتكم مع التلاوة والذِّكر، واغتنموا هذه الأيام المباركة بالطاعة وابتغاء الأجر من الله تعالى 💚
+      </p>
+
+      <div class="hero-announce">
+        <div class="hero-announce-title">🏆 جوائز قيّمة بإذن الله ستكون:</div>
+        <ul>
+          <li>لأول من يُتمّ ختم القرآن الكريم</li>
+          <li>ولصاحب أعلى عددٍ من النقاط</li>
+          <li>🎁 كما توجد جوائز قيّمة لأول 10 أشخاص من أصحاب النقاط الأعلى في لوحة الصدارة</li>
+        </ul>
+        <p class="hero-announce-text">
+          ✨ فكل صفحةٍ تُتلى، وكل ذِكرٍ يُقال، وكل صلاةٍ تُحفَظ… هو رصيدٌ في الأجر، وسببٌ للرفعة بإذن الله.
+          فسابقوا إلى الخيرات، واحتسبوا الأجر، واجعلوا هذه الختمة نورًا لكم في الدنيا والآخرة 🤍
+        </p>
+        <div class="hero-announce-note">
+          📌 تنبيه: يتم التحقق من النقاط والنتائج مع نهاية هذا الشهر الفضيل بإذن الله.
+        </div>
+      </div>
+
+    </section>
+
+    <div class="grid">
+      <!-- Left column -->
+      <div class="stack">
+        <div class="card">
+          <h2>➕ إضافة مشاركة جديدة</h2>
+          <p class="sub">ادخلي اسم المشترك وكلمة المرور لإضافته إلى لوحة الصدارة.</p>
+          <div class="stack">
+            <div>
+              <label for="nameInput">اسم المشاركة</label>
+              <input id="nameInput" type="text" placeholder="مثال: رزان" />
+            </div>
+            <div>
+              <label for="newUserPasswordInput">رمز الدخول (كلمة المرور)</label>
+              <input id="newUserPasswordInput" type="password" placeholder="مثال: 1234" />
+              <div class="small" style="margin-top:6px;">🔒 يُستخدم رمز الدخول لحماية بيانات المشاركة داخل هذا الجهاز.</div>
+            </div>
+            <button class="btn primary" id="addUserBtn">إضافة المشاركة</button>
+          </div>
+        </div>
+
+        <div class="card" id="controlCard">
+          <h2>🎯 حياتي في صلاتي 🤍🕌</h2>
+          <p class="sub">معلومة إيمانية: لما نحافظ على صلاتنا، نحس براحة في القلب وطمأنينة في اليوم كله ✨ الصلاة تهدّي الفكر، وتخفف التشتّت، وتملأ النفس سكينة… وبإذن الله تبعد الضيق والمشاعر السلبية 🤍</p>
+
+          <div class="stack">
+            <div style="display:none;">
+              <label for="userSelect">اختيار المشاركة</label>
+              <select id="userSelect"></select>
+              <div id="authStatus" class="small" style="margin-top:6px;"></div>
+            </div>
+
+            <div class="row" id="pointsSettingsRow" style="display:none;">
+              <div>
+                <label>نقاط كل صلاة</label>
+                <div id="dailyPointsFixedBox" style="border:1px solid #cbd5e1; border-radius:14px; padding:14px 16px; background:#f8fafc; font-weight:800; text-align:center;">5 نقاط (ثابت)</div>
+                <input id="dailyPointsInput" type="hidden" value="5" />
+              </div>
+              <div>
+                <label for="pagePointsInput">نقاط كل صفحة قرآن</label>
+                <input id="pagePointsInput" type="number" min="0" step="1" />
+              </div>
+            </div>
+
+            <button class="btn warn" id="dailyCheckBtn" style="display:none;">🌤️ تسجيل نقاط صباح اليوم</button>
+
+            <div style="border:1px solid #fde68a; border-radius:12px; padding:10px; background:#fffbeb;">
+              <div id="prayerTodayHeading" style="font-weight:800; margin-bottom:8px; line-height:1.15; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <span>🕌 الصلوات الخمس</span>
+                <span id="prayerTodayDateInline" style="display:inline-flex; align-items:center; justify-content:center; padding:4px 10px; border-radius:999px; background:linear-gradient(135deg,#0ea5a4,#0f766e); color:#fff; font-size:.78em; font-weight:700; box-shadow:0 4px 12px rgba(15,118,110,.18);"></span>
+              </div>
+              <div class="actions-inline" style="gap:8px; flex-wrap:wrap;">
+                <button class="btn ghost" id="prayerFajrBtn">الفجر</button>
+                <button class="btn ghost" id="prayerDhuhrBtn">الظهر</button>
+                <button class="btn ghost" id="prayerAsrBtn">العصر</button>
+                <button class="btn ghost" id="prayerMaghribBtn">المغرب</button>
+                <button class="btn ghost" id="prayerIshaBtn">العشاء</button>
+              </div>
+              <div class="small" id="prayerStatusBox" style="margin-top:8px; display:none;"></div>
+            </div>
+
+            <div style="border:1px dashed #cbd5e1; border-radius:12px; padding:10px; background:#f8fafc;">
+              <div class="row" style="display:none;">
+                <div>
+                  <label for="currentQuranPageInput">الصفحة الحالية في المصحف (1 - 604)</label>
+                  <input id="currentQuranPageInput" type="number" min="1" max="604" step="1" value="1" />
+                </div>
+                <div style="display:flex; align-items:end;">
+                  <button class="btn ghost" id="saveCurrentPageBtn">💾 حفظ الصفحة الحالية</button>
+                </div>
+              </div>
+              <div style="margin-top:8px;">
+                <button class="btn primary" id="nextQuranPageBtn" style="display:none !important;" aria-hidden="true" tabindex="-1">أنهيت الصفحة الحالية (التالي + نقاط) ⬅️</button>
+              </div>
+              <div class="small" id="quranPageHint" style="margin-top:6px; display:none;"></div>
+            </div>
+            <div class="row" style="display:none;">
+              <div>
+                <label for="pagesReadInput">عدد الصفحات المقروءة الآن</label>
+                <input id="pagesReadInput" type="number" min="1" step="1" value="1" />
+              </div>
+              <div style="display:flex; align-items:end;">
+                <button class="btn primary" id="addPagesBtn">📖 إضافة الصفحات + النقاط</button>
+              </div>
+            </div>
+
+            <div class="actions-inline" style="display:none;">
+              <button class="btn ghost" id="renameBtn">✏️ تعديل الاسم</button>
+              <button class="btn danger" id="deleteBtn">🗑️ حذف المشارك</button>
+            </div>
+
+            <div class="small" id="todayStatus" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🏡 ابني بيتكِ في الجنة 🤍</h2>
+          <p class="sub">سبحان الله وبحمده… تُغرس لكِ نخلةٌ في الجنة 🌴✨</p>
+
+          <div class="tasbeeh" id="tasbeehBox">
+            <div class="hint" id="tasbeehName">اختر مشاركًا أولًا</div>
+            <div class="count" id="tasbeehCount">0</div>
+            <div class="hint">سبحان الله وبحمده، سبحان الله العظيم 🤍</div>
+            <div class="row" style="margin-top:10px; grid-template-columns:1fr;">
+              <button class="btn primary" id="tasbeehPlus1">رددي الذكر</button>
+              <button class="btn ghost" id="tasbeehPlus33" style="display:none;">+33</button>
+              <button class="btn danger" id="tasbeehReset" style="display:none;">إعادة ضبط</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="display:none;">
+          <h3>💾 أدوات البيانات</h3>
+          <p class="sub">للاحتفاظ بنسخة احتياطية أو إعادة ضبط الصفحة.</p>
+          <div class="row">
+            <button class="btn ghost" id="exportBtn">⬇️ تصدير البيانات (JSON)</button>
+            <button class="btn ghost" id="importBtn">⬆️ استيراد البيانات</button>
+          </div>
+          <input id="importFile" type="file" accept="application/json" style="display:none;" />
+          <div style="margin-top:8px;">
+            <button class="btn danger" id="resetAllBtn">🧹 إعادة ضبط كل البيانات</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="stack">
+        <div class="card" id="selectedSummaryCard">
+          <h2>📊 ملخص التلاوة للمشاركة</h2>
+          <p class="sub">يظهر هنا تقدّم الختمة، عدد الصفحات، والمجموع الكلي للنقاط.</p>
+
+          <div id="selectedSummaryContent" class="empty">اختاري مشاركة من القائمة لعرض التفاصيل.</div>
+        </div>
+
+        <div class="card" id="leaderboardCard" style="position:relative;">
+          <h2>🏆 لوحة الصدارة والترتيب</h2>
+          <p class="sub">الترتيب بحسب المجموع الكلي للنقاط (ثم عدد الصفحات).</p>
+          <div id="participantsCountBadge" class="tag" style="position:absolute; top:14px; left:14px; margin:0; display:inline-flex; align-items:center; gap:6px; font-size:.88rem; padding:6px 10px; z-index:2;">👥 عدد المشاركات: 0</div>
+
+          <div id="leaderboardWrap" class="table-wrap"></div>
+        </div>
+
+        <div class="card" id="mushafViewerCard">
+          <h2 style="display:none;">🕌 المصحف داخل الصفحة (PDF رسمي)</h2>
+          <p class="sub" style="display:none;">
+            ضعي ملف المصحف <strong>PDF</strong> في نفس المجلد باسم <strong>mushaf.pdf</strong> (أو اكتبي اسم الملف أدناه)،
+            وسيتم فتح الصفحة الحالية للطالبة داخل العرض. زر <strong>التالي</strong> يحسب النقاط وينقل للصفحة التالية تلقائيًا. يمكن التمرير للأعلى/الأسفل داخل نفس الصفحة فقط، مع التنقل بين الصفحات من الأزرار.
+          </p>
+
+          <div class="row" id="mushafPathControlsRow" style="display:none;">
+            <div>
+              <label for="mushafPdfPathInput">اسم/مسار ملف المصحف PDF</label>
+              <input id="mushafPdfPathInput" type="text" placeholder="mushaf.pdf" />
+            </div>
+            <div style="display:flex; align-items:end;">
+              <button class="btn ghost" id="openMushafBtn">🔄 فتح/تحديث المصحف</button>
+            </div>
+          </div>
+
+          <div class="small" id="mushafStatus" style="margin-top:8px; display:none;">
+            أدخلي ملف المصحف PDF (مثل: mushaf.pdf) ثم اضغطي "فتح/تحديث المصحف".
+          </div>
+
+          <div class="viewer-frame-wrap">
+            <div class="viewer-page-pill" id="viewerPageBadge">📖 الصفحة: <strong>1</strong> | ⭐ 5 نقاط</div>
+            <iframe id="mushafFrame" title="عارض المصحف PDF"></iframe>
+          </div>
+
+          <div class="viewer-toolbar viewer-toolbar-bottom">
+            <button class="btn ghost" id="viewerPrevBtn">➡️ السابق (بدون نقاط)</button>
+            <button class="btn primary" id="viewerNextBtn">التالي (مع النقاط) ⬅️</button>
+            <button class="btn ghost" id="viewerSyncBtn" style="display:none;">🎯 مزامنة مع صفحة الطالبة</button>
+            <button class="btn ghost" id="viewerOpenNewTabBtn" style="display:none;">🔗 فتح في تبويب جديد</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'quran_khatma_points_app_v1';
+    const MUSHAF_TOTAL_PAGES = 604;
+
+    const defaultState = {
+      settings: {
+        dailyPoints: 5,
+        pagePoints: 5,
+        mushafPdfPath: 'mushaf.pdf'
+      },
+      selectedUserId: null,
+      users: []
+    };
+
+    let state = loadState();
+
+    // Elements
+    const nameInput = document.getElementById('nameInput');
+    const newUserPasswordInput = document.getElementById('newUserPasswordInput');
+    const addUserBtn = document.getElementById('addUserBtn');
+    const userSelect = document.getElementById('userSelect');
+    const authStatus = document.getElementById('authStatus');
+    const dailyPointsInput = document.getElementById('dailyPointsInput');
+    const pagePointsInput = document.getElementById('pagePointsInput');
+    const dailyCheckBtn = document.getElementById('dailyCheckBtn');
+    const prayerFajrBtn = document.getElementById('prayerFajrBtn');
+    const prayerDhuhrBtn = document.getElementById('prayerDhuhrBtn');
+    const prayerAsrBtn = document.getElementById('prayerAsrBtn');
+    const prayerMaghribBtn = document.getElementById('prayerMaghribBtn');
+    const prayerIshaBtn = document.getElementById('prayerIshaBtn');
+    const prayerStatusBox = document.getElementById('prayerStatusBox');
+    const currentQuranPageInput = document.getElementById('currentQuranPageInput');
+    const saveCurrentPageBtn = document.getElementById('saveCurrentPageBtn');
+    const nextQuranPageBtn = document.getElementById('nextQuranPageBtn');
+    const quranPageHint = document.getElementById('quranPageHint');
+    const pagesReadInput = document.getElementById('pagesReadInput');
+    const addPagesBtn = document.getElementById('addPagesBtn');
+    const renameBtn = document.getElementById('renameBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const todayStatus = document.getElementById('todayStatus');
+    const tasbeehName = document.getElementById('tasbeehName');
+    const tasbeehCount = document.getElementById('tasbeehCount');
+    const tasbeehPlus1 = document.getElementById('tasbeehPlus1');
+    const tasbeehPlus33 = document.getElementById('tasbeehPlus33');
+    const tasbeehReset = document.getElementById('tasbeehReset');
+    const selectedSummaryContent = document.getElementById('selectedSummaryContent');
+    const leaderboardWrap = document.getElementById('leaderboardWrap');
+    const participantsCountBadge = document.getElementById('participantsCountBadge');
+    const selectedSummaryCard = document.getElementById('selectedSummaryCard');
+    const leaderboardCard = document.getElementById('leaderboardCard');
+
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    const resetAllBtn = document.getElementById('resetAllBtn');
+
+    const mushafPdfPathInput = document.getElementById('mushafPdfPathInput');
+    const openMushafBtn = document.getElementById('openMushafBtn');
+    const viewerPrevBtn = document.getElementById('viewerPrevBtn');
+    const viewerNextBtn = document.getElementById('viewerNextBtn');
+    const viewerSyncBtn = document.getElementById('viewerSyncBtn');
+    const viewerOpenNewTabBtn = document.getElementById('viewerOpenNewTabBtn');
+    const mushafStatus = document.getElementById('mushafStatus');
+    const mushafFrame = document.getElementById('mushafFrame');
+    const viewerPageBadge = document.getElementById('viewerPageBadge');
+    const mushafViewport = document.querySelector('.viewer-frame-wrap');
+
+    let viewerState = { loadedPage: null, loadedPath: null };
+    let sessionAuth = { unlockedUserId: null };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        const loaded = {
+          ...structuredClone(defaultState),
+          ...parsed,
+          settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
+        };
+        loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
+        loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
+        return loaded;
+      } catch (e) {
+        console.error('Failed to load state:', e);
+        return structuredClone(defaultState);
+      }
+    }
+
+    function clampQuranPage(n) {
+      const v = Math.floor(Number(n));
+      if (!Number.isFinite(v)) return 1;
+      return Math.min(MUSHAF_TOTAL_PAGES, Math.max(1, v));
+    }
+
+    function inferCurrentPageFromTotalPages(totalPages) {
+      const t = Math.max(0, Math.floor(Number(totalPages || 0)));
+      return (t % MUSHAF_TOTAL_PAGES) + 1;
+    }
+
+    function sanitizeUser(u) {
+      const totalPages = Math.max(0, Math.floor(Number(u.totalPages || 0)));
+      return {
+        id: u.id || cryptoRandomId(),
+        name: String(u.name || 'مشارك').trim(),
+        password: String(u.password || ''),
+        totalPoints: Number(u.totalPoints || 0),
+        totalPages,
+        currentQuranPage: clampQuranPage(
+          u.currentQuranPage ?? inferCurrentPageFromTotalPages(totalPages)
+        ),
+        tasbeeh: Number(u.tasbeeh || 0),
+        morningDaysCount: Number(u.morningDaysCount || 0),
+        lastMorningBonusDate: u.lastMorningBonusDate || null,
+        prayersCount: Number(u.prayersCount || 0),
+        prayersByDate: (u.prayersByDate && typeof u.prayersByDate === 'object' && !Array.isArray(u.prayersByDate)) ? u.prayersByDate : {},
+        createdAt: u.createdAt || new Date().toISOString(),
+        history: Array.isArray(u.history) ? u.history.slice(-200) : []
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function cryptoRandomId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'id_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+    // ملاحظة: نعتمد توقيت الإمارات (Asia/Dubai) للصلاوات اليومية وتغيير اليوم تلقائيًا
+    function localDateKey(date = new Date()) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Dubai',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(date);
+        const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+        return `${map.year}-${map.month}-${map.day}`;
+      } catch (_) {
+        // fallback (في حال المتصفح لا يدعم timeZone بشكل صحيح)
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+    }
+
+    function todayArabic() {
+      try {
+        const d = new Date();
+        const formatted = d.toLocaleDateString('ar-AE-u-nu-latn', {
+          timeZone: 'Asia/Dubai',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        if (formatted && formatted.trim()) return formatted;
+      } catch (e) {}
+      try {
+        const d2 = new Date();
+        return d2.toLocaleDateString('en-GB', { timeZone: 'Asia/Dubai' });
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function updatePrayerTodayHeading() {
+      const el = document.getElementById('prayerTodayHeading');
+      if (!el) return;
+      el.innerHTML = `<span>🕌 الصلوات الخمس</span><span style="display:inline-flex; align-items:center; justify-content:center; padding:6px 14px; border-radius:999px; background:linear-gradient(135deg,#0ea5a4,#0f766e); color:#fff; font-size:1em; line-height:1.2; font-weight:800; min-width:140px; box-shadow:0 6px 14px rgba(15,118,110,.22); white-space:nowrap;">${todayArabic()}</span>`;
+    }
+
+    const PRAYER_ORDER = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+    const PRAYER_LABELS = {
+      fajr: 'الفجر',
+      dhuhr: 'الظهر',
+      asr: 'العصر',
+      maghrib: 'المغرب',
+      isha: 'العشاء'
+    };
+
+    function ensurePrayerTracking(user) {
+      if (!user) return;
+      if (!user.prayersByDate || typeof user.prayersByDate !== 'object' || Array.isArray(user.prayersByDate)) {
+        user.prayersByDate = {};
+      }
+      if (!Number.isFinite(Number(user.prayersCount || 0))) {
+        user.prayersCount = 0;
+      }
+    }
+
+    function getPrayerStateForDate(user, dateKey = localDateKey()) {
+      ensurePrayerTracking(user);
+      const raw = user.prayersByDate[dateKey];
+      const obj = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+      const out = {};
+      PRAYER_ORDER.forEach(k => out[k] = !!obj[k]);
+      return out;
+    }
+
+    function countDonePrayers(prayerState) {
+      return PRAYER_ORDER.reduce((acc, k) => acc + (prayerState?.[k] ? 1 : 0), 0);
+    }
+
+    function getSelectedUser() {
+      return state.users.find(u => u.id === state.selectedUserId) || null;
+    }
+
+    function setSelectedUser(id) {
+      state.selectedUserId = id;
+      saveState();
+      render();
+      syncMushafToSelectedUser({ silent: true });
+    }
+
+    function userHasPassword(user) {
+      return !!String(user?.password || '').length;
+    }
+
+    function isSelectedUserUnlocked() {
+      const user = getSelectedUser();
+      if (!user) return false;
+      if (!userHasPassword(user)) return true;
+      return sessionAuth.unlockedUserId === user.id;
+    }
+
+    function verifyUserPassword(user, options = {}) {
+      if (!user) return false;
+      if (!userHasPassword(user)) return true;
+      if (sessionAuth.unlockedUserId === user.id) return true;
+
+      const entered = window.prompt(`🔒 المشاركة "${user.name}" محمي بكلمة مرور.\nأدخلي كلمة المرور للمتابعة:`);
+      if (entered === null) return false;
+
+      if (String(entered) !== String(user.password)) {
+        alert('❌ كلمة المرور غير صحيحة.');
+        return false;
+      }
+
+      sessionAuth.unlockedUserId = user.id;
+      if (!options.silent) alert(`✅ تم فتح بيانات المشاركة: ${user.name}`);
+      return true;
+    }
+
+    function attemptSelectUser(id) {
+      const target = state.users.find(u => u.id === id);
+      if (!target) return false;
+      if (!verifyUserPassword(target, { silent: true })) {
+        renderUserSelect();
+        renderAuthStatus();
+        return false;
+      }
+      setSelectedUser(id);
+      return true;
+    }
+
+    function renderAuthStatus() {
+      if (!authStatus) return;
+      authStatus.style.display = 'none';
+      authStatus.textContent = '';
+    }
+
+
+    function normalizeMushafPath(v) {
+      const raw = String(v ?? '').trim();
+      return raw || 'mushaf.pdf';
+    }
+
+    function currentMushafPath() {
+      state.settings.mushafPdfPath = normalizeMushafPath(state.settings.mushafPdfPath);
+      return state.settings.mushafPdfPath;
+    }
+
+    function buildMushafPdfUrl(page) {
+      const path = currentMushafPath();
+      const p = clampQuranPage(page);
+      // ملاحظة: بعض المتصفحات لا تحدّث صفحة الـPDF داخل iframe إذا تغيّر #page فقط.
+      // لذلك نضيف cache-buster صغير لإجبار العارض على إعادة التحميل عند "التالي/السابق".
+      const base = String(path).split('#')[0];
+      const sep = base.includes('?') ? '&' : '?';
+      const cb = Date.now();
+      return `${base}${sep}cb=${cb}#page=${p}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
+    }
+
+    function loadMushafAtPage(page, options = {}) {
+      const p = clampQuranPage(page);
+      const path = currentMushafPath();
+      if (mushafPdfPathInput) mushafPdfPathInput.value = path;
+      const url = buildMushafPdfUrl(p);
+
+      // عند فتح صفحة جديدة: ارجاع التمرير لأعلى نفس الصفحة أولًا
+      try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
+      // إعادة تحميل قسرية للـ iframe لأن بعض عارِضات PDF المحلية تتجاهل تغيير الصفحة داخل نفس الملف
+      try { mushafFrame.src = 'about:blank'; } catch (e) {}
+      setTimeout(() => {
+        try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
+        mushafFrame.src = url;
+      }, 20);
+
+      viewerState.loadedPage = p;
+      viewerState.loadedPath = path;
+      if (viewerPageBadge) {
+        const selected = getSelectedUser();
+        const pagePointsTotal = selected ? Math.max(0, Math.floor(Number(selected.totalPages || 0)) * 5) : 0;
+        viewerPageBadge.innerHTML = `📖 الصفحة: <strong>${formatNum(p)}</strong> | ⭐ نقاط الصفحات: <strong>${formatNum(pagePointsTotal)}</strong>`;
+      }
+
+      const user = getSelectedUser();
+      const userName = user ? ` • المشاركة: ${user.name}` : '';
+      mushafStatus.innerHTML = `📖 تم فتح صفحة <strong>${formatNum(p)}</strong> من الملف: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.
+      <br>إذا لم يظهر المصحف داخل الصفحة، استخدمي زر <strong>فتح في تبويب جديد</strong> أو تأكدي أن ملف الـPDF موجود بنفس المجلد.`;
+      if (!options.silent) flash(document.getElementById('mushafViewerCard'));
+    }
+
+    function syncMushafToSelectedUser(options = {}) {
+      const user = getSelectedUser();
+      if (!user) {
+        mushafStatus.textContent = 'اختاري مشاركًا أولًا ثم افتحي المصحف.';
+        return;
+      }
+      const p = clampQuranPage(user.currentQuranPage || 1);
+      loadMushafAtPage(p, options);
+    }
+
+    function openMushafInNewTab() {
+      const user = getSelectedUser();
+      const page = user ? clampQuranPage(user.currentQuranPage || 1) : 1;
+      const url = buildMushafPdfUrl(page);
+      window.open(url, '_blank');
+    }
+
+    function saveMushafPathAndRefresh() {
+      state.settings.mushafPdfPath = normalizeMushafPath(mushafPdfPathInput.value);
+      saveState();
+      syncMushafToSelectedUser();
+    }
+
+    function goToPreviousQuranPageNoPoints() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+      const fromPage = clampQuranPage(user.currentQuranPage || 1);
+      const toPage = fromPage <= 1 ? MUSHAF_TOTAL_PAGES : fromPage - 1;
+      user.currentQuranPage = toPage;
+      addHistory(user, 'prev_quran_page_nav', { fromPage, toPage });
+      saveState();
+      render();
+      loadMushafAtPage(toPage, { silent: true });
+    }
+
+    function addHistory(user, type, details = {}) {
+      user.history.push({
+        at: new Date().toISOString(),
+        type,
+        ...details
+      });
+      if (user.history.length > 200) user.history = user.history.slice(-200);
+    }
+
+    function addUser(name, password) {
+      const clean = (name || '').trim();
+      if (!clean) {
+        alert('من فضلك أدخلي اسم المشاركة.');
+        return;
+      }
+
+      const pass = String(password || '').trim();
+      if (!pass) {
+        alert('من فضلك أدخلي كلمة مرور للمشارك.');
+        return;
+      }
+      if (pass.length < 3) {
+        alert('كلمة المرور قصيرة جدًا. اجعليها 3 أحرف/أرقام على الأقل.');
+        return;
+      }
+
+      const exists = state.users.some(u => u.name.trim().toLowerCase() === clean.toLowerCase());
+      if (exists) {
+        alert('هذا الاسم موجود بالفعل. اختاري اسمًا مختلفًا أو عدّلي الاسم الحالي.');
+        return;
+      }
+
+      const user = sanitizeUser({
+        id: cryptoRandomId(),
+        name: clean,
+        password: pass,
+        totalPoints: 0,
+        totalPages: 0,
+        currentQuranPage: 1,
+        tasbeeh: 0,
+        morningDaysCount: 0,
+        lastMorningBonusDate: null,
+        prayersCount: 0,
+        prayersByDate: {},
+        createdAt: new Date().toISOString(),
+        history: []
+      });
+
+      addHistory(user, 'create_user');
+      state.users.push(user);
+      state.selectedUserId = user.id;
+      // لا نفتح القفل تلقائيًا بعد الإنشاء حتى يطلب كلمة المرور عند الضغط على "اختيار"
+      sessionAuth.unlockedUserId = null;
+      saveState();
+      nameInput.value = '';
+      if (newUserPasswordInput) newUserPasswordInput.value = '';
+      flash(addUserBtn);
+      render();
+    }
+
+    function grantPrayer(prayerKey) {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+      if (!PRAYER_ORDER.includes(prayerKey)) return;
+
+      ensurePrayerTracking(user);
+      const today = localDateKey();
+      const todayPrayers = getPrayerStateForDate(user, today);
+
+      const alreadyDone = !!todayPrayers[prayerKey];
+      const pts = Math.max(0, Number(state.settings.dailyPoints || 0));
+
+      if (alreadyDone) {
+        // إزالة تسجيل الصلاة (Toggle OFF)
+        todayPrayers[prayerKey] = false;
+        user.prayersByDate[today] = todayPrayers;
+
+        user.prayersCount = Math.max(0, Number(user.prayersCount || 0) - 1);
+        user.totalPoints = Math.max(0, Number(user.totalPoints || 0) - pts);
+
+        addHistory(user, 'prayer_uncheck', {
+          prayerKey,
+          prayerName: PRAYER_LABELS[prayerKey],
+          points: pts,
+          date: today
+        });
+      } else {
+        // تسجيل الصلاة (Toggle ON)
+        todayPrayers[prayerKey] = true;
+        user.prayersByDate[today] = todayPrayers;
+
+        user.totalPoints = Number(user.totalPoints || 0) + pts;
+        user.prayersCount = Number(user.prayersCount || 0) + 1;
+
+        addHistory(user, 'prayer_check', {
+          prayerKey,
+          prayerName: PRAYER_LABELS[prayerKey],
+          points: pts,
+          date: today
+        });
+      }
+
+      saveState();
+      const prayerBtnMap = { fajr: prayerFajrBtn, dhuhr: prayerDhuhrBtn, asr: prayerAsrBtn, maghrib: prayerMaghribBtn, isha: prayerIshaBtn };
+      flash(prayerBtnMap[prayerKey]);
+      render();
+    }
+
+    // تم استبدال هذه الميزة بالصلوات الخمس (الإبقاء على الدالة للتوافق مع النسخ السابقة)
+    function grantMorningBonus() {
+      alert('✅ تم استبدال نقاط الصلاة بالصلوات الخمس في هذه النسخة.');
+    }
+
+    function applyPageReading(user, wholePages, historyType = 'read_pages') {
+      const pages = Math.max(0, Math.floor(Number(wholePages || 0)));
+      if (!pages) return { pages: 0, gained: 0, fromPage: clampQuranPage(user.currentQuranPage || 1), toPage: clampQuranPage(user.currentQuranPage || 1), completedKhatmas: 0 };
+
+      const ptsPerPage = 5; // ثابت: 5 نقاط لكل صفحة
+      const gained = pages * ptsPerPage;
+
+      const beforeTotalPages = Math.max(0, Math.floor(Number(user.totalPages || 0)));
+      const fromPage = clampQuranPage(user.currentQuranPage || inferCurrentPageFromTotalPages(beforeTotalPages));
+
+      user.totalPages = beforeTotalPages + pages;
+      user.totalPoints = Number(user.totalPoints || 0) + gained;
+      user.currentQuranPage = inferCurrentPageFromTotalPages(user.totalPages);
+
+      const completedKhatmas = Math.floor(user.totalPages / MUSHAF_TOTAL_PAGES) - Math.floor(beforeTotalPages / MUSHAF_TOTAL_PAGES);
+      const toPage = user.currentQuranPage;
+
+      addHistory(user, historyType, { pages, points: gained, fromPage, toPage, completedKhatmas });
+      return { pages, gained, fromPage, toPage, completedKhatmas };
+    }
+
+    function goToNextQuranPage() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      const result = applyPageReading(user, 1, 'next_quran_page');
+      saveState();
+      flash(nextQuranPageBtn);
+      render();
+      syncMushafToSelectedUser({ silent: true });
+
+      if (result.completedKhatmas > 0) {
+        alert('ما شاء الله 🌟 تم إكمال ختمة كاملة! تم البدء من الصفحة 1 تلقائيًا.');
+      }
+    }
+
+    function saveCurrentQuranPage() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      const v = Number(currentQuranPageInput.value);
+      if (!Number.isFinite(v) || v < 1 || v > MUSHAF_TOTAL_PAGES) {
+        return alert('أدخلي رقم صفحة صحيح من 1 إلى 604.');
+      }
+
+      user.currentQuranPage = clampQuranPage(v);
+      addHistory(user, 'set_current_page', { page: user.currentQuranPage });
+      saveState();
+      flash(saveCurrentPageBtn);
+      render();
+      syncMushafToSelectedUser({ silent: true });
+    }
+
+    function addPagesReading() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      const pages = Number(pagesReadInput.value);
+      if (!Number.isFinite(pages) || pages <= 0) {
+        return alert('أدخلي عدد صفحات صحيح أكبر من صفر.');
+      }
+
+      const wholePages = Math.floor(pages);
+      const result = applyPageReading(user, wholePages, 'read_pages');
+
+      saveState();
+      flash(addPagesBtn);
+      render();
+      syncMushafToSelectedUser({ silent: true });
+
+      if (result.completedKhatmas > 0) {
+        alert(`ما شاء الله 🌟 تم إكمال ${formatNum(result.completedKhatmas)} ختمة أثناء إضافة الصفحات.`);
+      }
+    }
+
+    function renameSelectedUser() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      const newName = prompt('اكتبي الاسم الجديد:', user.name);
+      if (newName === null) return;
+      const clean = newName.trim();
+      if (!clean) return alert('الاسم لا يمكن أن يكون فارغًا.');
+
+      const clash = state.users.some(u => u.id !== user.id && u.name.trim().toLowerCase() === clean.toLowerCase());
+      if (clash) return alert('هذا الاسم مستخدم لمشارك آخر.');
+
+      user.name = clean;
+      addHistory(user, 'rename_user', { newName: clean });
+      saveState();
+      render();
+    }
+
+    function deleteSelectedUser() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      const ok = confirm(`هل أنتِ متأكدة من حذف المشاركة: ${user.name} ؟\nسيتم حذف نقاطه وبياناته.`);
+      if (!ok) return;
+
+      state.users = state.users.filter(u => u.id !== user.id);
+      if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
+      if (!state.users.length) state.selectedUserId = null;
+      else state.selectedUserId = state.users[0].id;
+      saveState();
+      render();
+    }
+
+    function updateSettingsFromInputs() {
+      state.settings.dailyPoints = 5; // ثابت لكل صلاة
+      state.settings.pagePoints = 5; // ثابت لكل صفحة
+      if (dailyPointsInput) dailyPointsInput.value = '5';
+      saveState();
+      renderTodayStatus();
+      updatePrayerTodayHeading();
+    }
+
+    function incTasbeeh(amount) {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      const delta = Math.max(0, Math.floor(Number(amount || 0)));
+      if (!delta) return;
+
+      // ربط المسبحة بالنقاط: كل تسبيحة = 1 نقطة (و +33 = 33 نقطة)
+      user.tasbeeh = Math.max(0, Number(user.tasbeeh || 0) + delta);
+      user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
+
+      addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
+      saveState();
+      flash(document.getElementById('tasbeehBox'));
+      render();
+    }
+
+    function resetTasbeehCount() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+      const ok = confirm(`إعادة ضبط المسبحة للمشارك ${user.name} إلى 0؟`);
+      if (!ok) return;
+      user.tasbeeh = 0;
+      addHistory(user, 'tasbeeh_reset');
+      saveState();
+      render();
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json;charset=utf-8' });
+      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = `quran-khatma-data-${localDateKey()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(String(reader.result || '{}'));
+          const next = {
+            ...structuredClone(defaultState),
+            ...imported,
+            settings: { ...defaultState.settings, ...(imported.settings || {}) },
+            users: Array.isArray(imported.users) ? imported.users.map(sanitizeUser) : []
+          };
+          state = next;
+          sessionAuth.unlockedUserId = null;
+          if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
+            state.selectedUserId = state.users[0]?.id || null;
+          }
+          saveState();
+          render();
+          alert('تم استيراد البيانات بنجاح ✅');
+        } catch (e) {
+          console.error(e);
+          alert('ملف غير صالح أو حدث خطأ أثناء الاستيراد.');
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function resetAllData() {
+      const ok = confirm('هل أنتِ متأكدة من حذف جميع المشاركات والبيانات؟');
+      if (!ok) return;
+      state = structuredClone(defaultState);
+      sessionAuth.unlockedUserId = null;
+      saveState();
+      render();
+    }
+
+    function formatNum(n) {
+      try { return Number(n || 0).toLocaleString('ar-EG-u-nu-latn'); }
+      catch { return String(n || 0); }
+    }
+
+    function toHindiDigits(value) {
+      // تم تعطيل تحويل الأرقام للهندية بناءً على الطلب (نستخدم الأرقام الإنجليزية 1 2 3)
+      return String(value ?? '');
+    }
+
+    function applyHindiDigitsUI(root = document.body) {
+      // no-op: keep Latin digits in UI
+      return;
+    }
+
+    function sortedUsers() {
+      return [...state.users].sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        if (b.totalPages !== a.totalPages) return b.totalPages - a.totalPages;
+        return (a.createdAt || '').localeCompare(b.createdAt || '');
+      });
+    }
+
+    function renderUserSelect() {
+      const prev = state.selectedUserId;
+      userSelect.innerHTML = '';
+
+      if (!state.users.length) {
+        userSelect.innerHTML = '<option value="">لا يوجد مشاركون بعد</option>';
+        userSelect.disabled = true;
+        return;
+      }
+
+      userSelect.disabled = false;
+      sortedUsers().forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.name} (${formatNum(u.totalPoints)} نقطة)`;
+        userSelect.appendChild(opt);
+      });
+
+      if (prev && state.users.some(u => u.id === prev)) {
+        userSelect.value = prev;
+      } else {
+        state.selectedUserId = sortedUsers()[0].id;
+        userSelect.value = state.selectedUserId;
+        saveState();
+      }
+    }
+
+    function renderTodayStatus() {
+      const user = getSelectedUser();
+      if (!user) {
+        todayStatus.textContent = 'لا يوجد مشارك مختار.';
+        return;
+      }
+      const today = localDateKey();
+      const prayerState = getPrayerStateForDate(user, today);
+      const doneCount = countDonePrayers(prayerState);
+      const pending = PRAYER_ORDER.filter(k => !prayerState[k]).map(k => PRAYER_LABELS[k]);
+
+      const pendingText = pending.length ? ` • المتبقي: ${pending.join('، ')}` : ' • ما شاء الله تم تسجيل الصلوات الخمس اليوم ✅';
+      todayStatus.innerHTML = `🕌 صلوات اليوم (${todayArabic()}) للمشارك <strong>${escapeHtml(user.name)}</strong>: <strong>${formatNum(doneCount)}</strong> / 5${pendingText}.`;
+    }
+
+    function renderSelectedSummary() {
+      const user = getSelectedUser();
+      if (!user) {
+        selectedSummaryContent.className = 'empty';
+        selectedSummaryContent.textContent = 'اختاري مشاركة من القائمة لعرض التفاصيل.';
+        return;
+      }
+
+      // إذا المشارك محمي ولم يتم فتح القفل، نعرض ملخصًا مقفلاً فقط
+      if (userHasPassword(user) && !isSelectedUserUnlocked()) {
+        selectedSummaryContent.className = 'empty';
+        selectedSummaryContent.innerHTML = `بيانات المشاركة <strong>${escapeHtml(user.name)}</strong> مقفلة. اضغطي <strong>اختيار</strong> ثم أدخلي كلمة المرور لعرض التفاصيل وإجراء التعديلات.`;
+        return;
+      }
+
+      const totalPages = Number(user.totalPages || 0);
+      const currentQuranPage = clampQuranPage(user.currentQuranPage || inferCurrentPageFromTotalPages(totalPages));
+      const pagesDoneInCurrentKhatma = currentQuranPage - 1;
+      const khatmas = Math.floor(totalPages / MUSHAF_TOTAL_PAGES);
+      const progressPct = Math.min(100, (pagesDoneInCurrentKhatma / MUSHAF_TOTAL_PAGES) * 100);
+
+      const progressMessage =
+        progressPct >= 99.9 ? '🎉 ما شاء الله! ختمة كاملة — اضغطي التالي لبدء ختمة جديدة.' :
+        progressPct >= 90 ? '🔥 قربتِ جدًا! باقي صفحات قليلة وتكتمل الختمة.' :
+        progressPct >= 75 ? '🌟 ممتاز جدًا! أنتِ في المراحل الأخيرة من الختمة.' :
+        progressPct >= 50 ? '💪 أحسنتِ! وصلتي لنصف الختمة وأكثر، كمّلي بنفس الحماس.' :
+        progressPct >= 25 ? '✨ بداية قوية! استمري والقادم أجمل بإذن الله.' :
+        '🌱 بداية مباركة! كل صفحة نور ونقطة لكِ.';
+      const prayerDates = (user.prayersByDate && typeof user.prayersByDate === 'object') ? Object.keys(user.prayersByDate) : [];
+      const lastPrayerDateKey = prayerDates.sort().slice(-1)[0] || null;
+      const lastPrayerDate = lastPrayerDateKey
+        ? new Date(lastPrayerDateKey + 'T00:00:00').toLocaleDateString('ar-EG-u-nu-latn')
+        : '—';
+      const todayPrayerCount = countDonePrayers(getPrayerStateForDate(user, localDateKey()));
+
+      const lastActions = [...(user.history || [])].slice(-5).reverse();
+      const actionsHtml = lastActions.length
+        ? `<ul style="margin:8px 0 0; padding-inline-start:18px; line-height:1.9;">
+            ${lastActions.map(item => `<li>${renderActionText(item)}</li>`).join('')}
+           </ul>`
+        : '<div class="muted">لا توجد أنشطة بعد.</div>';
+
+      selectedSummaryContent.className = '';
+      selectedSummaryContent.innerHTML = `
+        <div class="stats">
+          <div class="stat">
+            <div class="k">👤 المشاركة</div>
+            <div class="v" style="font-size:1.05rem">${escapeHtml(user.name)}</div>
+          </div>
+          <div class="stat">
+            <div class="k">⭐ مجموع النقاط</div>
+            <div class="v">${formatNum(user.totalPoints)}</div>
+          </div>
+          <div class="stat">
+            <div class="k">📖 مجموع الصفحات</div>
+            <div class="v">${formatNum(totalPages)}</div>
+          </div>
+          <div class="stat">
+            <div class="k">🕌 إجمالي الصلوات</div>
+            <div class="v">${formatNum(user.prayersCount || 0)}</div>
+          </div>
+        </div>
+
+        <div class="card khatma-hero" style="box-shadow:none;">
+          <div class="khatma-hero-top">
+            <div class="khatma-hero-title">
+              <strong>🏆 تقدم الختمة الحالية</strong>
+              <span class="khatma-badge">✨ عدد الختمات: ${formatNum(khatmas)}</span>
+            </div>
+            <div class="khatma-percent">${progressPct.toFixed(1)}%</div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div class="muted" style="font-weight:700; color:#0f766e;">${formatNum(pagesDoneInCurrentKhatma)} / ${formatNum(MUSHAF_TOTAL_PAGES)} صفحة</div>
+            <div class="muted" style="font-weight:700; color:#0369a1;">باقي ${formatNum(Math.max(0, MUSHAF_TOTAL_PAGES - pagesDoneInCurrentKhatma))} صفحة</div>
+          </div>
+
+          <div class="progress"><span style="width:${progressPct.toFixed(2)}%"></span></div>
+
+          <div class="khatma-cheer">${progressMessage}</div>
+
+          <div class="khatma-hero-grid">
+            <div class="khatma-mini">
+              <div class="k">📖 الصفحة الحالية</div>
+              <div class="v">${formatNum(currentQuranPage)} ${currentQuranPage === MUSHAF_TOTAL_PAGES ? '(آخر صفحة)' : ''}</div>
+            </div>
+            <div class="khatma-mini">
+              <div class="k">🕌 صلوات اليوم</div>
+              <div class="v">${formatNum(todayPrayerCount)} / 5</div>
+            </div>
+            <div class="khatma-mini">
+              <div class="k">📅 آخر تسجيل صلوات</div>
+              <div class="v">${lastPrayerDate}</div>
+            </div>
+          </div>
+        </div>
+`;
+    }
+
+    function renderLeaderboard() {
+      const users = sortedUsers();
+      if (participantsCountBadge) participantsCountBadge.textContent = `👥 عدد المشاركات: ${formatNum(users.length)}`;
+      if (!users.length) {
+        leaderboardWrap.innerHTML = '<div class="empty">لا يوجد مشاركون بعد. أضيفي أول مشارك للبدء ✨</div>';
+        return;
+      }
+
+      const prayerPointValue = Math.max(0, Number(state.settings.dailyPoints || 0));
+
+      const rows = users.map((u, i) => {
+        const isSelected = u.id === state.selectedUserId;
+        const totalPages = Math.max(0, Number(u.totalPages || 0));
+        const khatmas = Math.floor(totalPages / MUSHAF_TOTAL_PAGES);
+        const currentPage = clampQuranPage(u.currentQuranPage || inferCurrentPageFromTotalPages(totalPages));
+        const todayPrayerCount = countDonePrayers(getPrayerStateForDate(u, localDateKey()));
+        const lockedBadge = '';
+
+        // تفصيل النقاط لكل نشاط (الترتيب يعتمد دائمًا على النقاط الكلية المخزنة)
+        const totalPoints = Math.max(0, Number(u.totalPoints || 0));
+        const tasbeehPoints = Math.max(0, Number(u.tasbeeh || 0)); // كل تسبيحة = 1 نقطة
+        const prayerPoints = Math.max(0, Number(u.prayersCount || 0)) * prayerPointValue;
+        const pagePoints = Math.max(0, totalPoints - tasbeehPoints - prayerPoints);
+        const rankBadgeHtml =
+          i === 0 ? `<span class="rank-badge top1" title="المركز الأول">🥇</span>` :
+          i === 1 ? `<span class="rank-badge top2" title="المركز الثاني">🥈</span>` :
+          i === 2 ? `<span class="rank-badge top3" title="المركز الثالث">🥉</span>` :
+                    `<span class="rank-badge" title="الترتيب ${formatNum(i + 1)}">${formatNum(i + 1)}</span>`;
+
+        return `
+          <tr style="${isSelected ? 'background:#f0fdfa;' : ''}">
+            <td class="rank">${rankBadgeHtml}</td>
+            <td class="name-cell">${escapeHtml(u.name)} ${isSelected ? '<span class="tag">مختار</span>' : ''} ${lockedBadge}</td>
+            <td>${formatNum(tasbeehPoints)}</td>
+            <td>${formatNum(prayerPoints)}</td>
+            <td>${formatNum(totalPages)}</td>
+            <td>${formatNum(currentPage)}</td>
+            <td>${formatNum(khatmas)}</td>
+            <td>${formatNum(todayPrayerCount)}/5</td>
+            <td><strong style="color:#0b5d56">${formatNum(totalPoints)}</strong></td>
+            <td>
+              <button class="btn ghost" style="padding:6px 9px; font-size:.82rem;" onclick="window.__pickUser('${u.id}')">اختيار</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      leaderboardWrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>الترتيب</th>
+              <th>الاسم</th>
+              <th>التسبيح</th>
+              <th>الصلاة</th>
+              <th>الصفحات</th>
+              <th>الصفحة الحالية</th>
+              <th>الختمات</th>
+              <th>صلوات اليوم</th>
+              <th>المجموع</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+
+function renderQuranPageControls() {
+      const user = getSelectedUser();
+      if (!user) {
+        currentQuranPageInput.value = 1;
+        quranPageHint.textContent = 'اختاري مشاركًا لعرض الصفحة الحالية والتقدّم.';
+        return;
+      }
+
+      const currentPage = clampQuranPage(user.currentQuranPage || inferCurrentPageFromTotalPages(user.totalPages));
+      const nextPage = currentPage >= MUSHAF_TOTAL_PAGES ? 1 : currentPage + 1;
+      currentQuranPageInput.value = currentPage;
+      quranPageHint.textContent = `الصفحة الحالية: ${formatNum(currentPage)} • بعد الضغط على "التالي" ستصبح: ${formatNum(nextPage)}.`;
+    }
+
+
+    function renderMushafControls() {
+      if (mushafPdfPathInput) mushafPdfPathInput.value = currentMushafPath();
+
+      const user = getSelectedUser();
+      const hasUsers = !!state.users.length;
+
+      [openMushafBtn, viewerPrevBtn, viewerNextBtn, viewerSyncBtn, viewerOpenNewTabBtn].forEach(btn => {
+        if (!btn) return;
+        btn.disabled = !hasUsers;
+        btn.style.opacity = hasUsers ? '1' : '.6';
+        btn.style.cursor = hasUsers ? 'pointer' : 'not-allowed';
+      });
+
+      if (!user) {
+        mushafStatus.textContent = 'اختاري مشاركًا أولًا ثم افتحي المصحف.';
+        return;
+      }
+
+      if (userHasPassword(user) && !isSelectedUserUnlocked()) {
+        mushafStatus.innerHTML = `تم اختيار المشاركة <strong>${escapeHtml(user.name)}</strong> لكن العرض مقفل. اضغطي <strong>اختيار</strong> وأدخلي كلمة المرور.`;
+        return;
+      }
+
+      const p = clampQuranPage(user.currentQuranPage || 1);
+      const path = currentMushafPath();
+      if (viewerState.loadedPage === null || viewerState.loadedPath !== path) {
+        // افتح أول مرة تلقائيًا على صفحة الطالبة الحالية
+        loadMushafAtPage(p, { silent: true });
+      } else {
+        mushafStatus.innerHTML = `📖 صفحة الطالبة الحالية: <strong>${formatNum(p)}</strong> • ملف المصحف: <code style="direction:ltr">${escapeHtml(path)}</code>.
+        <br>يمكنك الضغط على <strong>التالي</strong> لاحتساب الصفحة والانتقال تلقائيًا.`;
+      }
+    }
+
+    function renderPrayerControls() {
+      const user = getSelectedUser();
+      const btnMap = {
+        fajr: prayerFajrBtn,
+        dhuhr: prayerDhuhrBtn,
+        asr: prayerAsrBtn,
+        maghrib: prayerMaghribBtn,
+        isha: prayerIshaBtn
+      };
+
+      if (!prayerStatusBox) return;
+
+      if (!user) {
+        prayerStatusBox.textContent = 'اختاري مشاركًا لتسجيل الصلوات الخمس.';
+        Object.values(btnMap).forEach(btn => {
+          if (!btn) return;
+          btn.classList.remove('primary');
+          btn.classList.add('ghost');
+          btn.disabled = true;
+        });
+        return;
+      }
+
+      const unlocked = isSelectedUserUnlocked();
+      const todayState = getPrayerStateForDate(user, localDateKey());
+      const doneCount = countDonePrayers(todayState);
+
+      PRAYER_ORDER.forEach(k => {
+        const btn = btnMap[k];
+        if (!btn) return;
+        const done = !!todayState[k];
+        btn.textContent = `${done ? '✅ ' : ''}${PRAYER_LABELS[k]}`;
+        btn.classList.remove('primary', 'ghost');
+        btn.classList.add(done ? 'primary' : 'ghost');
+        // التمكين/التعطيل النهائي يتم أيضًا في render() حسب القفل
+        btn.dataset.done = done ? '1' : '0';
+        if (!unlocked) {
+          btn.disabled = true;
+        }
+      });
+
+      const remaining = PRAYER_ORDER.filter(k => !todayState[k]).map(k => PRAYER_LABELS[k]);
+      prayerStatusBox.innerHTML = `اليوم: <strong>${formatNum(doneCount)}</strong> / 5 صلوات • (يمكن الضغط مرة أخرى لإزالة الصلاة)${remaining.length ? ` • المتبقي: ${remaining.join('، ')}` : ' • ممتاز 🌟'}`;
+    }
+
+    function renderTasbeeh() {
+      const user = getSelectedUser();
+      if (!user) {
+        tasbeehName.textContent = 'اختر مشاركًا أولًا';
+        tasbeehCount.textContent = '0';
+        return;
+      }
+      tasbeehName.textContent = `المشاركة: ${user.name}`;
+      tasbeehCount.textContent = formatNum(user.tasbeeh || 0);
+    }
+
+    function render() {
+      state.settings.dailyPoints = 5; // تثبيت نقاط الصلاة دائمًا
+      if (dailyPointsInput) dailyPointsInput.value = '5';
+      const dailyPointsFixedBox = document.getElementById('dailyPointsFixedBox');
+      if (dailyPointsFixedBox) dailyPointsFixedBox.textContent = '٥ نقاط (ثابت)';
+      pagePointsInput.value = '5';
+
+      renderUserSelect();
+      renderTodayStatus();
+      renderPrayerControls();
+      renderSelectedSummary();
+      renderLeaderboard();
+      renderQuranPageControls();
+      renderTasbeeh();
+      renderMushafControls();
+
+      const hasUsers = !!state.users.length;
+      const unlocked = isSelectedUserUnlocked();
+
+      // أزرار العرض/المصحف تصبح متاحة فقط بعد فتح قفل المشاركة المختارة
+      [openMushafBtn, viewerSyncBtn, viewerOpenNewTabBtn].forEach(btn => {
+        if (!btn) return;
+        const canUse = hasUsers && unlocked;
+        btn.disabled = !canUse;
+        btn.style.opacity = canUse ? '1' : '.6';
+        btn.style.cursor = canUse ? 'pointer' : 'not-allowed';
+      });
+
+      // أزرار تعدّل بيانات المشاركة (محمية بكلمة المرور)
+      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
+        if (!btn) return;
+        const canUse = hasUsers && unlocked;
+        btn.disabled = !canUse;
+        btn.style.opacity = canUse ? '1' : '.6';
+        btn.style.cursor = canUse ? 'pointer' : 'not-allowed';
+      });
+
+      renderAuthStatus();
+      applyHindiDigitsUI(document.body);
+    }
+
+    function flash(el) {
+      if (!el) return;
+      el.classList.add('success-flash');
+      setTimeout(() => el.classList.remove('success-flash'), 350);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderActionText(item) {
+      const time = new Date(item.at).toLocaleString('ar-EG-u-nu-latn');
+      if (item.type === 'morning_bonus') {
+        return `🌤️ تسجيل صباحي (ميزة قديمة) (+${formatNum(item.points)} نقطة) — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'prayer_check') {
+        return `🕌 تسجيل صلاة ${escapeHtml(item.prayerName || PRAYER_LABELS[item.prayerKey] || '')} (+${formatNum(item.points)} نقطة) — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'prayer_uncheck') {
+        return `↩️ إزالة تسجيل صلاة ${escapeHtml(item.prayerName || PRAYER_LABELS[item.prayerKey] || '')} (-${formatNum(item.points)} نقطة) — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'read_pages') {
+        const fromTxt = item.fromPage ? ` (من صفحة ${formatNum(item.fromPage)} إلى ${formatNum(item.toPage)})` : '';
+        return `📖 قراءة ${formatNum(item.pages)} صفحة (+${formatNum(item.points)} نقطة)${fromTxt} — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'next_quran_page') {
+        return `➡️ إنهاء صفحة والانتقال للتالية (من ${formatNum(item.fromPage)} إلى ${formatNum(item.toPage)}) +${formatNum(item.points)} نقطة — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'prev_quran_page_nav') {
+        return `⬅️ رجوع لصفحة سابقة (بدون نقاط) من ${formatNum(item.fromPage)} إلى ${formatNum(item.toPage)} — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'set_current_page') {
+        return `📍 ضبط الصفحة الحالية إلى ${formatNum(item.page)} — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'tasbeeh') {
+        const sign = item.delta >= 0 ? '+' : '';
+        const pts = Number(item.points ?? item.delta ?? 0);
+        return `📿 مسبحة (${sign}${formatNum(item.delta)}) = +${formatNum(pts)} نقطة — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'tasbeeh_reset') {
+        return `📿 إعادة ضبط المسبحة — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'rename_user') {
+        return `✏️ تعديل الاسم إلى: ${escapeHtml(item.newName || '')} — <span class="muted">${time}</span>`;
+      }
+      if (item.type === 'create_user') {
+        return `👤 إنشاء مشاركة — <span class="muted">${time}</span>`;
+      }
+      return `📝 نشاط — <span class="muted">${time}</span>`;
+    }
+
+    // Expose selector helper for table buttons
+    window.__pickUser = (id) => attemptSelectUser(id);
+
+    // Events
+    addUserBtn.addEventListener('click', () => addUser(nameInput.value, newUserPasswordInput?.value));
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addUser(nameInput.value, newUserPasswordInput?.value);
+    });
+
+    newUserPasswordInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addUser(nameInput.value, newUserPasswordInput?.value);
+    });
+
+    userSelect.addEventListener('change', (e) => attemptSelectUser(e.target.value));
+
+    pagePointsInput.addEventListener('change', updateSettingsFromInputs);
+
+    prayerFajrBtn?.addEventListener('click', () => grantPrayer('fajr'));
+    prayerDhuhrBtn?.addEventListener('click', () => grantPrayer('dhuhr'));
+    prayerAsrBtn?.addEventListener('click', () => grantPrayer('asr'));
+    prayerMaghribBtn?.addEventListener('click', () => grantPrayer('maghrib'));
+    prayerIshaBtn?.addEventListener('click', () => grantPrayer('isha'));
+    dailyCheckBtn.addEventListener('click', grantMorningBonus);
+    saveCurrentPageBtn.addEventListener('click', saveCurrentQuranPage);
+    nextQuranPageBtn.addEventListener('click', goToNextQuranPage);
+    addPagesBtn.addEventListener('click', addPagesReading);
+    renameBtn.addEventListener('click', renameSelectedUser);
+    deleteBtn.addEventListener('click', deleteSelectedUser);
+
+    tasbeehPlus1.addEventListener('click', () => incTasbeeh(1));
+    tasbeehPlus33.addEventListener('click', () => incTasbeeh(33));
+    tasbeehReset.addEventListener('click', resetTasbeehCount);
+
+    exportBtn.addEventListener('click', exportData);
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      importData(file);
+      e.target.value = '';
+    });
+    resetAllBtn.addEventListener('click', resetAllData);
+
+    openMushafBtn.addEventListener('click', saveMushafPathAndRefresh);
+    mushafPdfPathInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveMushafPathAndRefresh();
+    });
+    viewerSyncBtn.addEventListener('click', () => syncMushafToSelectedUser());
+    viewerOpenNewTabBtn.addEventListener('click', openMushafInNewTab);
+    viewerPrevBtn.addEventListener('click', goToPreviousQuranPageNoPoints);
+    viewerNextBtn.addEventListener('click', goToNextQuranPage);
+
+    // مراقبة تبدّل اليوم حسب توقيت الإمارات أثناء بقاء الصفحة مفتوحة
+    let __uaeCurrentDayKey = localDateKey();
+    setInterval(() => {
+      const nextDayKey = localDateKey();
+      if (nextDayKey !== __uaeCurrentDayKey) {
+        __uaeCurrentDayKey = nextDayKey;
+        render(); // ستظهر الصلوات اليومية صفر/5 لليوم الجديد بينما تبقى النقاط محفوظة
+        syncMushafToSelectedUser({ silent: true });
+      }
+    }, 30000);
+
+
+
+    /* ===== Creative v29 Patch: UX + Visual polish (non-destructive) ===== */
+    (function creativePatchV29(){
+      // DOM additions
+      const progressBar = document.createElement('div');
+      progressBar.id = 'scrollProgressBar';
+      document.body.appendChild(progressBar);
+
+      const toTopBtn = document.createElement('button');
+      toTopBtn.id = 'backToTopBtn';
+      toTopBtn.type = 'button';
+      toTopBtn.setAttribute('aria-label', 'العودة للأعلى');
+      toTopBtn.textContent = '↑';
+      document.body.appendChild(toTopBtn);
+
+      const toastWrap = document.createElement('div');
+      toastWrap.id = 'toastWrap';
+      document.body.appendChild(toastWrap);
+
+      const hero = document.querySelector('.hero');
+      let heroStats = document.getElementById('heroStatsGrid');
+      if (hero && !heroStats) {
+        heroStats = document.createElement('div');
+        heroStats.id = 'heroStatsGrid';
+        heroStats.className = 'hero-stats-grid';
+        heroStats.innerHTML = `
+          <div class="hero-stat"><div class="k">👥 المشتركون</div><div class="v" data-hero-stat="users">0</div></div>
+          <div class="hero-stat"><div class="k">⭐ النقاط الكلية</div><div class="v" data-hero-stat="points">0</div></div>
+          <div class="hero-stat"><div class="k">📖 الصفحات</div><div class="v" data-hero-stat="pages">0</div></div>
+          <div class="hero-stat"><div class="k">🏆 الختمات</div><div class="v" data-hero-stat="khatmas">0</div></div>
+        `;
+        const pill = hero.querySelector('.pill');
+        if (pill) pill.insertAdjacentElement('afterend', heroStats);
+        else hero.appendChild(heroStats);
+      }
+
+      // Toast helper
+      function showToast(message, type='success', duration=2400){
+        const t = document.createElement('div');
+        t.className = `app-toast ${type}`;
+        t.textContent = toHindiDigits(String(message || ''));
+        toastWrap.appendChild(t);
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => {
+          t.classList.remove('show');
+          setTimeout(() => t.remove(), 220);
+        }, duration);
+      }
+      window.__appToast = showToast;
+
+      // Confetti
+      function confettiBurst(count=18, emoji='🎉'){
+        const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduced) return;
+        for(let i=0;i<count;i++){
+          const s = document.createElement('span');
+          s.className = 'confetti-piece';
+          s.textContent = i % 5 === 0 ? '✨' : emoji;
+          s.style.left = (Math.random() * window.innerWidth) + 'px';
+          s.style.opacity = '1';
+          document.body.appendChild(s);
+          requestAnimationFrame(() => {
+            s.style.transform = `translateY(${window.innerHeight + 60}px) rotate(${(Math.random()*420)-210}deg)`;
+            s.style.opacity = '0';
+          });
+          setTimeout(() => s.remove(), 1700);
+        }
+      }
+
+      // Scroll progress + top button
+      const onScrollFx = () => {
+        const h = document.documentElement.scrollHeight - window.innerHeight;
+        const p = h > 0 ? (window.scrollY / h) * 100 : 0;
+        progressBar.style.width = p + '%';
+        toTopBtn.classList.toggle('show', window.scrollY > 260);
+      };
+      window.addEventListener('scroll', onScrollFx, { passive: true });
+      window.addEventListener('resize', onScrollFx);
+      toTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+      onScrollFx();
+
+      // Reveal cards
+      const cardObserver = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('show');
+            cardObserver.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.08 }) : null;
+
+      function attachRevealCards(){
+        document.querySelectorAll('.card').forEach((card, i) => {
+          if (card.dataset.revealBound === '1') return;
+          card.dataset.revealBound = '1';
+          card.classList.add('reveal-card');
+          card.style.transitionDelay = Math.min(i * 40, 240) + 'ms';
+          if (cardObserver) cardObserver.observe(card);
+          else card.classList.add('show');
+        });
+      }
+
+      // Monkey-patch alert => toast (للرسائل السريعة فقط)
+      const nativeAlert = window.alert ? window.alert.bind(window) : null;
+      window.alert = function(msg){
+        const text = String(msg ?? '');
+        let type = 'warn';
+        if (/ما شاء الله|تم|نجاح|✅|🌟/.test(text)) type = 'success';
+        if (/خطأ|فشل|❌|أدخلي|اختاري/.test(text)) type = 'error';
+        showToast(text, type, 3200);
+        if (/ختمة كاملة/.test(text)) confettiBurst(26, '🎊');
+      };
+      window.__nativeAlert = nativeAlert;
+
+      // Enhance flash (existing green flash + toast-like pulse)
+      const _flash = flash;
+      flash = function(el){
+        _flash(el);
+        if (el) {
+          el.animate([
+            { transform: 'scale(1)' },
+            { transform: 'scale(1.01)' },
+            { transform: 'scale(1)' }
+          ], { duration: 220, easing: 'ease-out' });
+        }
+      };
+
+      // Wrap actions to add motivating toasts/confetti
+      const _addUser = addUser;
+      addUser = function(name, pw){
+        const before = state.users.length;
+        _addUser(name, pw);
+        if (state.users.length > before) {
+          showToast('تمت إضافة المشاركة بنجاح 🌷', 'success');
+        }
+      };
+
+      const _attemptSelectUser = attemptSelectUser;
+      attemptSelectUser = function(id){
+        const before = state.selectedUserId;
+        _attemptSelectUser(id);
+        const u = getSelectedUser();
+        if (u && state.selectedUserId !== before && (!userHasPassword(u) || isSelectedUserUnlocked())) {
+          showToast(`تم اختيار ${u.name} ✅`, 'success', 1800);
+        }
+      };
+      window.__pickUser = (id) => attemptSelectUser(id);
+
+      const _grantPrayer = grantPrayer;
+      grantPrayer = function(prayerKey){
+        const u = getSelectedUser();
+        const beforeDone = u ? countDonePrayers(getPrayerStateForDate(u, localDateKey())) : 0;
+        _grantPrayer(prayerKey);
+        const afterU = getSelectedUser();
+        if (!afterU) return;
+        const afterDone = countDonePrayers(getPrayerStateForDate(afterU, localDateKey()));
+        const label = (typeof PRAYER_LABELS !== 'undefined' && PRAYER_LABELS[prayerKey]) ? PRAYER_LABELS[prayerKey] : prayerKey;
+        if (afterDone > beforeDone) showToast(`تم تسجيل صلاة ${label} ✅`, 'success', 1700);
+        if (afterDone < beforeDone) showToast(`تم إزالة صلاة ${label} ↩️`, 'warn', 1700);
+        if (afterDone === 5 && beforeDone < 5) {
+          showToast('ما شاء الله! اكتملت الصلوات الخمس اليوم 🌟', 'success', 2800);
+          confettiBurst(22, '🕌');
+        }
+      };
+
+      const _incTasbeeh = incTasbeeh;
+      incTasbeeh = function(amount){
+        const u = getSelectedUser();
+        const before = u ? Number(u.tasbeeh || 0) : 0;
+        _incTasbeeh(amount);
+        const afterU = getSelectedUser();
+        if (!afterU) return;
+        const after = Number(afterU.tasbeeh || 0);
+        if (after > before) {
+          const d = after - before;
+          showToast(`📿 +${d} تسبيحة`, 'success', 1300);
+          if (after % 100 === 0) {
+            showToast(`🌟 ${after} تسبيحة — ما شاء الله!`, 'success', 2200);
+            confettiBurst(14, '✨');
+          }
+        }
+      };
+
+      const _goToNext = goToNextQuranPage;
+      goToNextQuranPage = function(){
+        const u = getSelectedUser();
+        const beforePage = u ? clampQuranPage(u.currentQuranPage || 1) : null;
+        const beforeK = u ? Math.floor((Number(u.totalPages || 0)) / MUSHAF_TOTAL_PAGES) : 0;
+        _goToNext();
+        const afterU = getSelectedUser();
+        if (!afterU) return;
+        const afterPage = clampQuranPage(afterU.currentQuranPage || 1);
+        const afterK = Math.floor((Number(afterU.totalPages || 0)) / MUSHAF_TOTAL_PAGES);
+        if (beforePage !== null) showToast(`📖 الصفحة التالية: ${formatNum(afterPage)}`, 'success', 1400);
+        if (afterK > beforeK) {
+          confettiBurst(28, '🎉');
+          showToast('🎊 تم إنجاز ختمة جديدة! بارك الله فيكِ', 'success', 3200);
+        }
+      };
+
+      const _goToPrev = goToPreviousQuranPageNoPoints;
+      goToPreviousQuranPageNoPoints = function(){
+        _goToPrev();
+        const u = getSelectedUser();
+        if (u) showToast(`رجوع للصفحة ${formatNum(clampQuranPage(u.currentQuranPage || 1))} ↩️`, 'warn', 1300);
+      };
+
+      // Dynamic hero stats + decorative tweaks after each render
+      const _render = render;
+      render = function(){
+        _render();
+
+        // Update hero stats
+        const users = sortedUsers();
+        const totalUsers = users.length;
+        const totalPoints = users.reduce((s,u)=> s + Number(u.totalPoints || 0), 0);
+        const totalPages = users.reduce((s,u)=> s + Number(u.totalPages || 0), 0);
+        const totalKhatmas = users.reduce((s,u)=> s + Math.floor(Number(u.totalPages || 0) / MUSHAF_TOTAL_PAGES), 0);
+        document.querySelector('[data-hero-stat="users"]') && (document.querySelector('[data-hero-stat="users"]').textContent = formatNum(totalUsers));
+        document.querySelector('[data-hero-stat="points"]') && (document.querySelector('[data-hero-stat="points"]').textContent = formatNum(totalPoints));
+        document.querySelector('[data-hero-stat="pages"]') && (document.querySelector('[data-hero-stat="pages"]').textContent = formatNum(totalPages));
+        document.querySelector('[data-hero-stat="khatmas"]') && (document.querySelector('[data-hero-stat="khatmas"]').textContent = formatNum(totalKhatmas));
+
+        // Better title for selected summary if user exists
+        const selected = getSelectedUser();
+        const summaryCardTitle = document.querySelector('#selectedSummaryCard h2');
+        if (summaryCardTitle) summaryCardTitle.textContent = selected ? `📊 متابعة ${selected.name}` : '📊 ملخص التلاوة للمشاركة';
+
+        // Highlight selected/locked states in leaderboard (extra polish)
+        document.querySelectorAll('#leaderboardWrap tbody tr').forEach((tr, idx) => {
+          tr.style.transition = 'background-color .2s ease';
+          if (idx === 0) tr.classList.add('top-rank-row');
+        });
+
+        // Animate khatma progress bar in summary
+        document.querySelectorAll('#selectedSummaryContent .progress > span').forEach(span => {
+          const w = span.style.width;
+          span.style.width = '0%';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => { span.style.width = w; });
+          });
+        });
+
+        attachRevealCards();
+      };
+
+      // Initial bind for reveal cards before first patched render executes
+      attachRevealCards();
+    })();
+
+
+    // First render
+    render();
+  </script>
+
+  <style id="adminMasterControlsStyle">
+    .admin-master-fab{
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      z-index: 9999;
+      min-width: 92px;
+      height: 40px;
+      border: 1px solid rgba(15,23,42,.12);
+      border-radius: 999px;
+      padding: 0 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 800;
+      cursor: pointer;
+      color: #0f766e;
+      background: rgba(255,255,255,.72);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 14px rgba(15,118,110,.10);
+      opacity: .95;
+      transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease, background .2s ease, color .2s ease;
+      font-family: inherit;
+      font-size: .9rem;
+      white-space: nowrap;
+    }
+    .admin-master-fab:hover{ transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15,118,110,.16); opacity: 1; }
+    .admin-master-fab:focus-visible{ opacity:1; outline:2px solid rgba(20,184,166,.35); outline-offset:2px; }
+    .admin-master-fab.admin-on{
+      background: rgba(245,158,11,.18);
+      color: #b45309;
+      border-color: rgba(180,83,9,.22);
+      box-shadow: 0 8px 18px rgba(180,83,9,.14);
+      opacity: .9;
+    }
+    .admin-master-pill{
+      position: fixed;
+      right: 10px;
+      bottom: 56px;
+      z-index: 9998;
+      background: rgba(255,255,255,.95);
+      border: 1px solid #d1d5db;
+      color: #374151;
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: .82rem;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(15,23,42,.08);
+      max-width: min(90vw, 320px);
+      display: none;
+    }
+    body.admin-master-unlocked .admin-master-pill{ display: block; border-color:#fcd34d; background:#fffbeb; color:#92400e; }
+  </style>
+
+  <script id="adminMasterControlsScript">
+  (() => {
+    const MASTER_PASSWORD = '28071993';
+    const SESSION_KEY = 'khatma_admin_master_unlocked_v1';
+    let adminMasterUnlocked = false;
+    function normalizeDigits(v) {
+      return String(v ?? '')
+        .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660))
+        .replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0));
+    }
+
+    function setDisplayImportant(el, displayValue) {
+      if (!el) return;
+      el.style.setProperty('display', displayValue, 'important');
+    }
+
+    function adminTargets() {
+      const targets = [];
+      const add = (el, display) => { if (el) targets.push({ el, display }); };
+
+      // اختيار المشاركة + حالة القفل
+      add(document.getElementById('userSelect')?.closest('div'), 'block');
+
+      // إعدادات النقاط
+      add(document.getElementById('pointsSettingsRow'), 'grid');
+
+      // زر الصباح القديم (اختياري)
+      add(document.getElementById('dailyCheckBtn'), 'block');
+
+      // حالة الصلوات واليوم
+      add(document.getElementById('prayerStatusBox'), 'block');
+      add(document.getElementById('todayStatus'), 'block');
+
+      // أدوات الصفحات المخفية
+      add(document.getElementById('currentQuranPageInput')?.closest('.row'), 'grid');
+      add(document.getElementById('quranPageHint'), 'block');
+      add(document.getElementById('pagesReadInput')?.closest('.row'), 'grid');
+      add(document.getElementById('renameBtn')?.closest('.actions-inline'), 'flex');
+
+      // أزرار تسبيح إضافية
+      add(document.getElementById('tasbeehPlus33'), 'block');
+      add(document.getElementById('tasbeehReset'), 'block');
+
+      // زر التالي العلوي المخفي
+      add(document.getElementById('nextQuranPageBtn'), 'block');
+
+      // بطاقة أدوات البيانات (تصدير/استيراد/إعادة ضبط)
+      add(document.getElementById('resetAllBtn')?.closest('.card'), 'block');
+
+      // عنوان المصحف + الإعدادات + الحالة + الأزرار المخفية
+      add(document.querySelector('#mushafPathControlsRow')?.previousElementSibling?.previousElementSibling, 'block'); // h2
+      add(document.querySelector('#mushafPathControlsRow')?.previousElementSibling, 'block'); // p.sub
+      add(document.getElementById('mushafPathControlsRow'), 'grid');
+      add(document.getElementById('mushafStatus'), 'block');
+      add(document.getElementById('viewerSyncBtn'), 'block');
+      add(document.getElementById('viewerOpenNewTabBtn'), 'block');
+
+      return targets;
+    }
+
+    function applyAdminVisibility() {
+      document.body.classList.toggle('admin-master-unlocked', adminMasterUnlocked);
+
+      adminTargets().forEach(({ el, display }) => {
+        if (!el) return;
+        if (adminMasterUnlocked) {
+          setDisplayImportant(el, display);
+        } else {
+          // نرجّع فقط العناصر الإدارية المخفية إلى مخفية عند قفل وضع الإدارة
+          setDisplayImportant(el, 'none');
+        }
+      });
+
+      const btn = document.getElementById('adminMasterFab');
+      const pill = document.getElementById('adminMasterPill');
+      if (btn) {
+        btn.classList.toggle('admin-on', adminMasterUnlocked);
+        btn.textContent = adminMasterUnlocked ? 'للمشرف ✓' : 'للمشرف';
+        btn.title = adminMasterUnlocked ? 'اضغطي لإغلاق وضع الإدارة' : 'اضغطي لإدخال كلمة مرور الإدارة';
+      }
+      if (pill) {
+        pill.textContent = adminMasterUnlocked
+          ? '✅ وضع الإدارة مفعل — بإمكانك التحكم بكل الأدوات المخفية.'
+          : '';
+      }
+    }
+
+    function createAdminUI() {
+      if (document.getElementById('adminMasterFab')) return;
+
+      const btn = document.createElement('button');
+      btn.id = 'adminMasterFab';
+      btn.className = 'admin-master-fab';
+      btn.type = 'button';
+      btn.textContent = 'للمشرف';
+      btn.title = 'أدوات الإدارة (للمشرف)';
+      btn.setAttribute('aria-label','أدوات الإدارة للمشرف');
+
+      const pill = document.createElement('div');
+      pill.id = 'adminMasterPill';
+      pill.className = 'admin-master-pill';
+
+      btn.addEventListener('click', () => {
+        if (adminMasterUnlocked) {
+          const ok = window.confirm('إغلاق وضع الإدارة الآن؟');
+          if (!ok) return;
+          adminMasterUnlocked = false;
+          try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+          try { render && render(); } catch { applyAdminVisibility(); }
+          return;
+        }
+
+        const entered = window.prompt('🔒 أدوات الإدارة\nأدخلي كلمة مرور الإدارة:');
+        if (entered === null) return;
+        const normalizedEntered = normalizeDigits(entered).trim();
+        const normalizedMaster = normalizeDigits(MASTER_PASSWORD).trim();
+        if (normalizedEntered !== normalizedMaster) {
+          alert('❌ كلمة مرور الإدارة غير صحيحة.');
+          return;
+        }
+
+        adminMasterUnlocked = true;
+        try { sessionStorage.setItem(SESSION_KEY, '1'); } catch {}
+        alert('✅ تم فتح وضع الإدارة بنجاح.');
+        try { render && render(); } catch { applyAdminVisibility(); }
+      });
+
+      document.body.appendChild(btn);
+      document.body.appendChild(pill);
+      applyAdminVisibility();
+    }
+
+    function patchAuthFunctions() {
+      if (typeof window.isSelectedUserUnlocked === 'function' && !window.__adminPatch_isSelectedUserUnlocked) {
+        const original = window.isSelectedUserUnlocked;
+        window.isSelectedUserUnlocked = function() {
+          if (adminMasterUnlocked) return true;
+          return original.apply(this, arguments);
+        };
+        window.__adminPatch_isSelectedUserUnlocked = true;
+      }
+
+      if (typeof window.verifyUserPassword === 'function' && !window.__adminPatch_verifyUserPassword) {
+        const originalVerify = window.verifyUserPassword;
+        window.verifyUserPassword = function(user, options = {}) {
+          if (adminMasterUnlocked) {
+            try {
+              if (user && typeof sessionAuth !== 'undefined') {
+                sessionAuth.unlockedUserId = user.id;
+              }
+            } catch {}
+            return true;
+          }
+          return originalVerify.call(this, user, options);
+        };
+        window.__adminPatch_verifyUserPassword = true;
+      }
+
+      if (typeof window.render === 'function' && !window.__adminPatch_render) {
+        const originalRender = window.render;
+        window.render = function() {
+          const out = originalRender.apply(this, arguments);
+          applyAdminVisibility();
+          return out;
+        };
+        window.__adminPatch_render = true;
+      }
+    }
+
+    function initAdminMasterControls() {
+      try { adminMasterUnlocked = sessionStorage.getItem(SESSION_KEY) === '1'; } catch {}
+      patchAuthFunctions();
+      createAdminUI();
+      try { if (typeof render === 'function') render(); } catch { applyAdminVisibility(); }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAdminMasterControls, { once: true });
+    } else {
+      initAdminMasterControls();
+    }
+  })();
+  </script>
+
+</body>
+</html>
