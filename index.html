@@ -3570,5 +3570,67 @@ function renderQuranPageControls() {
     })();
   </script>
 
+
+<!-- Mushaf PDF Full Open Button (mobile-friendly) -->
+<div id="mushafPdfFab" style="position:fixed;bottom:16px;right:16px;z-index:99999;display:flex;gap:8px;align-items:center;">
+  <button id="openMushafPdfBtn" type="button"
+    style="padding:12px 14px;border-radius:14px;border:0;cursor:pointer;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.18);">
+    📖 فتح المصحف PDF
+  </button>
+  <a id="downloadMushafPdfLink" href="#" download
+     style="padding:12px 12px;border-radius:14px;text-decoration:none;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.18);display:inline-block;">
+     ⬇️
+  </a>
+</div>
+
+<script>
+(function(){
+  function getMushafPdfUrl(){
+    // Use existing setting, but allow it to be a full PDF path.
+    var p = (window.state && state.settings && state.settings.mushafPdfPath ? String(state.settings.mushafPdfPath) : '').trim();
+
+    // If user kept the old folder name (e.g., "mushaf-pages"), fall back to "mushaf.pdf" in site root.
+    if (!p) return 'mushaf.pdf';
+
+    // If it's clearly a folder, append mushaf.pdf
+    if (p.endsWith('/')) return p + 'mushaf.pdf';
+
+    // If it doesn't look like a pdf, try adding .pdf
+    if (!/\.pdf(\?|#|$)/i.test(p)) {
+      // common case: "mushaf-pages" (folder) -> "mushaf.pdf"
+      if (/mushaf-?pages/i.test(p)) return 'mushaf.pdf';
+      return p + '.pdf';
+    }
+    return p;
+  }
+
+  function refreshLinks(){
+    var url = getMushafPdfUrl();
+    var dl = document.getElementById('downloadMushafPdfLink');
+    if (dl) dl.href = url;
+  }
+
+  function openPdfFull(){
+    var url = getMushafPdfUrl();
+    refreshLinks();
+
+    // Try opening in a new tab; if blocked, navigate directly (best for mobile).
+    var w = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!w) window.location.href = url;
+  }
+
+  function init(){
+    refreshLinks();
+    var btn = document.getElementById('openMushafPdfBtn');
+    if (btn) btn.addEventListener('click', openPdfFull, {passive:true});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>
