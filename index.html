@@ -1576,27 +1576,27 @@
     let viewerState = { loadedPage: null, loadedPath: null };
     let sessionAuth = { unlockedUserId: null };
 
-    const AUTH_SESSION_KEY = 'quran_khatma_unlocked_user_v1';
 
-    function loadSessionAuth() {
-      try {
-        const id = sessionStorage.getItem(AUTH_SESSION_KEY);
-        sessionAuth.unlockedUserId = id || null;
-      } catch (e) {
-        sessionAuth.unlockedUserId = null;
-            saveSessionAuth();
+// حفظ حالة فتح المشاركة داخل نفس جلسة المتصفح حتى لا يُطلب الباسوورد فجأة بعد Refresh
+const USER_SESSION_KEY = 'quran_khatma_unlocked_user_v1';
+
+function loadSessionAuth() {
+  try {
+    const id = sessionStorage.getItem(USER_SESSION_KEY);
+    sessionAuth.unlockedUserId = id || null;
+  } catch (e) {}
 }
-    }
 
-    function saveSessionAuth() {
-      try {
-        if (sessionAuth.unlockedUserId) sessionStorage.setItem(AUTH_SESSION_KEY, String(sessionAuth.unlockedUserId));
-        else sessionStorage.removeItem(AUTH_SESSION_KEY);
-      } catch (e) {}
-    }
+function persistSessionAuth() {
+  try {
+    if (sessionAuth.unlockedUserId) sessionStorage.setItem(USER_SESSION_KEY, String(sessionAuth.unlockedUserId));
+    else sessionStorage.removeItem(USER_SESSION_KEY);
+  } catch (e) {}
+}
 
-    // حمّل حالة الفتح عند بدء الصفحة (ضمن نفس جلسة المتصفح)
-    loadSessionAuth();
+// استرجاع حالة القفل عند فتح الصفحة
+loadSessionAuth();
+
 
     function loadState() {
       try {
@@ -1655,7 +1655,8 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (e) {
         console.error('Failed to save state:', e);
-        alert('⚠️ تعذر حفظ البيانات على هذا الجهاز (قد تكون مساحة التخزين ممتلئة). يُفضّل تصدير نسخة احتياطية الآن.');
+        try { showToast && showToast('⚠️ تعذر حفظ البيانات على هذا الجهاز (قد تكون مساحة التخزين ممتلئة).', 'warn', 2600); } catch {}
+        // لا نحذف أي بيانات هنا
       }
     }
 
@@ -1777,7 +1778,7 @@
       }
 
       sessionAuth.unlockedUserId = user.id;
-      saveSessionAuth();
+      persistSessionAuth();
       if (!options.silent) alert(`✅ تم فتح بيانات المشاركة: ${user.name}`);
       return true;
     }
@@ -1841,31 +1842,6 @@
       return getMushafImageCandidates(page)[0];
     }
 
-
-    function preloadMushafNeighborPages(page, folder, ext) {
-      try {
-        const p = clampQuranPage(page);
-        const pad = String(p).padStart(3, '0');
-        const base = `mushaf_page_${pad}.${ext}`;
-        const url = `${folder}/${base}?v=1`;
-        const img = new Image();
-        img.decoding = 'async';
-        img.loading = 'eager';
-        img.src = url;
-      } catch (e) {}
-    }
-
-    function preloadMushafAround(currentPage, folder, loadedPathNoQuery) {
-      try {
-        const m = String(loadedPathNoQuery || '').match(/\.([a-zA-Z0-9]+)$/);
-        const ext = m ? m[1] : 'jpg';
-        // جهّز السابقة واللاحقة
-        preloadMushafNeighborPages(currentPage - 1, folder, ext);
-        preloadMushafNeighborPages(currentPage + 1, folder, ext);
-      } catch (e) {}
-    }
-
-
     function loadMushafAtPage(page, options = {}) {
       const p = clampQuranPage(page);
       const path = currentMushafPath();
@@ -1874,12 +1850,11 @@
       // عند فتح صفحة جديدة: ارجاع التمرير لأعلى نفس الصفحة أولًا
       try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
 
-      // إعادة التحميل القسري لصورة الصفحة (فقط عند الطلب)
-      if (options.forceReload) {
+      // إعادة التحميل القسري لصورة الصفحة (اختياري فقط)
+      if (options && options.forceReload) {
         try { mushafFrame.removeAttribute('src'); } catch (e) {}
       }
-
-      setTimeout(() => {
+setTimeout(() => {
         try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
 
         const candidates = getMushafImageCandidates(p, path);
@@ -1902,8 +1877,19 @@
           const user = getSelectedUser();
           const userName = user ? ` • المشاركة: ${user.name}` : '';
           mushafStatus.innerHTML = `✅ تم فتح صفحة <strong>${formatNum(p)}</strong> من مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.<br><span class="small">الملف المستخدم: <code style="direction:ltr">${escapeHtml(loadedPath)}</code></span>`;
-          // تسخين الكاش للصفحة السابقة/اللاحقة لتسريع التنقل على الجوال
-          preloadMushafAround(p, path, loadedPath);
+
+// تسريع على الجوال: تحميل الصفحة السابقة/اللاحقة في الخلفية (نفس الامتداد الذي نجح)
+try {
+  const srcNoQ = String(mushafFrame.currentSrc || mushafFrame.src || '').split('?')[0];
+  const extMatch = srcNoQ.match(/\.(jpg|jpeg|png|webp)$/i);
+  const ext = extMatch ? extMatch[1] : null;
+  if (ext) {
+    const base = (n) => `${path}/mushaf_page_${String(n).padStart(3,'0')}.${ext}?v=1`;
+    const preload = (url) => { const im = new Image(); im.decoding = 'async'; im.loading = 'eager'; im.src = url; };
+    if (p > 1) preload(base(p - 1));
+    if (p < MUSHAF_TOTAL_PAGES) preload(base(p + 1));
+  }
+} catch (e) {}
         };
 
         tryNext();
@@ -2008,8 +1994,7 @@
       state.selectedUserId = user.id;
       // لا نفتح القفل تلقائيًا بعد الإنشاء حتى يطلب كلمة المرور عند الضغط على "اختيار"
       sessionAuth.unlockedUserId = null;
-            saveSessionAuth();
-saveState();
+      persistSessionAuth();saveState();
       nameInput.value = '';
       if (newUserPasswordInput) newUserPasswordInput.value = '';
       flash(addUserBtn);
@@ -2029,10 +2014,10 @@ saveState();
       const pts = Math.max(0, Number(state.settings.dailyPoints || 0));
 
       if (alreadyDone) {
-        // إزالة تسجيل الصلاة (Toggle OFF)
-        const ok = confirm(`هل تريدين إلغاء تسجيل صلاة ${PRAYER_LABELS[prayerKey]} لليوم؟
-⚠️ هذا سيخصم ${pts} نقاط من المجموع.`);
-        if (!ok) return;
+        // إزالة تسجيل الصلاة (Toggle OFF) — حماية من نقص النقاط بالخطأ
+        const okRemove = confirm(`هل تريدين إزالة تسجيل صلاة ${PRAYER_LABELS[prayerKey]}؟
+سيتم خصم ${formatNum(pts)} نقاط.`);
+        if (!okRemove) return;
         todayPrayers[prayerKey] = false;
         user.prayersByDate[today] = todayPrayers;
 
@@ -2173,9 +2158,8 @@ saveState();
       if (!ok) return;
 
       state.users = state.users.filter(u => u.id !== user.id);
-      if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
-            saveSessionAuth();
-if (!state.users.length) state.selectedUserId = null;
+      if (sessionAuth.unlockedUserId === user.id) { sessionAuth.unlockedUserId = null; persistSessionAuth(); }
+      persistSessionAuth();if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
       saveState();
       render();
@@ -2207,41 +2191,42 @@ if (!state.users.length) state.selectedUserId = null;
       render();
     }
 
-    // تحسين الأداء على الجوال: تجميع ضغطات التسبيح بدل إعادة render لكل ضغطة
-    let pendingTasbeehDelta = 0;
-    let tasbeehFlushTimer = null;
 
-    function incTasbeehBuffered(amount) {
-      const delta = Math.max(0, Math.floor(Number(amount || 0)));
-      if (!delta) return;
-      const user = getSelectedUser();
-      if (!user) return alert('اختاري مشاركة أولًا.');
+// تحسين أداء التسبيح على الجوال: نجمع الضغطات بسرعة ثم نحفظ/نرندر مرة واحدة (لتجنب التعليق)
+let __tasbeehPendingDelta = 0;
+let __tasbeehFlushTimer = null;
 
-      pendingTasbeehDelta += delta;
+function incTasbeehBuffered(amount) {
+  const user = getSelectedUser();
+  if (!user) return alert('اختاري مشاركة أولًا.');
 
-      // تحديث سريع للواجهة بدون render كامل (اختياري لكن يفيد)
-      try {
-        const newTotal = Math.max(0, Number(user.tasbeeh || 0) + pendingTasbeehDelta);
-        if (tasbeehCount) tasbeehCount.textContent = String(newTotal);
-      } catch (e) {}
+  const delta = Math.max(0, Math.floor(Number(amount || 0)));
+  if (!delta) return;
 
-      if (tasbeehFlushTimer) return;
-      tasbeehFlushTimer = setTimeout(() => {
-        const u = getSelectedUser();
-        const d = pendingTasbeehDelta;
-        pendingTasbeehDelta = 0;
-        tasbeehFlushTimer = null;
-        if (!u || !d) return;
-        // نفس منطق incTasbeeh لكن دفعة واحدة
-        u.tasbeeh = Math.max(0, Number(u.tasbeeh || 0) + d);
-        u.totalPoints = Math.max(0, Number(u.totalPoints || 0) + d);
-        addHistory(u, 'tasbeeh', { delta: d, points: d, total: u.tasbeeh });
-        saveState();
-        flash(document.getElementById('tasbeehBox'));
-        render();
-      }, 180);
-    }
+  // تحديث فوري للعداد بدون render كامل
+  user.tasbeeh = Math.max(0, Number(user.tasbeeh || 0) + delta);
+  user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
 
+  try { if (tasbeehCount) tasbeehCount.textContent = String(user.tasbeeh || 0); } catch (e) {}
+  try { flash(document.getElementById('tasbeehBox')); } catch (e) {}
+
+  __tasbeehPendingDelta += delta;
+
+  if (__tasbeehFlushTimer) return;
+  __tasbeehFlushTimer = setTimeout(() => {
+    const u = getSelectedUser();
+    const d = __tasbeehPendingDelta;
+    __tasbeehPendingDelta = 0;
+    __tasbeehFlushTimer = null;
+
+    if (!u || !d) { try { render(); } catch {} return; }
+
+    // نسجل العملية مرة واحدة بدل كل ضغطة
+    addHistory(u, 'tasbeeh', { delta: d, points: d, total: u.tasbeeh });
+    saveState();
+    render();
+  }, 180);
+}
 
     function resetTasbeehCount() {
       const user = getSelectedUser();
@@ -2280,8 +2265,7 @@ if (!state.users.length) state.selectedUserId = null;
           };
           state = next;
           sessionAuth.unlockedUserId = null;
-                saveSessionAuth();
-if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
+      persistSessionAuth();if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
             state.selectedUserId = state.users[0]?.id || null;
           }
           saveState();
@@ -2300,8 +2284,7 @@ if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId
       if (!ok) return;
       state = structuredClone(defaultState);
       sessionAuth.unlockedUserId = null;
-            saveSessionAuth();
-saveState();
+      persistSessionAuth();saveState();
       render();
     }
 
@@ -3260,7 +3243,7 @@ function renderQuranPageControls() {
             try {
               if (user && typeof sessionAuth !== 'undefined') {
                 sessionAuth.unlockedUserId = user.id;
-              }
+                persistSessionAuth();}
             } catch {}
             return true;
           }
