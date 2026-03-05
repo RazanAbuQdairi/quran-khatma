@@ -1587,61 +1587,217 @@
     let viewerState = { loadedPage: null, loadedPath: null };
     let sessionAuth = { unlockedUserId: null };
 
+    function getLikelyKhatmaStorageKeys() {
+      const keys = new Set([
+        STORAGE_KEY,
+        'quran_khatma_points_app',
+        'quran_khatma_points_app_v0',
+        'quran_khatma_points_app_v1',
+        'quran_khatma_points_app_v2',
+        'quran_khatma_tracker_v1',
+        'quran_khatma_tracker_data',
+        'quran_khatma_data',
+        'quran_khatma_local_data',
+        'quran_khatma_live_cache',
+        'quran_khatma_live_sync_cache',
+        'quran_khatma_backup_v1'
+      ]);
+
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          if (/quran.*khatma|khatma.*quran/i.test(k)) keys.add(k);
+        }
+      } catch (e) {
+        console.warn('Cannot enumerate localStorage keys:', e);
+      }
+
+      return [...keys];
+    }
+
+    function normalizeLoadedStateShape(parsed) {
+      const loaded = {
+        ...structuredClone(defaultState),
+        ...(parsed && typeof parsed === 'object' ? parsed : {}),
+        settings: { ...defaultState.settings, ...((parsed && parsed.settings) || {}) },
+        users: Array.isArray(parsed?.users) ? parsed.users.map(sanitizeUser) : []
+      };
+
+      loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
+      loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
+      loaded.settings.mushafPdfPath = FIXED_MUSHAF_IMAGES_PATH; // تثبيت مجلد صور المصحف
+      return loaded;
+    }
+
+    function mergePrayerMaps(a = {}, b = {}) {
+      const out = {};
+      const prayerKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+      const allDates = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+      for (const d of allDates) {
+        const aa = (a && typeof a[d] === 'object') ? a[d] : {};
+        const bb = (b && typeof b[d] === 'object') ? b[d] : {};
+        const mergedDay = {};
+        prayerKeys.forEach(k => { mergedDay[k] = !!(aa[k] || bb[k]); });
+        out[d] = mergedDay;
+      }
+      return out;
+    }
+
+    function mergeUserRecords(oldUser, newUser) {
+      const a = sanitizeUser(oldUser || {});
+      const b = sanitizeUser(newUser || {});
+      const pickB = (Number(b.totalPoints || 0) > Number(a.totalPoints || 0)) ||
+                    (Number(b.totalPoints || 0) === Number(a.totalPoints || 0) && Number(b.totalPages || 0) >= Number(a.totalPages || 0));
+
+      const base = pickB ? b : a;
+      const alt  = pickB ? a : b;
+
+      const merged = sanitizeUser({
+        ...alt,
+        ...base,
+        id: base.id || alt.id || cryptoRandomId(),
+        name: String(base.name || alt.name || 'مشارك').trim(),
+        password: String(base.password || alt.password || ''),
+        totalPoints: Math.max(Number(a.totalPoints || 0), Number(b.totalPoints || 0)),
+        totalPages: Math.max(Number(a.totalPages || 0), Number(b.totalPages || 0)),
+        tasbeeh: Math.max(Number(a.tasbeeh || 0), Number(b.tasbeeh || 0)),
+        morningDaysCount: Math.max(Number(a.morningDaysCount || 0), Number(b.morningDaysCount || 0)),
+        prayersCount: Math.max(Number(a.prayersCount || 0), Number(b.prayersCount || 0)),
+        lastMorningBonusDate: b.lastMorningBonusDate || a.lastMorningBonusDate || null,
+        createdAt: (String(a.createdAt || '') <= String(b.createdAt || '') ? (a.createdAt || b.createdAt) : (b.createdAt || a.createdAt)),
+        prayersByDate: mergePrayerMaps(a.prayersByDate, b.prayersByDate),
+        history: [...(Array.isArray(a.history) ? a.history : []), ...(Array.isArray(b.history) ? b.history : [])]
+          .sort((x, y) => String(x?.at || '').localeCompare(String(y?.at || '')))
+          .slice(-200)
+      });
+
+      if (!merged.currentQuranPage || !Number.isFinite(Number(merged.currentQuranPage))) {
+        merged.currentQuranPage = inferCurrentPageFromTotalPages(merged.totalPages);
+      }
+      return merged;
+    }
+
+    function mergeStateSnapshots(snapshots) {
+      let merged = structuredClone(defaultState);
+      const byKey = new Map();
+
+      for (const snap of snapshots) {
+        const normalized = normalizeLoadedStateShape(snap);
+
+        merged.settings = { ...merged.settings, ...(normalized.settings || {}) };
+        if (!merged.selectedUserId && normalized.selectedUserId) {
+          merged.selectedUserId = normalized.selectedUserId;
+        }
+
+        for (const u of normalized.users || []) {
+          const idKey = u?.id ? `id:${u.id}` : '';
+          const nameKey = `name:${String(u?.name || '').trim().toLowerCase()}`;
+          const primaryKey = idKey || nameKey;
+          if (!primaryKey) continue;
+
+          let existingKey = null;
+          if (idKey && byKey.has(idKey)) existingKey = idKey;
+          else if (nameKey && byKey.has(nameKey)) existingKey = nameKey;
+
+          if (!existingKey) {
+            const cleanUser = sanitizeUser(u);
+            byKey.set(primaryKey, cleanUser);
+            if (idKey && primaryKey !== idKey) byKey.set(idKey, cleanUser);
+            if (nameKey && primaryKey !== nameKey) byKey.set(nameKey, cleanUser);
+          } else {
+            const current = byKey.get(existingKey);
+            const mergedUser = mergeUserRecords(current, u);
+            const mergedIdKey = `id:${mergedUser.id}`;
+            const mergedNameKey = `name:${String(mergedUser.name || '').trim().toLowerCase()}`;
+
+            byKey.set(existingKey, mergedUser);
+            byKey.set(mergedIdKey, mergedUser);
+            byKey.set(mergedNameKey, mergedUser);
+          }
+        }
+      }
+
+      const uniqueUsers = [];
+      const seenIds = new Set();
+      for (const v of byKey.values()) {
+        if (!v) continue;
+        const id = String(v.id || '');
+        if (seenIds.has(id)) continue;
+        seenIds.add(id);
+        uniqueUsers.push(sanitizeUser(v));
+      }
+
+      merged.users = uniqueUsers;
+      if (merged.selectedUserId && !merged.users.some(u => u.id === merged.selectedUserId)) {
+        merged.selectedUserId = merged.users[0]?.id || null;
+      }
+
+      merged.settings.dailyPoints = 5;
+      merged.settings.pagePoints = 5;
+      merged.settings.mushafPdfPath = FIXED_MUSHAF_IMAGES_PATH;
+      return merged;
+    }
+
     function loadState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(defaultState);
-        const parsed = JSON.parse(raw);
-        const loaded = {
-          ...structuredClone(defaultState),
-          ...parsed,
-          settings: { ...defaultState.settings, ...(parsed.settings || {}) },
-          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
-        };
-        loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
-        loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
-        loaded.settings.mushafPdfPath = FIXED_MUSHAF_IMAGES_PATH; // تثبيت مسار صور المصحف
+        const snapshots = [];
+        const keys = getLikelyKhatmaStorageKeys();
+
+        for (const key of keys) {
+          let raw = null;
+          try { raw = localStorage.getItem(key); } catch (e) { raw = null; }
+          if (!raw) continue;
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') snapshots.push(parsed);
+          } catch (e) {
+            // تجاهل أي قيمة ليست JSON
+          }
+        }
+
+        if (!snapshots.length) {
+          const fresh = structuredClone(defaultState);
+          fresh.settings.mushafPdfPath = FIXED_MUSHAF_IMAGES_PATH;
+          return fresh;
+        }
+
+        const loaded = mergeStateSnapshots(snapshots);
+
+        // إعادة تخزين نسخة موحدة تلقائيًا (حتى لا تضيع الأسماء بين الإصدارات)
+        try {
+          const payload = JSON.stringify(loaded);
+          localStorage.setItem(STORAGE_KEY, payload);
+          localStorage.setItem('quran_khatma_backup_v1', payload);
+        } catch (e) {
+          console.warn('Auto-backup failed:', e);
+        }
+
         return loaded;
       } catch (e) {
         console.error('Failed to load state:', e);
-        return structuredClone(defaultState);
+        const fresh = structuredClone(defaultState);
+        fresh.settings.mushafPdfPath = FIXED_MUSHAF_IMAGES_PATH;
+        return fresh;
       }
     }
 
-    function clampQuranPage(n) {
-      const v = Math.floor(Number(n));
-      if (!Number.isFinite(v)) return 1;
-      return Math.min(MUSHAF_TOTAL_PAGES, Math.max(1, v));
-    }
-
-    function inferCurrentPageFromTotalPages(totalPages) {
-      const t = Math.max(0, Math.floor(Number(totalPages || 0)));
-      return (t % MUSHAF_TOTAL_PAGES) + 1;
-    }
-
-    function sanitizeUser(u) {
-      const totalPages = Math.max(0, Math.floor(Number(u.totalPages || 0)));
-      return {
-        id: u.id || cryptoRandomId(),
-        name: String(u.name || 'مشارك').trim(),
-        password: String(u.password || ''),
-        totalPoints: Number(u.totalPoints || 0),
-        totalPages,
-        currentQuranPage: clampQuranPage(
-          u.currentQuranPage ?? inferCurrentPageFromTotalPages(totalPages)
-        ),
-        tasbeeh: Number(u.tasbeeh || 0),
-        morningDaysCount: Number(u.morningDaysCount || 0),
-        lastMorningBonusDate: u.lastMorningBonusDate || null,
-        prayersCount: Number(u.prayersCount || 0),
-        prayersByDate: (u.prayersByDate && typeof u.prayersByDate === 'object' && !Array.isArray(u.prayersByDate)) ? u.prayersByDate : {},
-        createdAt: u.createdAt || new Date().toISOString(),
-        history: Array.isArray(u.history) ? u.history.slice(-200) : []
-      };
-    }
-
     function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      try {
+        if (!state || typeof state !== 'object') return;
+        state.settings = { ...(state.settings || {}) };
+        state.settings.dailyPoints = 5;
+        state.settings.pagePoints = 5;
+        state.settings.mushafPdfPath = FIXED_MUSHAF_IMAGES_PATH;
+
+        const payload = JSON.stringify(state);
+        localStorage.setItem(STORAGE_KEY, payload);
+        localStorage.setItem('quran_khatma_backup_v1', payload);
+        // حفظ نسخة إضافية باسم قديم شائع لتفادي ضياع البيانات عند تبديل الملفات
+        localStorage.setItem('quran_khatma_points_app', payload);
+      } catch (e) {
+        console.error('Failed to save state:', e);
+      }
     }
 
     function cryptoRandomId() {
