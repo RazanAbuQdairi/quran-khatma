@@ -1922,6 +1922,9 @@
       const userName = user ? ` • المشاركة: ${user.name}` : '';
       mushafStatus.innerHTML = `📖 تم فتح صفحة <strong>${formatNum(p)}</strong> من الملف: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.
       <br>إذا لم يظهر المصحف داخل الصفحة، استخدمي زر <strong>فتح في تبويب جديد</strong> أو تأكدي أن ملف الـPDF موجود بنفس المجلد.`;
+      // إظهار زر "فتح في تبويب جديد" دائمًا (مفيد خصوصًا على الجوال عندما لا يدعم الـ iframe عرض PDF)
+      if (viewerOpenNewTabBtn) viewerOpenNewTabBtn.style.display = 'inline-flex';
+
       if (!options.silent) flash(document.getElementById('mushafViewerCard'));
     }
 
@@ -1935,10 +1938,23 @@
       loadMushafAtPage(p, options);
     }
 
-    function openMushafInNewTab() {
+    
+    function isMobileDevice() {
+      const ua = navigator.userAgent || '';
+      const touch = navigator.maxTouchPoints || 0;
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (touch > 1 && Math.min(screen.width, screen.height) < 900);
+    }
+
+function openMushafInNewTab() {
       const user = getSelectedUser();
       const page = user ? clampQuranPage(user.currentQuranPage || 1) : 1;
       const url = buildMushafPdfUrl(page);
+
+      // على الجوال: window.open قد تُحجب كـ popup، لذلك نستخدم الانتقال المباشر
+      if (isMobileDevice()) {
+        window.location.href = url;
+        return;
+      }
       window.open(url, '_blank');
     }
 
