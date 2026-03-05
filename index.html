@@ -1576,25 +1576,27 @@
     let viewerState = { loadedPage: null, loadedPath: null };
     let sessionAuth = { unlockedUserId: null };
 
-        const AUTH_SESSION_KEY = 'quran_khatma_unlocked_user_v1';
-    
-        function loadSessionAuth() {
-          try {
-            const id = sessionStorage.getItem(AUTH_SESSION_KEY);
-            sessionAuth.unlockedUserId = id || null;
-          } catch (e) {
-            // ignore
-          }
-        }
-    
-        function saveSessionAuth() {
-          try {
-            if (sessionAuth.unlockedUserId) sessionStorage.setItem(AUTH_SESSION_KEY, sessionAuth.unlockedUserId);
-            else sessionStorage.removeItem(AUTH_SESSION_KEY);
-          } catch (e) {
-            // ignore
-          }
-        }
+    const AUTH_SESSION_KEY = 'quran_khatma_unlocked_user_v1';
+
+    function loadSessionAuth() {
+      try {
+        const id = sessionStorage.getItem(AUTH_SESSION_KEY);
+        sessionAuth.unlockedUserId = id || null;
+      } catch (e) {
+        sessionAuth.unlockedUserId = null;
+            saveSessionAuth();
+}
+    }
+
+    function saveSessionAuth() {
+      try {
+        if (sessionAuth.unlockedUserId) sessionStorage.setItem(AUTH_SESSION_KEY, String(sessionAuth.unlockedUserId));
+        else sessionStorage.removeItem(AUTH_SESSION_KEY);
+      } catch (e) {}
+    }
+
+    // حمّل حالة الفتح عند بدء الصفحة (ضمن نفس جلسة المتصفح)
+    loadSessionAuth();
 
     function loadState() {
       try {
@@ -1653,8 +1655,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (e) {
         console.error('Failed to save state:', e);
-        alert('⚠️ تعذر حفظ البيانات (قد تكون مساحة التخزين ممتلئة أو المتصفح يمنع التخزين).
-يُفضّل تصدير نسخة احتياطية الآن.');
+        alert('⚠️ تعذر حفظ البيانات على هذا الجهاز (قد تكون مساحة التخزين ممتلئة). يُفضّل تصدير نسخة احتياطية الآن.');
       }
     }
 
@@ -1816,9 +1817,8 @@
         .trim()
         .replace(/[\\/]+$/, '') || 'mushaf-pages';
       const pageStr = String(p).padStart(3, '0');
-      const cb = Date.now();
-
-      // نجرب عدة صيغ لأن ويندوز قد يُخفي الامتداد وقد تكون الصور JPG/JPEG/PNG/WEBP أو بأحرف كبيرة
+      const cb = '1';
+// نجرب عدة صيغ لأن ويندوز قد يُخفي الامتداد وقد تكون الصور JPG/JPEG/PNG/WEBP أو بأحرف كبيرة
       const exts = ['jpg','JPG','jpeg','JPEG','png','PNG','webp','WEBP'];
       const baseNames = [
         `mushaf_page_${pageStr}`,          // النمط المطلوب
@@ -1830,7 +1830,7 @@
       const out = [];
       for (const base of baseNames) {
         for (const ext of exts) {
-          out.push(`${folder}/${base}.${ext}?cb=${cb}`);
+          out.push(`${folder}/${base}.${ext}?v=${cb}`);
         }
       }
       // إزالة التكرار إن وجد
@@ -1841,6 +1841,31 @@
       return getMushafImageCandidates(page)[0];
     }
 
+
+    function preloadMushafNeighborPages(page, folder, ext) {
+      try {
+        const p = clampQuranPage(page);
+        const pad = String(p).padStart(3, '0');
+        const base = `mushaf_page_${pad}.${ext}`;
+        const url = `${folder}/${base}?v=1`;
+        const img = new Image();
+        img.decoding = 'async';
+        img.loading = 'eager';
+        img.src = url;
+      } catch (e) {}
+    }
+
+    function preloadMushafAround(currentPage, folder, loadedPathNoQuery) {
+      try {
+        const m = String(loadedPathNoQuery || '').match(/\.([a-zA-Z0-9]+)$/);
+        const ext = m ? m[1] : 'jpg';
+        // جهّز السابقة واللاحقة
+        preloadMushafNeighborPages(currentPage - 1, folder, ext);
+        preloadMushafNeighborPages(currentPage + 1, folder, ext);
+      } catch (e) {}
+    }
+
+
     function loadMushafAtPage(page, options = {}) {
       const p = clampQuranPage(page);
       const path = currentMushafPath();
@@ -1849,8 +1874,10 @@
       // عند فتح صفحة جديدة: ارجاع التمرير لأعلى نفس الصفحة أولًا
       try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
 
-      // إعادة التحميل القسري لصورة الصفحة
-      try { mushafFrame.removeAttribute('src'); } catch (e) {}
+      // إعادة التحميل القسري لصورة الصفحة (فقط عند الطلب)
+      if (options.forceReload) {
+        try { mushafFrame.removeAttribute('src'); } catch (e) {}
+      }
 
       setTimeout(() => {
         try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
@@ -1875,6 +1902,8 @@
           const user = getSelectedUser();
           const userName = user ? ` • المشاركة: ${user.name}` : '';
           mushafStatus.innerHTML = `✅ تم فتح صفحة <strong>${formatNum(p)}</strong> من مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.<br><span class="small">الملف المستخدم: <code style="direction:ltr">${escapeHtml(loadedPath)}</code></span>`;
+          // تسخين الكاش للصفحة السابقة/اللاحقة لتسريع التنقل على الجوال
+          preloadMushafAround(p, path, loadedPath);
         };
 
         tryNext();
@@ -1979,8 +2008,8 @@
       state.selectedUserId = user.id;
       // لا نفتح القفل تلقائيًا بعد الإنشاء حتى يطلب كلمة المرور عند الضغط على "اختيار"
       sessionAuth.unlockedUserId = null;
-      saveSessionAuth();
-      saveState();
+            saveSessionAuth();
+saveState();
       nameInput.value = '';
       if (newUserPasswordInput) newUserPasswordInput.value = '';
       flash(addUserBtn);
@@ -2000,12 +2029,10 @@
       const pts = Math.max(0, Number(state.settings.dailyPoints || 0));
 
       if (alreadyDone) {
-        // تأكيد قبل إزالة الصلاة حتى لا تُحذف النقاط بالخطأ
-        const ok = confirm(`هل تريدين إزالة تسجيل صلاة ${PRAYER_LABELS[prayerKey]} لليوم؟
-(سيتم خصم ${formatNum(pts)} نقاط)`);
-        if (!ok) return;
-
         // إزالة تسجيل الصلاة (Toggle OFF)
+        const ok = confirm(`هل تريدين إلغاء تسجيل صلاة ${PRAYER_LABELS[prayerKey]} لليوم؟
+⚠️ هذا سيخصم ${pts} نقاط من المجموع.`);
+        if (!ok) return;
         todayPrayers[prayerKey] = false;
         user.prayersByDate[today] = todayPrayers;
 
@@ -2146,12 +2173,9 @@
       if (!ok) return;
 
       state.users = state.users.filter(u => u.id !== user.id);
-      if (sessionAuth.unlockedUserId === user.id) {
-        sessionAuth.unlockedUserId = null;
-        saveSessionAuth();
-      }
-      saveSessionAuth();
-      if (!state.users.length) state.selectedUserId = null;
+      if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
+            saveSessionAuth();
+if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
       saveState();
       render();
@@ -2165,40 +2189,6 @@
       renderTodayStatus();
       updatePrayerTodayHeading();
     }
-
-    // تحسين الأداء: تجميع ضغطات المسبحة لتقليل التقطيع عند التسبيح السريع
-        let __tasbeehPendingDelta = 0;
-        let __tasbeehFlushTimer = null;
-    
-        function incTasbeehBuffered(amount) {
-          const delta = Math.max(0, Math.floor(Number(amount || 0)));
-          if (!delta) return;
-    
-          __tasbeehPendingDelta += delta;
-    
-          // تحديث الرقم فورًا قدر الإمكان بدون إعادة render كاملة
-          const user = getSelectedUser();
-          if (user) {
-            const preview = Math.max(0, Number(user.tasbeeh || 0) + __tasbeehPendingDelta);
-            if (tasbeehCount) tasbeehCount.textContent = formatNum(preview);
-          }
-    
-          if (__tasbeehFlushTimer) return;
-          __tasbeehFlushTimer = setTimeout(() => {
-            const user2 = getSelectedUser();
-            const d = __tasbeehPendingDelta;
-            __tasbeehPendingDelta = 0;
-            __tasbeehFlushTimer = null;
-            if (!user2) return;
-    
-            user2.tasbeeh = Math.max(0, Number(user2.tasbeeh || 0) + d);
-            user2.totalPoints = Math.max(0, Number(user2.totalPoints || 0) + d);
-            addHistory(user2, 'tasbeeh', { delta: d, points: d, total: user2.tasbeeh });
-            saveState();
-            flash(document.getElementById('tasbeehBox'));
-            render();
-          }, 200);
-        }
 
     function incTasbeeh(amount) {
       const user = getSelectedUser();
@@ -2216,6 +2206,42 @@
       flash(document.getElementById('tasbeehBox'));
       render();
     }
+
+    // تحسين الأداء على الجوال: تجميع ضغطات التسبيح بدل إعادة render لكل ضغطة
+    let pendingTasbeehDelta = 0;
+    let tasbeehFlushTimer = null;
+
+    function incTasbeehBuffered(amount) {
+      const delta = Math.max(0, Math.floor(Number(amount || 0)));
+      if (!delta) return;
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      pendingTasbeehDelta += delta;
+
+      // تحديث سريع للواجهة بدون render كامل (اختياري لكن يفيد)
+      try {
+        const newTotal = Math.max(0, Number(user.tasbeeh || 0) + pendingTasbeehDelta);
+        if (tasbeehCount) tasbeehCount.textContent = String(newTotal);
+      } catch (e) {}
+
+      if (tasbeehFlushTimer) return;
+      tasbeehFlushTimer = setTimeout(() => {
+        const u = getSelectedUser();
+        const d = pendingTasbeehDelta;
+        pendingTasbeehDelta = 0;
+        tasbeehFlushTimer = null;
+        if (!u || !d) return;
+        // نفس منطق incTasbeeh لكن دفعة واحدة
+        u.tasbeeh = Math.max(0, Number(u.tasbeeh || 0) + d);
+        u.totalPoints = Math.max(0, Number(u.totalPoints || 0) + d);
+        addHistory(u, 'tasbeeh', { delta: d, points: d, total: u.tasbeeh });
+        saveState();
+        flash(document.getElementById('tasbeehBox'));
+        render();
+      }, 180);
+    }
+
 
     function resetTasbeehCount() {
       const user = getSelectedUser();
@@ -2254,8 +2280,8 @@
           };
           state = next;
           sessionAuth.unlockedUserId = null;
-      saveSessionAuth();
-          if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
+                saveSessionAuth();
+if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
             state.selectedUserId = state.users[0]?.id || null;
           }
           saveState();
@@ -2274,8 +2300,8 @@
       if (!ok) return;
       state = structuredClone(defaultState);
       sessionAuth.unlockedUserId = null;
-      saveSessionAuth();
-      saveState();
+            saveSessionAuth();
+saveState();
       render();
     }
 
@@ -3028,9 +3054,8 @@ function renderQuranPageControls() {
 
 
     // First render
-    loadSessionAuth();
     render();
-</script>
+  </script>
 
   <style id="adminMasterControlsStyle">
     .admin-master-fab{
