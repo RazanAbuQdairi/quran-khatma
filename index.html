@@ -650,8 +650,18 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
     }
-    /* وضع الصور: لا نحتاج تغطية شريط عارض PDF */
-    .viewer-frame-wrap::after { content: none; }
+    /* إخفاء شريط عارض الـ PDF قدر الإمكان وجعل التنقل فقط من الأزرار */
+    .viewer-frame-wrap::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 18px; /* يغطي شريط التمرير الظاهر داخل بعض عارِضات PDF */
+      height: 100%;
+      background: #fff;
+      pointer-events: none;
+      z-index: 3;
+    }
     .viewer-frame-wrap::before { content: none; }
 
     .viewer-page-pill {
@@ -685,18 +695,18 @@
     }
     #mushafFrame {
       display: block;
-      width: 100%;
-      height: auto;
-      min-height: 0;
+      width: calc(100% + 18px); /* ندفع شريط عارض الـPDF الداخلي خارج الإطار */
+      margin-right: -18px;
+      height: 1120px; /* أقصر قليلًا لإخفاء الجزء الزائد أسفل الصفحة */
+      min-height: 860px;
       border: 0;
       background: #f8fafc;
-      pointer-events: none; /* نمنع السحب/التكبير داخل الصورة ونبقي التنقل من الأزرار */
+      pointer-events: none; /* نمنع التفاعل داخل العارض ونسمح بالتمرير من الحاوية الخارجية فقط */
       user-select: none;
-      object-fit: contain;
     }
     @media (max-width: 768px) {
       .viewer-frame-wrap { max-height: 56vh; }
-      #mushafFrame { width: 100%; height: auto; min-height: 0; }
+      #mushafFrame { height: 940px; min-height: 700px; }
     }
 
     .small {
@@ -1290,21 +1300,58 @@
     .hero-announce-title, .hero-announce li, .hero-announce-text, .hero-announce-note{ line-height: 2.0 !important; }
   }
 
+
+  .hero-credit-badge{
+    position:absolute;
+    top:14px;
+    left:18px;
+    z-index:3;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(13,148,136,.18);
+    color:#0f766e;
+    font-weight:800;
+    font-size:14px;
+    line-height:1.35;
+    box-shadow:0 8px 20px rgba(15,118,110,.10);
+    backdrop-filter: blur(4px);
+    max-width:min(92%, 440px);
+    white-space:normal;
+  }
+  @media (max-width: 900px){
+    .hero-credit-badge{
+      top:10px;
+      right:12px;
+      left:12px;
+      justify-content:center;
+      font-size:13px;
+      padding:7px 12px;
+    }
+    .hero{
+      padding-top: 52px !important;
+    }
+  }
+
+
+  .hero{
+    padding-top: 58px !important;
+  }
+  @media (max-width: 900px){
+    .hero{
+      padding-top: 62px !important;
+    }
+  }
+
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div style="margin:12px 0 10px; display:flex; justify-content:flex-start;">
-      <div style="
-        display:inline-flex; align-items:center; gap:8px;
-        padding:8px 14px; border-radius:999px;
-        background:rgba(255,255,255,.82);
-        border:1px solid rgba(13,148,136,.22);
-        color:#0f766e; font-weight:700; font-size:15px;
-        box-shadow:0 6px 18px rgba(15,118,110,.08);
-      ">✍️ إعداد وتصميم: وفاء أبوقديري ورزان محمد</div>
-    </div>
-    <section class="hero">
+<section class="hero">
+      <div class="hero-credit-badge">✍️ إعداد وتصميم: وفاء أبوقديري ورزان محمد</div>
       <h1>القرآنُ ربيعُ القلوب ونورُ الدروب 🌿✨</h1>
       <p>
         ابدؤوا رحلتكم مع التلاوة والذِّكر، واغتنموا هذه الأيام المباركة بالطاعة وابتغاء الأجر من الله تعالى 💚
@@ -1470,16 +1517,16 @@
         </div>
 
         <div class="card" id="mushafViewerCard">
-          <h2 style="display:none;">🕌 المصحف داخل الصفحة (صور)</h2>
+          <h2 style="display:none;">🕌 المصحف داخل الصفحة (PDF رسمي)</h2>
           <p class="sub" style="display:none;">
-            ضعي <strong>مجلد صور المصحف</strong> في نفس المجلد باسم <strong>mushaf-pages</strong> (أو اكتبي اسم المجلد أدناه)،
+            ضعي ملف المصحف <strong>PDF</strong> في نفس المجلد باسم <strong>mushaf.pdf</strong> (أو اكتبي اسم الملف أدناه)،
             وسيتم فتح الصفحة الحالية للطالبة داخل العرض. زر <strong>التالي</strong> يحسب النقاط وينقل للصفحة التالية تلقائيًا. يمكن التمرير للأعلى/الأسفل داخل نفس الصفحة فقط، مع التنقل بين الصفحات من الأزرار.
           </p>
 
           <div class="row" id="mushafPathControlsRow" style="display:none;">
             <div>
-              <label for="mushafPdfPathInput">اسم مجلد صور المصحف</label>
-              <input id="mushafPdfPathInput" type="text" placeholder="mushaf-pages" />
+              <label for="mushafPdfPathInput">اسم/مسار ملف المصحف PDF</label>
+              <input id="mushafPdfPathInput" type="text" placeholder="mushaf.pdf" />
             </div>
             <div style="display:flex; align-items:end;">
               <button class="btn ghost" id="openMushafBtn">🔄 فتح/تحديث المصحف</button>
@@ -1487,12 +1534,12 @@
           </div>
 
           <div class="small" id="mushafStatus" style="margin-top:8px; display:none;">
-            أدخلي اسم مجلد الصور (مثل: mushaf-pages) ثم اضغطي "فتح/تحديث المصحف".
+            أدخلي ملف المصحف PDF (مثل: mushaf.pdf) ثم اضغطي "فتح/تحديث المصحف".
           </div>
 
           <div class="viewer-frame-wrap">
             <div class="viewer-page-pill" id="viewerPageBadge">📖 الصفحة: <strong>1</strong> | ⭐ 5 نقاط</div>
-            <img id="mushafFrame" alt="صورة صفحة المصحف" />
+            <iframe id="mushafFrame" title="عارض المصحف PDF"></iframe>
           </div>
 
           <div class="viewer-toolbar viewer-toolbar-bottom">
@@ -1514,139 +1561,15 @@
       settings: {
         dailyPoints: 5,
         pagePoints: 5,
-        mushafPdfPath: 'mushaf-pages'
+        mushafPdfPath: 'mushaf.pdf'
       },
       selectedUserId: null,
       users: []
     };
 
-        // ===== قاعدة البيانات المحلية (localStorage) =====
-    // ملاحظة مهمّة: بعض المتصفحات (أو بعض الإعدادات) قد لا تدعم structuredClone
-    // وهذا قد يسبب رجوع التطبيق للحالة الافتراضية بشكل مفاجئ. لذلك نستخدم clone آمن.
-    function clone(obj) {
-      try {
-        if (typeof window.structuredClone === 'function') return window.clone(obj);
-      } catch (_) {}
-      return JSON.parse(JSON.stringify(obj));
-    }
-
-    const SESSION_AUTH_KEY = STORAGE_KEY + '_session_auth_v1';
-
     let state = loadState();
 
-    let sessionAuth = loadSessionAuth();
-
-    function loadSessionAuth() {
-      try {
-        const raw = sessionStorage.getItem(SESSION_AUTH_KEY);
-        if (!raw) return { unlockedUserId: null };
-        const parsed = JSON.parse(raw);
-        const unlockedUserId = parsed && typeof parsed === 'object' ? parsed.unlockedUserId : null;
-        // نتأكد أن المستخدم موجود فعلاً
-        if (unlockedUserId && state.users.some(u => u.id === unlockedUserId)) {
-          return { unlockedUserId };
-        }
-        return { unlockedUserId: null };
-      } catch (e) {
-        return { unlockedUserId: null };
-      }
-    }
-
-    function persistSessionAuth() {
-      try {
-        sessionStorage.setItem(SESSION_AUTH_KEY, JSON.stringify({ unlockedUserId: sessionAuth.unlockedUserId || null }));
-      } catch (_) {}
-    }
-
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return clone(defaultState);
-
-        const parsed = JSON.parse(raw);
-
-        const loaded = {
-          ...clone(defaultState),
-          ...parsed,
-          settings: { ...defaultState.settings, ...(parsed.settings || {}) },
-          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
-        };
-
-        loaded.settings.dailyPoints = 5;
-        loaded.settings.pagePoints = 5;
-
-        return loaded;
-
-      } catch (e) {
-        console.error('Failed to load state:', e);
-        return clone(defaultState);
-      }
-    }
-
-    let __saveTimer = null;
-    function saveState(immediate = false) {
-      const doSave = () => {
-        __saveTimer = null;
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (e) {
-          console.error('Failed to save state:', e);
-        }
-      };
-      if (immediate) return doSave();
-      if (__saveTimer) return;
-      __saveTimer = setTimeout(doSave, 200);
-    }
-
-    // نحفظ قبل إغلاق الصفحة لضمان عدم ضياع آخر ضغطات
-    window.addEventListener('beforeunload', () => {
-      try { saveState(true); } catch (_) {}
-    });
-
-    function sanitizeUser(u) {
-      const totalPages = Math.max(0, Math.floor(Number(u.totalPages || 0)));
-
-      return {
-        id: u.id || cryptoRandomId(),
-        name: String(u.name || 'مشارك').trim(),
-        password: String(u.password || ''),
-        totalPoints: Number(u.totalPoints || 0),
-        totalPages,
-        currentQuranPage: clampQuranPage(
-          u.currentQuranPage ?? inferCurrentPageFromTotalPages(totalPages)
-        ),
-        tasbeeh: Number(u.tasbeeh || 0),
-        morningDaysCount: Number(u.morningDaysCount || 0),
-        lastMorningBonusDate: u.lastMorningBonusDate || null,
-        prayersCount: Number(u.prayersCount || 0),
-        prayersByDate:
-          (u.prayersByDate && typeof u.prayersByDate === 'object' && !Array.isArray(u.prayersByDate))
-            ? u.prayersByDate
-            : {},
-        createdAt: u.createdAt || new Date().toISOString(),
-        history: Array.isArray(u.history) ? u.history.slice(-200) : []
-      };
-    }
-
-    function cryptoRandomId() {
-      if (window.crypto && crypto.randomUUID) {
-        return crypto.randomUUID();
-      }
-      return 'id_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    }
-
-    function clampQuranPage(n) {
-      const v = Math.floor(Number(n));
-      if (!Number.isFinite(v)) return 1;
-      return Math.min(MUSHAF_TOTAL_PAGES, Math.max(1, v));
-    }
-
-    function inferCurrentPageFromTotalPages(totalPages) {
-      const t = Math.max(0, Math.floor(Number(totalPages || 0)));
-      return (t % MUSHAF_TOTAL_PAGES) + 1;
-    }
-
-// Elements
+    // Elements
     const nameInput = document.getElementById('nameInput');
     const newUserPasswordInput = document.getElementById('newUserPasswordInput');
     const addUserBtn = document.getElementById('addUserBtn');
@@ -1698,7 +1621,158 @@
     const mushafViewport = document.querySelector('.viewer-frame-wrap');
 
     let viewerState = { loadedPage: null, loadedPath: null };
+    let sessionAuth = { unlockedUserId: null };
+
+    const SESSION_UNLOCKED_USERS_KEY = 'quran_khatma_unlocked_users_v1';
+
+    // Buffer سريع للتسبيح لتخفيف التعليق عند الضغط المتكرر
+    let tasbeehBuffer = { userId: null, delta: 0, timer: null };
+
+    function readUnlockedUsersFromSession() {
+      // ✅ بدل sessionStorage: نخزنها في localStorage مع مدة صلاحية حتى ما يطلب باسورد كل مرة
+      // الصيغة: { "<userId>": <expiresAtEpochMs>, ... }
+      try {
+        const raw = localStorage.getItem(SESSION_UNLOCKED_USERS_KEY);
+        const obj = JSON.parse(raw || "{}");
+        const now = Date.now();
+        const out = new Set();
+        if (obj && typeof obj === "object") {
+          for (const [id, exp] of Object.entries(obj)) {
+            const expiresAt = Number(exp || 0);
+            if (expiresAt && expiresAt > now) out.add(String(id));
+          }
+        }
+        return out;
+      } catch (_) {
+        return new Set();
+      }
+    }
+
+    function writeUnlockedUsersToSession(setObj, ttlMs = 7 * 24 * 60 * 60 * 1000) {
+      try {
+        const now = Date.now();
+        const expiresAt = now + ttlMs;
+        const obj = {};
+        (setObj || new Set()).forEach((id) => { obj[String(id)] = expiresAt; });
+        localStorage.setItem(SESSION_UNLOCKED_USERS_KEY, JSON.stringify(obj));
+      } catch (_) {}
+    }
+
+    function isUserUnlockedInSession(userId) {
+      if (!userId) return false;
+      if (sessionAuth.unlockedUserId === userId) return true;
+      return readUnlockedUsersFromSession().has(String(userId));
+    }
+
+    function unlockUserInSession(userId) {
+      if (!userId) return;
+      sessionAuth.unlockedUserId = userId;
+      const setObj = readUnlockedUsersFromSession();
+      setObj.add(String(userId));
+      // 7 أيام افتراضيًا
+      writeUnlockedUsersToSession(setObj, 7 * 24 * 60 * 60 * 1000);
+    }
+
+    function lockUserInSession(userId) {
+      if (!userId) return;
+      if (sessionAuth.unlockedUserId === userId) sessionAuth.unlockedUserId = null;
+      const setObj = readUnlockedUsersFromSession();
+      setObj.delete(String(userId));
+      writeUnlockedUsersToSession(setObj, 7 * 24 * 60 * 60 * 1000);
+    }
+function scheduleTasbeehFlush() {
+      if (tasbeehBuffer.timer) clearTimeout(tasbeehBuffer.timer);
+      tasbeehBuffer.timer = setTimeout(() => flushTasbeehBuffer(), 180);
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        const loaded = {
+          ...structuredClone(defaultState),
+          ...parsed,
+          settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
+        };
+        loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
+        loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
+        return loaded;
+      } catch (e) {
+        console.error('Failed to load state:', e);
+        return structuredClone(defaultState);
+      }
+    }
+
+    function clampQuranPage(n) {
+      const v = Math.floor(Number(n));
+      if (!Number.isFinite(v)) return 1;
+      return Math.min(MUSHAF_TOTAL_PAGES, Math.max(1, v));
+    }
+
+    function inferCurrentPageFromTotalPages(totalPages) {
+      const t = Math.max(0, Math.floor(Number(totalPages || 0)));
+      return (t % MUSHAF_TOTAL_PAGES) + 1;
+    }
+
+    function sanitizeUser(u) {
+      const totalPages = Math.max(0, Math.floor(Number(u.totalPages || 0)));
+      return {
+        id: u.id || cryptoRandomId(),
+        name: String(u.name || 'مشارك').trim(),
+        password: String(u.password || ''),
+        totalPoints: Number(u.totalPoints || 0),
+        totalPages,
+        currentQuranPage: clampQuranPage(
+          u.currentQuranPage ?? inferCurrentPageFromTotalPages(totalPages)
+        ),
+        tasbeeh: Number(u.tasbeeh || 0),
+        morningDaysCount: Number(u.morningDaysCount || 0),
+        lastMorningBonusDate: u.lastMorningBonusDate || null,
+        prayersCount: Number(u.prayersCount || 0),
+        prayersByDate: (u.prayersByDate && typeof u.prayersByDate === 'object' && !Array.isArray(u.prayersByDate)) ? u.prayersByDate : {},
+        createdAt: u.createdAt || new Date().toISOString(),
+        history: Array.isArray(u.history) ? u.history.slice(-200) : []
+      };
+    }
+
+    function saveState(options = {}) {
+      backupStateSnapshot();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (options && options.skipCloud) return;
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
+          window.__firebaseSync.pushState(state);
+        }
+      } catch (e) {
+        console.warn('Firebase sync push skipped:', e);
+      }
     
+    // ✅ تخفيف الضغط: نؤجل رفع المزامنة السحابية بدل ما يصير على كل ضغطة
+    let __cloudPushTimer = null;
+    function scheduleCloudPush(delayMs = 1500) {
+      try {
+        if (!window.__firebaseSync || typeof window.__firebaseSync.pushState !== 'function') return;
+        if (__cloudPushTimer) clearTimeout(__cloudPushTimer);
+        __cloudPushTimer = setTimeout(() => {
+          try { window.__firebaseSync.pushState(state); } catch (_) {}
+        }, Math.max(250, Number(delayMs || 1500)));
+      } catch (_) {}
+    }
+
+    // ✅ نسخة احتياطية سريعة لمنع فقدان النقاط عند تعارض/انقطاع مفاجئ
+    function backupStateSnapshot() {
+      try {
+        localStorage.setItem(STORAGE_KEY + "_backup", JSON.stringify(state));
+      } catch (_) {}
+    }
+}
+
+    function cryptoRandomId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'id_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
 
     // ملاحظة: نعتمد توقيت الإمارات (Asia/Dubai) للصلاوات اليومية وتغيير اليوم تلقائيًا
     function localDateKey(date = new Date()) {
@@ -1782,9 +1856,11 @@
     }
 
     function setSelectedUser(id) {
+      flushTasbeehBuffer({ silent: true });
       state.selectedUserId = id;
-      saveState();
-      scheduleRender();
+      // اختيار المستخدم محلي لكل جهاز (لا نرفعه للسحابة حتى لا يغيّر حساب الباقين)
+      saveState({ skipCloud: true });
+      render();
       syncMushafToSelectedUser({ silent: true });
     }
 
@@ -1796,13 +1872,13 @@
       const user = getSelectedUser();
       if (!user) return false;
       if (!userHasPassword(user)) return true;
-      return sessionAuth.unlockedUserId === user.id;
+      return isUserUnlockedInSession(user.id);
     }
 
     function verifyUserPassword(user, options = {}) {
       if (!user) return false;
       if (!userHasPassword(user)) return true;
-      if (sessionAuth.unlockedUserId === user.id) return true;
+      if (isUserUnlockedInSession(user.id)) return true;
 
       const entered = window.prompt(`🔒 المشاركة "${user.name}" محمي بكلمة مرور.\nأدخلي كلمة المرور للمتابعة:`);
       if (entered === null) return false;
@@ -1812,8 +1888,7 @@
         return false;
       }
 
-      sessionAuth.unlockedUserId = user.id;
-      persistSessionAuth();
+      unlockUserInSession(user.id);
       if (!options.silent) alert(`✅ تم فتح بيانات المشاركة: ${user.name}`);
       return true;
     }
@@ -1838,8 +1913,8 @@
 
 
     function normalizeMushafPath(v) {
-      const raw = String(v ?? '').trim().replace(/[\/]+$/, '');
-      return raw || 'mushaf-pages';
+      const raw = String(v ?? '').trim();
+      return raw || 'mushaf.pdf';
     }
 
     function currentMushafPath() {
@@ -1847,88 +1922,30 @@
       return state.settings.mushafPdfPath;
     }
 
-    function getMushafImageCandidates(page, folderInput) {
-      const p = clampQuranPage(page);
-      const folder = String(folderInput ?? currentMushafPath())
-        .trim()
-        .replace(/[\\/]+$/, '') || 'mushaf-pages';
-      const pageStr = String(p).padStart(3, '0');
-      const cb = Date.now();
-
-      // نجرب عدة صيغ لأن ويندوز قد يُخفي الامتداد وقد تكون الصور JPG/JPEG/PNG/WEBP أو بأحرف كبيرة
-      const exts = ['jpg','JPG','jpeg','JPEG','png','PNG','webp','WEBP'];
-      const baseNames = [
-        `mushaf_page_${pageStr}`,          // النمط المطلوب
-        `mushaf_page_${String(p)}`,        // احتياطًا لو تم الحفظ بدون pad
-        `mushaf-page-${pageStr}`,          // احتياطًا لو استُخدمت شرطات
-        `mushaf-page-${String(p)}`,
-        `${pageStr}`,                      // 001
-        `${String(p)}`,                    // 1
-        `page_${pageStr}`,                 // page_001
-        `page_${String(p)}`,               // page_1
-        `Page_${pageStr}`,
-        `Page_${String(p)}`,
-        `p${pageStr}`,                     // p001
-        `p${String(p)}`,
-        `P${pageStr}`,
-        `P${String(p)}`,
-        `quran_page_${pageStr}`,
-        `quran_page_${String(p)}`,
-        `quran-${pageStr}`,
-        `quran-${String(p)}`
-      ];
-
-      const out = [];
-      for (const base of baseNames) {
-        for (const ext of exts) {
-          out.push(`${folder}/${base}.${ext}?cb=${cb}`);
-        }
-      }
-      // إزالة التكرار إن وجد
-      return [...new Set(out)];
-    }
-
     function buildMushafPdfUrl(page) {
-      return getMushafImageCandidates(page)[0];
+      const path = currentMushafPath();
+      const p = clampQuranPage(page);
+      // ملاحظة: بعض المتصفحات لا تحدّث صفحة الـPDF داخل iframe إذا تغيّر #page فقط.
+      // لذلك نضيف cache-buster صغير لإجبار العارض على إعادة التحميل عند "التالي/السابق".
+      const base = String(path).split('#')[0];
+      const sep = base.includes('?') ? '&' : '?';
+      const cb = Date.now();
+      return `${base}${sep}cb=${cb}#page=${p}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
     }
 
     function loadMushafAtPage(page, options = {}) {
       const p = clampQuranPage(page);
       const path = currentMushafPath();
       if (mushafPdfPathInput) mushafPdfPathInput.value = path;
+      const url = buildMushafPdfUrl(p);
 
       // عند فتح صفحة جديدة: ارجاع التمرير لأعلى نفس الصفحة أولًا
       try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
-
-      // إعادة التحميل القسري لصورة الصفحة
-      try { mushafFrame.removeAttribute('src'); } catch (e) {}
-
+      // إعادة تحميل قسرية للـ iframe لأن بعض عارِضات PDF المحلية تتجاهل تغيير الصفحة داخل نفس الملف
+      try { mushafFrame.src = 'about:blank'; } catch (e) {}
       setTimeout(() => {
         try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
-
-        const candidates = getMushafImageCandidates(p, path);
-        let idx = 0;
-
-        const tryNext = () => {
-          if (idx >= candidates.length) {
-            const tried = candidates.slice(0, 4).map(u => String(u).split('?')[0]).join(' ، ');
-            mushafStatus.innerHTML = `❌ لم يتم العثور على صورة الصفحة <strong>${formatNum(p)}</strong> داخل المجلد <code style="direction:ltr">${escapeHtml(path)}</code>.<br>تأكدي من وجود الملف بنفس النمط مثل: <code style="direction:ltr">mushaf_page_${String(p).padStart(3,'0')}.jpg</code> أو <code style="direction:ltr">.JPG</code>.<br><span class="small">أمثلة تمّت تجربتها: ${escapeHtml(tried)}</span>`;
-            return;
-          }
-          const nextUrl = candidates[idx++];
-          mushafFrame.src = nextUrl;
-        };
-
-        mushafFrame.onerror = function () { tryNext(); };
-        mushafFrame.onload = function () {
-          mushafFrame.onerror = null;
-          const loadedPath = String(mushafFrame.currentSrc || mushafFrame.src || '').split('?')[0];
-          const user = getSelectedUser();
-          const userName = user ? ` • المشاركة: ${user.name}` : '';
-          mushafStatus.innerHTML = `✅ تم فتح صفحة <strong>${formatNum(p)}</strong> من مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.<br><span class="small">الملف المستخدم: <code style="direction:ltr">${escapeHtml(loadedPath)}</code></span>`;
-        };
-
-        tryNext();
+        mushafFrame.src = url;
       }, 20);
 
       viewerState.loadedPage = p;
@@ -1939,6 +1956,10 @@
         viewerPageBadge.innerHTML = `📖 الصفحة: <strong>${formatNum(p)}</strong> | ⭐ نقاط الصفحات: <strong>${formatNum(pagePointsTotal)}</strong>`;
       }
 
+      const user = getSelectedUser();
+      const userName = user ? ` • المشاركة: ${user.name}` : '';
+      mushafStatus.innerHTML = `📖 تم فتح صفحة <strong>${formatNum(p)}</strong> من الملف: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.
+      <br>إذا لم يظهر المصحف داخل الصفحة، استخدمي زر <strong>فتح في تبويب جديد</strong> أو تأكدي أن ملف الـPDF موجود بنفس المجلد.`;
       if (!options.silent) flash(document.getElementById('mushafViewerCard'));
     }
 
@@ -1961,11 +1982,14 @@
 
     function saveMushafPathAndRefresh() {
       state.settings.mushafPdfPath = normalizeMushafPath(mushafPdfPathInput.value);
-      saveState();
+      backupStateSnapshot();
+      saveState({ skipCloud: true });
+      scheduleCloudPush(1800);
       syncMushafToSelectedUser();
     }
 
     function goToPreviousQuranPageNoPoints() {
+      flushTasbeehBuffer({ silent: true });
       const user = getSelectedUser();
       if (!user) return alert('اختاري مشاركة أولًا.');
       const fromPage = clampQuranPage(user.currentQuranPage || 1);
@@ -1973,7 +1997,7 @@
       user.currentQuranPage = toPage;
       addHistory(user, 'prev_quran_page_nav', { fromPage, toPage });
       saveState();
-      scheduleRender();
+      render();
       loadMushafAtPage(toPage, { silent: true });
     }
 
@@ -2029,12 +2053,12 @@
       state.users.push(user);
       state.selectedUserId = user.id;
       // لا نفتح القفل تلقائيًا بعد الإنشاء حتى يطلب كلمة المرور عند الضغط على "اختيار"
-      sessionAuth.unlockedUserId = null; persistSessionAuth();
+      clearAllSessionUnlocks();
       saveState();
       nameInput.value = '';
       if (newUserPasswordInput) newUserPasswordInput.value = '';
       flash(addUserBtn);
-      scheduleRender();
+      render();
     }
 
     function grantPrayer(prayerKey) {
@@ -2082,7 +2106,7 @@
       saveState();
       const prayerBtnMap = { fajr: prayerFajrBtn, dhuhr: prayerDhuhrBtn, asr: prayerAsrBtn, maghrib: prayerMaghribBtn, isha: prayerIshaBtn };
       flash(prayerBtnMap[prayerKey]);
-      scheduleRender();
+      render();
     }
 
     // تم استبدال هذه الميزة بالصلوات الخمس (الإبقاء على الدالة للتوافق مع النسخ السابقة)
@@ -2112,13 +2136,14 @@
     }
 
     function goToNextQuranPage() {
+      flushTasbeehBuffer({ silent: true });
       const user = getSelectedUser();
       if (!user) return alert('اختاري مشاركة أولًا.');
 
       const result = applyPageReading(user, 1, 'next_quran_page');
       saveState();
       flash(nextQuranPageBtn);
-      scheduleRender();
+      render();
       syncMushafToSelectedUser({ silent: true });
 
       if (result.completedKhatmas > 0) {
@@ -2127,6 +2152,7 @@
     }
 
     function saveCurrentQuranPage() {
+      flushTasbeehBuffer({ silent: true });
       const user = getSelectedUser();
       if (!user) return alert('اختاري مشاركة أولًا.');
 
@@ -2139,7 +2165,7 @@
       addHistory(user, 'set_current_page', { page: user.currentQuranPage });
       saveState();
       flash(saveCurrentPageBtn);
-      scheduleRender();
+      render();
       syncMushafToSelectedUser({ silent: true });
     }
 
@@ -2157,7 +2183,7 @@
 
       saveState();
       flash(addPagesBtn);
-      scheduleRender();
+      render();
       syncMushafToSelectedUser({ silent: true });
 
       if (result.completedKhatmas > 0) {
@@ -2180,7 +2206,7 @@
       user.name = clean;
       addHistory(user, 'rename_user', { newName: clean });
       saveState();
-      scheduleRender();
+      render();
     }
 
     function deleteSelectedUser() {
@@ -2191,11 +2217,11 @@
       if (!ok) return;
 
       state.users = state.users.filter(u => u.id !== user.id);
-      if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null; persistSessionAuth();
+      lockUserInSession(user.id);
       if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
       saveState();
-      scheduleRender();
+      render();
     }
 
     function updateSettingsFromInputs() {
@@ -2214,17 +2240,23 @@
       const delta = Math.max(0, Math.floor(Number(amount || 0)));
       if (!delta) return;
 
-      // ربط المسبحة بالنقاط: كل تسبيحة = 1 نقطة (و +33 = 33 نقطة)
-      user.tasbeeh = Math.max(0, Number(user.tasbeeh || 0) + delta);
-      user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
+      if (tasbeehBuffer.userId && tasbeehBuffer.userId !== user.id) {
+        flushTasbeehBuffer({ silent: true });
+      }
 
-      addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
-      saveState();
+      tasbeehBuffer.userId = user.id;
+      tasbeehBuffer.delta = Math.max(0, Number(tasbeehBuffer.delta || 0) + delta);
+
+      // تحديث مرئي فوري بدون إعادة رسم كاملة
+      const optimistic = Math.max(0, Number(user.tasbeeh || 0) + Number(tasbeehBuffer.delta || 0));
+      if (tasbeehCount) tasbeehCount.textContent = formatNum(optimistic);
       flash(document.getElementById('tasbeehBox'));
-      scheduleRender();
+
+      scheduleTasbeehFlush();
     }
 
     function resetTasbeehCount() {
+      flushTasbeehBuffer({ silent: true });
       const user = getSelectedUser();
       if (!user) return alert('اختاري مشاركة أولًا.');
       const ok = confirm(`إعادة ضبط المسبحة للمشارك ${user.name} إلى 0؟`);
@@ -2232,7 +2264,7 @@
       user.tasbeeh = 0;
       addHistory(user, 'tasbeeh_reset');
       saveState();
-      scheduleRender();
+      render();
     }
 
     function exportData() {
@@ -2248,24 +2280,25 @@
     }
 
     function importData(file) {
+      flushTasbeehBuffer({ silent: true });
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
         try {
           const imported = JSON.parse(String(reader.result || '{}'));
           const next = {
-            ...clone(defaultState),
+            ...structuredClone(defaultState),
             ...imported,
             settings: { ...defaultState.settings, ...(imported.settings || {}) },
             users: Array.isArray(imported.users) ? imported.users.map(sanitizeUser) : []
           };
           state = next;
-          sessionAuth.unlockedUserId = null; persistSessionAuth();
+          clearAllSessionUnlocks();
           if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
             state.selectedUserId = state.users[0]?.id || null;
           }
           saveState();
-          scheduleRender();
+          render();
           alert('تم استيراد البيانات بنجاح ✅');
         } catch (e) {
           console.error(e);
@@ -2276,12 +2309,13 @@
     }
 
     function resetAllData() {
+      flushTasbeehBuffer({ silent: true });
       const ok = confirm('هل أنتِ متأكدة من حذف جميع المشاركات والبيانات؟');
       if (!ok) return;
-      state = clone(defaultState);
-      sessionAuth.unlockedUserId = null; persistSessionAuth();
+      state = structuredClone(defaultState);
+      clearAllSessionUnlocks();
       saveState();
-      scheduleRender();
+      render();
     }
 
     function formatNum(n) {
@@ -2561,7 +2595,8 @@ function renderQuranPageControls() {
         // افتح أول مرة تلقائيًا على صفحة الطالبة الحالية
         loadMushafAtPage(p, { silent: true });
       } else {
-        mushafStatus.innerHTML = `📖 صفحة الطالبة الحالية: <strong>${formatNum(p)}</strong> • مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>.\n        <br>يمكنك الضغط على <strong>التالي</strong> لاحتساب الصفحة والانتقال تلقائيًا.`;
+        mushafStatus.innerHTML = `📖 صفحة الطالبة الحالية: <strong>${formatNum(p)}</strong> • ملف المصحف: <code style="direction:ltr">${escapeHtml(path)}</code>.
+        <br>يمكنك الضغط على <strong>التالي</strong> لاحتساب الصفحة والانتقال تلقائيًا.`;
       }
     }
 
@@ -2621,18 +2656,7 @@ function renderQuranPageControls() {
       tasbeehCount.textContent = formatNum(user.tasbeeh || 0);
     }
 
-    
-    let __renderScheduled = false;
-    function scheduleRender() {
-      if (__renderScheduled) return;
-      __renderScheduled = true;
-      requestAnimationFrame(() => {
-        __renderScheduled = false;
-        scheduleRender();
-      });
-    }
-
-function render() {
+    function render() {
       state.settings.dailyPoints = 5; // تثبيت نقاط الصلاة دائمًا
       if (dailyPointsInput) dailyPointsInput.value = '5';
       const dailyPointsFixedBox = document.getElementById('dailyPointsFixedBox');
@@ -2786,7 +2810,7 @@ function render() {
       const nextDayKey = localDateKey();
       if (nextDayKey !== __uaeCurrentDayKey) {
         __uaeCurrentDayKey = nextDayKey;
-        scheduleRender(); // ستظهر الصلوات اليومية صفر/5 لليوم الجديد بينما تبقى النقاط محفوظة
+        render(); // ستظهر الصلوات اليومية صفر/5 لليوم الجديد بينما تبقى النقاط محفوظة
         syncMushafToSelectedUser({ silent: true });
       }
     }, 30000);
@@ -3043,6 +3067,134 @@ function render() {
     })();
 
 
+    try {
+      window.addEventListener('beforeunload', () => flushTasbeehBuffer({ silent: true }));
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushTasbeehBuffer({ silent: true });
+      });
+    } catch (_) {}
+
+    // Bridge for optional cloud sync (Firebase)
+    window.__quranAppBridge = {
+      getState() {
+        try { return JSON.parse(JSON.stringify(state)); }
+        catch (_) { return structuredClone(state); }
+      },
+      _trimPrayersByDate(prayersObj) {
+        const src = (prayersObj && typeof prayersObj === 'object' && !Array.isArray(prayersObj)) ? prayersObj : {};
+        const keys = Object.keys(src).sort().slice(-45); // آخر 45 يوم فقط لتخفيف حجم المزامنة
+        const out = {};
+        keys.forEach(k => { out[k] = src[k]; });
+        return out;
+      },
+      _stripHeavyUserFieldsForCloud(user) {
+        const u = sanitizeUser(user || {});
+        return {
+          ...u,
+          // تقليل حجم المستند لتخفيف التعليق أثناء التزامن
+          history: Array.isArray(u.history) ? u.history.slice(-20) : [],
+          prayersByDate: this._trimPrayersByDate(u.prayersByDate)
+        };
+      },
+      _restoreLocalHeavyFields(remoteNormalized, prevLocalState) {
+        const prevUsersMap = new Map(((prevLocalState && Array.isArray(prevLocalState.users)) ? prevLocalState.users : []).map(u => [String(u.id), u]));
+        remoteNormalized.users = (Array.isArray(remoteNormalized.users) ? remoteNormalized.users : []).map(u => {
+          const prev = prevUsersMap.get(String(u.id));
+          if (!prev) return u;
+          // لا نمسح السجل المحلي إذا كان أحدث/أكبر
+          if (Array.isArray(prev.history) && prev.history.length > (Array.isArray(u.history) ? u.history.length : 0)) {
+            u.history = prev.history.slice(-200);
+          }
+          // إذا المحلي يحتوي أيام صلاة أكثر (غير متزامنة بعد) نحتفظ بها مؤقتًا
+          const prevPrayerKeys = Object.keys((prev.prayersByDate && typeof prev.prayersByDate === 'object') ? prev.prayersByDate : {});
+          const remotePrayerKeys = Object.keys((u.prayersByDate && typeof u.prayersByDate === 'object') ? u.prayersByDate : {});
+          if (prevPrayerKeys.length > remotePrayerKeys.length) {
+            u.prayersByDate = { ...prev.prayersByDate };
+          }
+          return u;
+        });
+        return remoteNormalized;
+      },
+      toSyncPayload(raw) {
+        const normalized = this.normalizeState(raw);
+        // لا نزامن اختيار المستخدم لأنه محلي لكل جهاز
+        delete normalized.selectedUserId;
+        // نخفف الحقول الثقيلة لتقليل التعليق وحجم الكتابة
+        normalized.users = (Array.isArray(normalized.users) ? normalized.users : []).map(u => this._stripHeavyUserFieldsForCloud(u));
+        return normalized;
+      },
+      normalizeState(raw) {
+        try {
+          const parsed = (raw && typeof raw === 'object') ? raw : {};
+          const normalized = {
+            ...structuredClone(defaultState),
+            ...parsed,
+            settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+            users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
+          };
+          normalized.settings.dailyPoints = 5;
+          normalized.settings.pagePoints = 5;
+          return normalized;
+        } catch (e) {
+          console.warn('normalizeState fallback:', e);
+          return structuredClone(defaultState);
+        }
+      },
+      applyRemoteState(remoteState) {
+        try {
+          try { flushTasbeehBuffer({ silent: true }); } catch (_) {}
+          const prevLocalState = this.getState();
+          const localSelectedUserId = prevLocalState?.selectedUserId ?? null;
+
+          let nextState = this.normalizeState(remoteState);
+          nextState = this._restoreLocalHeavyFields(nextState, prevLocalState);
+
+          // ✅ حماية من فقدان النقاط: لا نسمح لبيانات أقدم (أصغر) أن تكتب فوق الأحدث
+          try {
+            const localUsers = Array.isArray(prevLocalState?.users) ? prevLocalState.users : [];
+            const localMap = new Map(localUsers.map(u => [String(u.id), u]));
+            nextState.users = (Array.isArray(nextState.users) ? nextState.users : []).map(u => {
+              const lu = localMap.get(String(u.id));
+              if (!lu) return u;
+              const pickMax = (a, b) => {
+                const na = Number(a || 0), nb = Number(b || 0);
+                return (Number.isFinite(na) && Number.isFinite(nb)) ? Math.max(na, nb) : (nb || na || 0);
+              };
+              return {
+                ...u,
+                totalPoints: pickMax(u.totalPoints, lu.totalPoints),
+                totalPagesRead: pickMax(u.totalPagesRead, lu.totalPagesRead),
+                currentQuranPage: pickMax(u.currentQuranPage, lu.currentQuranPage),
+                totalPages: pickMax(u.totalPages, lu.totalPages),
+                tasbeeh: pickMax(u.tasbeeh, lu.tasbeeh),
+                morningDaysCount: pickMax(u.morningDaysCount, lu.morningDaysCount),
+                prayersCount: pickMax(u.prayersCount, lu.prayersCount)
+              };
+            });
+          } catch (_) {}
+
+          state = nextState;
+          if (localSelectedUserId && state.users.some(u => u.id === localSelectedUserId)) {
+            state.selectedUserId = localSelectedUserId;
+          } else if (!state.selectedUserId && state.users.length) {
+            state.selectedUserId = state.users[0].id;
+          }
+          backupStateSnapshot();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+          // تقليل الضغط على الرسم عند كثرة تحديثات المزامنة
+          if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(() => render());
+          } else {
+            render();
+          }
+        } catch (e) {
+          console.error('Failed applying remote state:', e);
+        }
+      },
+      rerender() { try { render(); } catch (_) {} }
+    };
+
     // First render
     render();
   </script>
@@ -3099,7 +3251,43 @@ function render() {
       display: none;
     }
     body.admin-master-unlocked .admin-master-pill{ display: block; border-color:#fcd34d; background:#fffbeb; color:#92400e; }
-  </style>
+  
+  .hero-credit-badge{
+    position:absolute;
+    top:14px;
+    left:18px;
+    z-index:3;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(13,148,136,.18);
+    color:#0f766e;
+    font-weight:800;
+    font-size:14px;
+    line-height:1.35;
+    box-shadow:0 8px 20px rgba(15,118,110,.10);
+    backdrop-filter: blur(4px);
+    max-width:min(92%, 440px);
+    white-space:normal;
+  }
+  @media (max-width: 900px){
+    .hero-credit-badge{
+      top:10px;
+      right:12px;
+      left:12px;
+      justify-content:center;
+      font-size:13px;
+      padding:7px 12px;
+    }
+    .hero{
+      padding-top: 52px !important;
+    }
+  }
+
+</style>
 
   <script id="adminMasterControlsScript">
   (() => {
@@ -3223,7 +3411,7 @@ function render() {
         }
 
         adminMasterUnlocked = true;
-        try { sessionStorage.setItem(SESSION_KEY, '1'); } catch {}
+        try { localStorage.setItem(SESSION_KEY, String(Date.now())); } catch {}
         alert('✅ تم فتح وضع الإدارة بنجاح.');
         try { render && render(); } catch { applyAdminVisibility(); }
       });
@@ -3249,8 +3437,7 @@ function render() {
           if (adminMasterUnlocked) {
             try {
               if (user && typeof sessionAuth !== 'undefined') {
-                sessionAuth.unlockedUserId = user.id;
-      persistSessionAuth();
+                try { if (typeof unlockUserInSession === 'function') unlockUserInSession(user.id); else sessionAuth.unlockedUserId = user.id; } catch {}
               }
             } catch {}
             return true;
@@ -3272,7 +3459,7 @@ function render() {
     }
 
     function initAdminMasterControls() {
-      try { adminMasterUnlocked = sessionStorage.getItem(SESSION_KEY) === '1'; } catch {}
+      try { adminMasterUnlocked = (function(){try{const t=Number(localStorage.getItem(SESSION_KEY)||0);return t && (Date.now()-t) < (7*24*60*60*1000);}catch(_){return false;}})(); } catch {}
       patchAuthFunctions();
       createAdminUI();
       try { if (typeof render === 'function') render(); } catch { applyAdminVisibility(); }
@@ -3284,6 +3471,273 @@ function render() {
       initAdminMasterControls();
     }
   })();
+  </script>
+
+  <!-- Firebase shared sync (Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script id="firebaseSharedSyncScript">
+    (function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyAsam8wactjTxuGrHmzXyrbTkIFymZ7CMU",
+        authDomain: "quran-khatma-live.firebaseapp.com",
+        projectId: "quran-khatma-live",
+        storageBucket: "quran-khatma-live.firebasestorage.app",
+        messagingSenderId: "306161636819",
+        appId: "1:306161636819:web:9fe89c1267bf7899278b26",
+        measurementId: "G-H9PSJLBR5W"
+      };
+
+      const FIREBASE_SYNC_ENABLED = true;
+      if (!FIREBASE_SYNC_ENABLED) return;
+
+      function getBridge() {
+        return window.__quranAppBridge || null;
+      }
+
+      function toast(msg) {
+        try {
+          const t = document.getElementById('toast');
+          if (t) {
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+            return;
+          }
+        } catch (_) {}
+        console.log(msg);
+      }
+
+      let ready = false;
+      let applyingRemote = false;
+      let pushTimer = null;
+      let remoteApplyTimer = null;
+      let lastCloudJson = null;
+      let lastPushedJson = null;
+      let lastSyncedPayload = null;
+      let pushInFlight = false;
+      let queuedStateObj = null;
+      let pushQueued = false;
+      const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
+
+      const COLLECTION_PATH = 'shared_state';
+      const DOC_ID = 'quran_khatma_main';
+
+      function stableJson(v) {
+        try { return JSON.stringify(v); } catch (_) { return ''; }
+      }
+
+      function cloneObj(v) {
+        try { return JSON.parse(JSON.stringify(v)); } catch (_) { return v; }
+      }
+
+      function buildUserMap(usersArr) {
+        const map = new Map();
+        (Array.isArray(usersArr) ? usersArr : []).forEach(u => {
+          if (u && u.id) map.set(String(u.id), u);
+        });
+        return map;
+      }
+
+      function computePayloadPatch(basePayload, localPayload) {
+        const base = basePayload || { settings: {}, users: [] };
+        const local = localPayload || { settings: {}, users: [] };
+        const patch = {
+          settingsChanged: stableJson(base.settings || {}) !== stableJson(local.settings || {}),
+          settings: cloneObj(local.settings || {}),
+          upserts: [],
+          deletedUserIds: []
+        };
+
+        const baseMap = buildUserMap(base.users);
+        const localMap = buildUserMap(local.users);
+
+        for (const [id, user] of localMap.entries()) {
+          const oldUser = baseMap.get(id);
+          if (stableJson(oldUser || null) !== stableJson(user || null)) {
+            patch.upserts.push(cloneObj(user));
+          }
+        }
+        for (const id of baseMap.keys()) {
+          if (!localMap.has(id)) patch.deletedUserIds.push(id);
+        }
+
+        patch.hasChanges = !!(patch.settingsChanged || patch.upserts.length || patch.deletedUserIds.length);
+        return patch;
+      }
+
+      function applyPatchToPayload(currentPayload, patch) {
+        const current = cloneObj(currentPayload || { settings: {}, users: [] });
+        if (!patch || !patch.hasChanges) return current;
+
+        if (patch.settingsChanged) current.settings = cloneObj(patch.settings || {});
+
+        const currentUsers = Array.isArray(current.users) ? current.users : [];
+        const upsertMap = new Map((patch.upserts || []).map(u => [String(u.id), u]));
+        const deletedSet = new Set((patch.deletedUserIds || []).map(String));
+        const mergedUsers = [];
+
+        for (const u of currentUsers) {
+          if (!u || !u.id) continue;
+          const id = String(u.id);
+          if (deletedSet.has(id)) continue;
+          if (upsertMap.has(id)) {
+            mergedUsers.push(cloneObj(upsertMap.get(id)));
+            upsertMap.delete(id);
+          } else {
+            mergedUsers.push(u);
+          }
+        }
+        for (const u of upsertMap.values()) mergedUsers.push(cloneObj(u));
+        current.users = mergedUsers;
+        return current;
+      }
+
+      try {
+        if (!window.firebase || !firebase.apps) return;
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        try { db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (_) {}
+
+        const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
+
+        window.__firebaseSync = window.__firebaseSync || {};
+        window.__firebaseSync.pushState = function (stateObj) {
+          if (!ready || applyingRemote) return;
+          const bridge = getBridge();
+          if (!bridge) return;
+
+          queuedStateObj = stateObj;
+          pushQueued = true;
+
+          clearTimeout(pushTimer);
+          pushTimer = setTimeout(async () => {
+            const stateForPush = queuedStateObj;
+            pushQueued = false;
+
+            try {
+              if (pushInFlight) {
+                // إذا كانت عملية دفع جارية نؤجل آخر حالة فقط
+                pushQueued = true;
+                return;
+              }
+
+              const localPayload = (typeof bridge.toSyncPayload === 'function') ? bridge.toSyncPayload(stateForPush) : bridge.normalizeState(stateForPush);
+              const localJson = stableJson(localPayload);
+
+              // حماية من تضخم المستند (يسبب تعليق وفشل كتابة)
+              try {
+                const approxBytes = (new Blob([localJson])).size;
+                if (approxBytes > 850000) {
+                  console.warn('Firebase sync skipped: payload too large', approxBytes);
+                  return;
+                }
+              } catch (_) {}
+
+              if (localJson === lastPushedJson) return;
+
+              const patch = computePayloadPatch(lastSyncedPayload || { settings: {}, users: [] }, localPayload);
+              if (!patch.hasChanges) {
+                lastPushedJson = localJson;
+                return;
+              }
+
+              pushInFlight = true;
+              await db.runTransaction(async (tx) => {
+                const snap = await tx.get(docRef);
+                const currentData = snap.exists ? (snap.data() || {}) : {};
+                const currentPayload = currentData.state
+                  ? ((typeof bridge.toSyncPayload === 'function') ? bridge.toSyncPayload(currentData.state) : bridge.normalizeState(currentData.state))
+                  : { settings: {}, users: [] };
+
+                const mergedPayload = applyPatchToPayload(currentPayload, patch);
+                if (stableJson(mergedPayload) === stableJson(currentPayload)) return;
+
+                tx.set(docRef, {
+                  state: mergedPayload,
+                  meta: {
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedBy: clientId,
+                    version: 3
+                  }
+                }, { merge: true });
+              });
+
+              lastPushedJson = localJson;
+            } catch (e) {
+              console.error('Firebase push failed:', e);
+            } finally {
+              pushInFlight = false;
+              if (pushQueued) {
+                clearTimeout(pushTimer);
+                pushTimer = setTimeout(() => {
+                  try { window.__firebaseSync.pushState((getBridge() || bridge)?.getState?.() || stateForPush); } catch (_) {}
+                }, 220);
+              }
+            }
+          }, 900);
+        };
+
+        docRef.onSnapshot((snap) => {
+          const bridge = getBridge();
+          if (!bridge) return;
+
+          if (!snap.exists) {
+            ready = true;
+            lastSyncedPayload = { settings: {}, users: [] };
+            window.__firebaseSync.pushState(bridge.getState());
+            toast('☁️ تم تفعيل المزامنة المباشرة');
+            return;
+          }
+
+          const data = snap.data() || {};
+          if (!data.state) {
+            ready = true;
+            lastSyncedPayload = { settings: {}, users: [] };
+            window.__firebaseSync.pushState(bridge.getState());
+            return;
+          }
+
+          const remoteNormalized = (typeof bridge.toSyncPayload === 'function') ? bridge.toSyncPayload(data.state) : bridge.normalizeState(data.state);
+          const remoteJson = stableJson(remoteNormalized);
+          lastSyncedPayload = cloneObj(remoteNormalized);
+
+          if ((data.meta || {}).updatedBy === clientId) {
+            lastCloudJson = remoteJson;
+            ready = true;
+            return;
+          }
+
+          if (remoteJson === lastCloudJson) {
+            ready = true;
+            return;
+          }
+
+          const localJson = stableJson((typeof bridge.toSyncPayload === 'function') ? bridge.toSyncPayload(bridge.getState()) : bridge.normalizeState(bridge.getState()));
+          lastCloudJson = remoteJson;
+          ready = true;
+
+          if (remoteJson === localJson) return;
+
+          clearTimeout(remoteApplyTimer);
+          remoteApplyTimer = setTimeout(() => {
+            applyingRemote = true;
+            try {
+              bridge.applyRemoteState(remoteNormalized);
+            } finally {
+              setTimeout(() => { applyingRemote = false; }, 260);
+            }
+          }, 260);
+        }, (err) => {
+          console.error('Firebase onSnapshot error:', err);
+          toast('⚠️ فشل ربط المزامنة. افحصي قواعد Firestore');
+        });
+      } catch (e) {
+        console.error('Firebase init failed:', e);
+      }
+    })();
   </script>
 
 </body>
