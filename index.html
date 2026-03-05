@@ -1810,73 +1810,37 @@
       return state.settings.mushafPdfPath;
     }
 
-    
-// نسخة ثابتة للصور (غيّرها فقط إذا بدّلت ملفات الصور وتحتاج تجديد الكاش)
-const MUSHAF_ASSET_VERSION = '1';
+    function getMushafImageCandidates(page, folderInput) {
+      const p = clampQuranPage(page);
+      const folder = String(folderInput ?? currentMushafPath())
+        .trim()
+        .replace(/[\\/]+$/, '') || 'mushaf-pages';
+      const pageStr = String(p).padStart(3, '0');
+      const cb = Date.now();
 
-function getMushafImageCandidates(page, folderInput) {
-  const p = clampQuranPage(page);
-  const folder = String(folderInput ?? currentMushafPath())
-    .trim()
-    .replace(/[\\/]+$/, '') || 'mushaf-pages';
-  const pageStr = String(p).padStart(3, '0');
+      // نجرب عدة صيغ لأن ويندوز قد يُخفي الامتداد وقد تكون الصور JPG/JPEG/PNG/WEBP أو بأحرف كبيرة
+      const exts = ['jpg','JPG','jpeg','JPEG','png','PNG','webp','WEBP'];
+      const baseNames = [
+        `mushaf_page_${pageStr}`,          // النمط المطلوب
+        `mushaf_page_${String(p)}`,        // احتياطًا لو تم الحفظ بدون pad
+        `mushaf-page-${pageStr}`,          // احتياطًا لو استُخدمت شرطات
+        `mushaf-page-${String(p)}`
+      ];
 
-  // IMPORTANT: لا نستخدم Date.now() أو cache-buster متغير
-  // لأن هذا يمنع كاش المتصفح ويبطّئ التحميل على الجوال.
-  const q = MUSHAF_ASSET_VERSION ? `?v=${encodeURIComponent(MUSHAF_ASSET_VERSION)}` : '';
-
-  // نجرب عدة صيغ لأن ويندوز قد يُخفي الامتداد وقد تكون الصور JPG/JPEG/PNG/WEBP أو بأحرف كبيرة
-  const exts = ['jpg','JPG','jpeg','JPEG','png','PNG','webp','WEBP'];
-  const baseNames = [
-    `mushaf_page_${pageStr}`,          // النمط المطلوب
-    `mushaf_page_${String(p)}`,        // احتياطًا لو تم الحفظ بدون pad
-    `mushaf-page-${pageStr}`,          // احتياطًا لو استُخدمت شرطات
-    `mushaf-page-${String(p)}`
-  ];
-
-  const out = [];
-  for (const base of baseNames) {
-    for (const ext of exts) {
-      out.push(`${folder}/${base}.${ext}${q}`);
+      const out = [];
+      for (const base of baseNames) {
+        for (const ext of exts) {
+          out.push(`${folder}/${base}.${ext}?cb=${cb}`);
+        }
+      }
+      // إزالة التكرار إن وجد
+      return [...new Set(out)];
     }
-  }
-  // إزالة التكرار إن وجد
-  return [...new Set(out)];
-}
 
     function buildMushafPdfUrl(page) {
       return getMushafImageCandidates(page)[0];
     }
 
-
-// تسريع التصفح على الجوال: بعد تحميل الصفحة الحالية نحمّل (في الخلفية) الصفحة السابقة والتالية
-// بنفس الامتداد الذي تم تحميله فعليًا، حتى تكون "التالي/السابق" أسرع.
-function preloadMushafNeighborsFromLoadedPath(loadedPath, currentPage) {
-  try {
-    const clean = String(loadedPath || '').split('?')[0];
-    // نتأكد أنه بالنمط: .../mushaf_page_###.ext
-    const m = clean.match(/^(.*\/)(mushaf_page_)(\d{3})(\.(?:jpg|jpeg|png|webp))$/i);
-    if (!m) return;
-
-    const folder = m[1];
-    const prefix = m[2];
-    const ext = m[4];
-
-    const next = (currentPage >= MUSHAF_TOTAL_PAGES) ? 1 : (currentPage + 1);
-    const prev = (currentPage <= 1) ? MUSHAF_TOTAL_PAGES : (currentPage - 1);
-
-    const make = (pg) => `${folder}${prefix}${String(pg).padStart(3,'0')}${ext}${MUSHAF_ASSET_VERSION ? `?v=${encodeURIComponent(MUSHAF_ASSET_VERSION)}` : ''}`;
-
-    [make(next), make(prev)].forEach((u) => {
-      const im = new Image();
-      im.decoding = 'async';
-      im.loading = 'eager';
-      im.src = u;
-    });
-  } catch (e) {
-    // ignore
-  }
-}
     function loadMushafAtPage(page, options = {}) {
       const p = clampQuranPage(page);
       const path = currentMushafPath();
@@ -1885,7 +1849,9 @@ function preloadMushafNeighborsFromLoadedPath(loadedPath, currentPage) {
       // عند فتح صفحة جديدة: ارجاع التمرير لأعلى نفس الصفحة أولًا
       try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
 
-      // ملاحظة أداء: لا نحذف src ولا نستخدم cache-buster متغير حتى يستفيد الجوال من الكاش.
+      // إعادة التحميل القسري لصورة الصفحة
+      try { mushafFrame.removeAttribute('src'); } catch (e) {}
+
       setTimeout(() => {
         try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
 
@@ -1909,8 +1875,6 @@ function preloadMushafNeighborsFromLoadedPath(loadedPath, currentPage) {
           const user = getSelectedUser();
           const userName = user ? ` • المشاركة: ${user.name}` : '';
           mushafStatus.innerHTML = `✅ تم فتح صفحة <strong>${formatNum(p)}</strong> من مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.<br><span class="small">الملف المستخدم: <code style="direction:ltr">${escapeHtml(loadedPath)}</code></span>`;
-          // تسخين الكاش للصفحتين المجاورتين لتسريع التحميل على الجوال
-          preloadMushafNeighborsFromLoadedPath(loadedPath, p);
         };
 
         tryNext();
