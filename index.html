@@ -1482,13 +1482,13 @@
         <div class="card" id="mushafViewerCard">
           <h2 style="display:none;">🕌 المصحف داخل الصفحة (PDF رسمي)</h2>
           <p class="sub" style="display:none;">
-            ضعي ملف المصحف <strong>PDF</strong> في نفس المجلد باسم <strong>mushaf-pages</strong> (أو اكتبي اسم الملف أدناه)،
+            ضعي مجلد صور المصحف <strong>mushaf-pages</strong> في نفس مجلد الموقع (أو اكتبي اسم المجلد أدناه)،
             وسيتم فتح الصفحة الحالية للطالبة داخل العرض. زر <strong>التالي</strong> يحسب النقاط وينقل للصفحة التالية تلقائيًا. يمكن التمرير للأعلى/الأسفل داخل نفس الصفحة فقط، مع التنقل بين الصفحات من الأزرار.
           </p>
 
           <div class="row" id="mushafPathControlsRow" style="display:none;">
             <div>
-              <label for="mushafPdfPathInput">اسم/مسار ملف المصحف PDF</label>
+              <label for="mushafPdfPathInput">اسم/مسار مجلد صور المصحف</label>
               <input id="mushafPdfPathInput" type="text" placeholder="mushaf-pages" />
             </div>
             <div style="display:flex; align-items:end;">
@@ -1497,12 +1497,12 @@
           </div>
 
           <div class="small" id="mushafStatus" style="margin-top:8px; display:none;">
-            أدخلي ملف المصحف PDF (مثل: mushaf-pages) ثم اضغطي "فتح/تحديث المصحف".
+            أدخلي اسم مجلد الصور (مثل: mushaf-pages) ثم اضغطي "فتح/تحديث المصحف".
           </div>
 
           <div class="viewer-frame-wrap">
             <div class="viewer-page-pill" id="viewerPageBadge">📖 الصفحة: <strong>1</strong> | ⭐ 5 نقاط</div>
-            <iframe id="mushafFrame" title="عارض المصحف PDF"></iframe>
+            <iframe id="mushafFrame" title="عارض صفحات المصحف"></iframe>
           </div>
 
           <div class="viewer-toolbar viewer-toolbar-bottom">
@@ -1784,12 +1784,22 @@
 
 
     function normalizeMushafPath(v) {
-      const raw = String(v ?? '').trim();
+      let raw = String(v ?? '').trim();
+      // تصحيح تلقائي إذا كان المسار القديم محفوظًا كملف PDF أو HTML بدل مجلد الصور
+      if (!raw) return 'mushaf-pages';
+      raw = raw.replace(/^\.\//, '').replace(/^\/+/, '').replace(/\/$/, '');
+      const lower = raw.toLowerCase();
+      if (lower.endsWith('.pdf') || lower.endsWith('.html') || lower === 'mushaf' || lower === 'mushaf.pdf') {
+        return 'mushaf-pages';
+      }
       return raw || 'mushaf-pages';
     }
 
     function currentMushafPath() {
-      state.settings.mushafPdfPath = normalizeMushafPath(state.settings.mushafPdfPath);
+      // توافق مع النسخ القديمة + تنظيف المسار الخاطئ المحفوظ في localStorage
+      state.settings = state.settings || {};
+      const legacy = state.settings.mushafPdfPath;
+      state.settings.mushafPdfPath = normalizeMushafPath(legacy);
       return state.settings.mushafPdfPath;
     }
 
@@ -1797,7 +1807,7 @@
       const p = clampQuranPage(page);
       const base = String(currentMushafPath() || 'mushaf-pages').replace(/\/$/, '');
       const fileName = `mushaf_page_${String(p).padStart(3, '0')}.jpg`;
-      return `${base}/${fileName}`;
+      return `${encodeURI(base)}/${fileName}`;
     }
 
     function preloadNearbyMushafImages(page) {
@@ -1835,8 +1845,8 @@
 
       const user = getSelectedUser();
       const userName = user ? ` • المشاركة: ${user.name}` : '';
-      mushafStatus.innerHTML = `📖 تم فتح صفحة <strong>${formatNum(p)}</strong> من الملف: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.
-      <br>إذا لم يظهر المصحف داخل الصفحة، استخدمي زر <strong>فتح في تبويب جديد</strong> أو تأكدي أن ملف الـPDF موجود بنفس المجلد.`;
+      mushafStatus.innerHTML = `📖 تم فتح صفحة <strong>${formatNum(p)}</strong> من مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.
+      <br>إذا لم تظهر الصفحة داخل العارض، تأكدي أن مجلد الصور اسمه <strong>mushaf-pages</strong> وموجود بجانب <strong>index.html</strong>.`;
       if (!options.silent) flash(document.getElementById('mushafViewerCard'));
     }
 
@@ -2459,7 +2469,7 @@ function renderQuranPageControls() {
         // افتح أول مرة تلقائيًا على صفحة الطالبة الحالية
         loadMushafAtPage(p, { silent: true });
       } else {
-        mushafStatus.innerHTML = `📖 صفحة الطالبة الحالية: <strong>${formatNum(p)}</strong> • ملف المصحف: <code style="direction:ltr">${escapeHtml(path)}</code>.
+        mushafStatus.innerHTML = `📖 صفحة الطالبة الحالية: <strong>${formatNum(p)}</strong> • مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>.
         <br>يمكنك الضغط على <strong>التالي</strong> لاحتساب الصفحة والانتقال تلقائيًا.`;
       }
     }
@@ -2932,6 +2942,7 @@ function renderQuranPageControls() {
 
 
     // First render
+    try { state.settings.mushafPdfPath = normalizeMushafPath(state.settings?.mushafPdfPath); saveState(); } catch(e) {}
     render();
   </script>
 
