@@ -3167,6 +3167,33 @@ function renderQuranPageControls() {
 
     // First render
     render();
+  
+    // === Auto-save safety net (every 10 seconds, only if state changed) ===
+    (function setupAutoSave10s(){
+      let lastSig = '';
+      function sig(){
+        try { return JSON.stringify(state); } catch (_) { return ''; }
+      }
+      function tick(){
+        const s = sig();
+        if (!s) return;
+        if (s !== lastSig) {
+          lastSig = s;
+          try { saveState(); } catch (_) {}
+        }
+      }
+      // initialize signature after initial render
+      try { lastSig = sig(); } catch (_) {}
+      setInterval(tick, 10000);
+
+      // save when leaving / backgrounding
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') tick();
+      });
+      window.addEventListener('pagehide', tick);
+      window.addEventListener('beforeunload', tick);
+    })();
+
   </script>
 
   <style id="adminMasterControlsStyle">
