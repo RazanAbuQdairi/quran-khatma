@@ -1622,6 +1622,53 @@
 
     let viewerState = { loadedPage: null, loadedPath: null };
     let sessionAuth = { unlockedUserId: null };
+    const SESSION_UNLOCKED_USERS_KEY = 'quran_khatma_unlocked_users_v1';
+
+    // Buffer سريع للتسبيح لتقليل التعليق وكثرة إعادة الرسم/المزامنة عند الضغط المتكرر
+    let tasbeehBuffer = { userId: null, delta: 0, timer: null };
+
+    function readUnlockedUsersFromSession() {
+      try {
+        const raw = sessionStorage.getItem(SESSION_UNLOCKED_USERS_KEY);
+        const arr = JSON.parse(raw || '[]');
+        return new Set(Array.isArray(arr) ? arr.map(v => String(v)) : []);
+      } catch (_) {
+        return new Set();
+      }
+    }
+
+    function writeUnlockedUsersToSession(setObj) {
+      try {
+        sessionStorage.setItem(SESSION_UNLOCKED_USERS_KEY, JSON.stringify(Array.from(setObj || [])));
+      } catch (_) {}
+    }
+
+    function isUserUnlockedInSession(userId) {
+      if (!userId) return false;
+      if (sessionAuth.unlockedUserId === userId) return true;
+      return readUnlockedUsersFromSession().has(String(userId));
+    }
+
+    function unlockUserInSession(userId) {
+      if (!userId) return;
+      sessionAuth.unlockedUserId = userId;
+      const setObj = readUnlockedUsersFromSession();
+      setObj.add(String(userId));
+      writeUnlockedUsersToSession(setObj);
+    }
+
+    function lockUserInSession(userId) {
+      if (!userId) return;
+      if (sessionAuth.unlockedUserId === userId) sessionAuth.unlockedUserId = null;
+      const setObj = readUnlockedUsersFromSession();
+      setObj.delete(String(userId));
+      writeUnlockedUsersToSession(setObj);
+    }
+
+    function clearAllSessionUnlocks() {
+      clearAllSessionUnlocks();
+      try { sessionStorage.removeItem(SESSION_UNLOCKED_USERS_KEY); } catch (_) {}
+    }
 
     function loadState() {
       try {
@@ -1675,8 +1722,9 @@
       };
     }
 
-    function saveState() {
+    function saveState(options = {}) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (options && options.skipCloud) return;
       try {
         if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
           window.__firebaseSync.pushState(state);
@@ -1768,13 +1816,50 @@
       return PRAYER_ORDER.reduce((acc, k) => acc + (prayerState?.[k] ? 1 : 0), 0);
     }
 
+    function flushTasbeehBuffer(options = {}) {
+      const silent = !!options.silent;
+      if (tasbeehBuffer.timer) {
+        clearTimeout(tasbeehBuffer.timer);
+        tasbeehBuffer.timer = null;
+      }
+      const userId = tasbeehBuffer.userId;
+      const delta = Math.max(0, Math.floor(Number(tasbeehBuffer.delta || 0)));
+      if (!userId || !delta) {
+        tasbeehBuffer.userId = null;
+        tasbeehBuffer.delta = 0;
+        return;
+      }
+
+      const user = state.users.find(u => u.id === userId);
+      tasbeehBuffer.userId = null;
+      tasbeehBuffer.delta = 0;
+      if (!user) return;
+
+      user.tasbeeh = Math.max(0, Number(user.tasbeeh || 0) + delta);
+      user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
+      addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
+
+      saveState();
+      if (!silent) {
+        flash(document.getElementById('tasbeehBox'));
+        render();
+      }
+    }
+
+    function scheduleTasbeehFlush() {
+      if (tasbeehBuffer.timer) clearTimeout(tasbeehBuffer.timer);
+      tasbeehBuffer.timer = setTimeout(() => flushTasbeehBuffer(), 180);
+    }
+
     function getSelectedUser() {
       return state.users.find(u => u.id === state.selectedUserId) || null;
     }
 
     function setSelectedUser(id) {
+      flushTasbeehBuffer({ silent: true });
       state.selectedUserId = id;
-      saveState();
+      // اختيار المستخدم إعداد محلي لكل جهاز ولا يجب أن يغيّر بقية الأجهزة
+      saveState({ skipCloud: true });
       render();
       syncMushafToSelectedUser({ silent: true });
     }
@@ -1787,13 +1872,13 @@
       const user = getSelectedUser();
       if (!user) return false;
       if (!userHasPassword(user)) return true;
-      return sessionAuth.unlockedUserId === user.id;
+      return isUserUnlockedInSession(user.id);
     }
 
     function verifyUserPassword(user, options = {}) {
       if (!user) return false;
       if (!userHasPassword(user)) return true;
-      if (sessionAuth.unlockedUserId === user.id) return true;
+      if (isUserUnlockedInSession(user.id)) return true;
 
       const entered = window.prompt(`🔒 المشاركة "${user.name}" محمي بكلمة مرور.\nأدخلي كلمة المرور للمتابعة:`);
       if (entered === null) return false;
@@ -1803,7 +1888,7 @@
         return false;
       }
 
-      sessionAuth.unlockedUserId = user.id;
+      unlockUserInSession(user.id);
       if (!options.silent) alert(`✅ تم فتح بيانات المشاركة: ${user.name}`);
       return true;
     }
@@ -2120,6 +2205,7 @@
     }
 
     function deleteSelectedUser() {
+      flushTasbeehBuffer({ silent: true });
       const user = getSelectedUser();
       if (!user) return alert('اختاري مشاركة أولًا.');
 
@@ -2127,7 +2213,7 @@
       if (!ok) return;
 
       state.users = state.users.filter(u => u.id !== user.id);
-      if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
+      lockUserInSession(user.id);
       if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
       saveState();
@@ -2150,17 +2236,24 @@
       const delta = Math.max(0, Math.floor(Number(amount || 0)));
       if (!delta) return;
 
-      // ربط المسبحة بالنقاط: كل تسبيحة = 1 نقطة (و +33 = 33 نقطة)
-      user.tasbeeh = Math.max(0, Number(user.tasbeeh || 0) + delta);
-      user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
+      // إن كان هناك تجميع لمشارك آخر، نطبّقه أولًا
+      if (tasbeehBuffer.userId && tasbeehBuffer.userId !== user.id) {
+        flushTasbeehBuffer({ silent: true });
+      }
 
-      addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
-      saveState();
+      tasbeehBuffer.userId = user.id;
+      tasbeehBuffer.delta = Math.max(0, Number(tasbeehBuffer.delta || 0) + delta);
+
+      // تحديث مرئي فوري بدون إعادة رسم كاملة (لتقليل التعليق)
+      const optimistic = Math.max(0, Number(user.tasbeeh || 0) + Number(tasbeehBuffer.delta || 0));
+      if (tasbeehCount) tasbeehCount.textContent = formatNum(optimistic);
       flash(document.getElementById('tasbeehBox'));
-      render();
+
+      scheduleTasbeehFlush();
     }
 
     function resetTasbeehCount() {
+      flushTasbeehBuffer({ silent: true });
       const user = getSelectedUser();
       if (!user) return alert('اختاري مشاركة أولًا.');
       const ok = confirm(`إعادة ضبط المسبحة للمشارك ${user.name} إلى 0؟`);
@@ -2172,6 +2265,7 @@
     }
 
     function exportData() {
+      flushTasbeehBuffer({ silent: true });
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json;charset=utf-8' });
       const a = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -2184,6 +2278,7 @@
     }
 
     function importData(file) {
+      flushTasbeehBuffer({ silent: true });
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
@@ -2196,7 +2291,7 @@
             users: Array.isArray(imported.users) ? imported.users.map(sanitizeUser) : []
           };
           state = next;
-          sessionAuth.unlockedUserId = null;
+          clearAllSessionUnlocks();
           if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
             state.selectedUserId = state.users[0]?.id || null;
           }
@@ -2212,10 +2307,11 @@
     }
 
     function resetAllData() {
+      flushTasbeehBuffer({ silent: true });
       const ok = confirm('هل أنتِ متأكدة من حذف جميع المشاركات والبيانات؟');
       if (!ok) return;
       state = structuredClone(defaultState);
-      sessionAuth.unlockedUserId = null;
+      clearAllSessionUnlocks();
       saveState();
       render();
     }
@@ -2969,11 +3065,24 @@ function renderQuranPageControls() {
     })();
 
 
+    try {
+      window.addEventListener('beforeunload', () => flushTasbeehBuffer({ silent: true }));
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushTasbeehBuffer({ silent: true });
+      });
+    } catch (_) {}
+
     // Bridge for optional cloud sync (Firebase)
     window.__quranAppBridge = {
       getState() {
         try { return JSON.parse(JSON.stringify(state)); }
         catch (_) { return structuredClone(state); }
+      },
+      toSyncPayload(raw) {
+        const normalized = this.normalizeState(raw);
+        // لا نزامن اختيار المستخدم لأنه إعداد محلي لكل جهاز
+        delete normalized.selectedUserId;
+        return normalized;
       },
       normalizeState(raw) {
         try {
@@ -2994,7 +3103,11 @@ function renderQuranPageControls() {
       },
       applyRemoteState(remoteState) {
         try {
+          const localSelectedUserId = state?.selectedUserId ?? null;
           state = this.normalizeState(remoteState);
+          if (localSelectedUserId && state.users.some(u => u.id === localSelectedUserId)) {
+            state.selectedUserId = localSelectedUserId;
+          }
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           render();
         } catch (e) {
@@ -3345,7 +3458,7 @@ function renderQuranPageControls() {
           clearTimeout(pushTimer);
           pushTimer = setTimeout(async () => {
             try {
-              const normalized = bridge.normalizeState(stateObj);
+              const normalized = (typeof bridge.toSyncPayload === 'function') ? bridge.toSyncPayload(stateObj) : bridge.normalizeState(stateObj);
               const json = JSON.stringify(normalized);
               if (json === lastPushedJson) return;
               lastPushedJson = json;
@@ -3381,13 +3494,18 @@ function renderQuranPageControls() {
             return;
           }
 
-          const remoteNormalized = bridge.normalizeState(data.state);
+          const remoteNormalized = (typeof bridge.toSyncPayload === 'function') ? bridge.toSyncPayload(data.state) : bridge.normalizeState(data.state);
           const remoteJson = JSON.stringify(remoteNormalized);
+          if ((data.meta || {}).updatedBy === clientId) {
+            lastCloudJson = remoteJson;
+            ready = true;
+            return;
+          }
           if (remoteJson === lastCloudJson) {
             ready = true;
             return;
           }
-          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
+          const localJson = JSON.stringify((typeof bridge.toSyncPayload === 'function') ? bridge.toSyncPayload(bridge.getState()) : bridge.normalizeState(bridge.getState()));
           lastCloudJson = remoteJson;
           ready = true;
 
