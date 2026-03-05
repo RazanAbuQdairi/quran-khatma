@@ -651,6 +651,7 @@
       -webkit-overflow-scrolling: touch;
     }
     /* إخفاء شريط عارض الـ PDF قدر الإمكان وجعل التنقل فقط من الأزرار */
+    .viewer-frame-wrap::after { content: none; }
     .viewer-frame-wrap::before { content: none; }
 
     .viewer-page-pill {
@@ -682,30 +683,28 @@
     .viewer-page-pill .pts {
       color: #0f766e;
     }
-    #mushafFrame {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-width: 100%;
-      border: 0;
-      background: #fff;
-      pointer-events: none;
-      user-select: none;
-      object-fit: contain;
-    }
+    #mushafImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0;
+  background: #fff;
+  pointer-events: none;
+  user-select: none;
+  object-fit: contain;
+}
     @media (max-width: 768px) {
       .viewer-frame-wrap { max-height: 56vh; }
-      #mushafFrame {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-width: 100%;
-      border: 0;
-      background: #fff;
-      pointer-events: none;
-      user-select: none;
-      object-fit: contain;
-    }
+      #mushafImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0;
+  background: #fff;
+  pointer-events: none;
+  user-select: none;
+  object-fit: contain;
+}
     }
 
     .small {
@@ -898,10 +897,16 @@
     background: linear-gradient(180deg, #f8fafc, #eef2f7) !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
   }
-  #mushafFrame {
-    border-radius: 14px;
-    background: #fff;
-  }
+  #mushafImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0;
+  background: #fff;
+  pointer-events: none;
+  user-select: none;
+  object-fit: contain;
+}
   .viewer-toolbar-bottom {
     margin-top: 10px;
     display: grid !important;
@@ -1516,16 +1521,16 @@
         </div>
 
         <div class="card" id="mushafViewerCard">
-          <h2 style="display:none;">🕌 المصحف داخل الصفحة (صور)</h2>
+          <h2 style="display:none;">🕌 المصحف داخل الصفحة (PDF رسمي)</h2>
           <p class="sub" style="display:none;">
-            ضعي صور المصحف في نفس المجلد باسم <strong>mushaf.pdf</strong> (أو اكتبي اسم الملف أدناه)،
+            ضعي ملف المصحف <strong>PDF</strong> في نفس المجلد باسم <strong>mushaf.pdf</strong> (أو اكتبي اسم الملف أدناه)،
             وسيتم فتح الصفحة الحالية للطالبة داخل العرض. زر <strong>التالي</strong> يحسب النقاط وينقل للصفحة التالية تلقائيًا. يمكن التمرير للأعلى/الأسفل داخل نفس الصفحة فقط، مع التنقل بين الصفحات من الأزرار.
           </p>
 
           <div class="row" id="mushafPathControlsRow" style="display:none;">
             <div>
-              <label for="mushafPdfPathInput">اسم/مسار مجلد صور المصحف</label>
-              <input id="mushafPdfPathInput" type="text" placeholder="mushaf_images" />
+              <label for="mushafPdfPathInput">اسم/مسار ملف المصحف PDF</label>
+              <input id="mushafPdfPathInput" type="text" placeholder="mushaf.pdf" />
             </div>
             <div style="display:flex; align-items:end;">
               <button class="btn ghost" id="openMushafBtn">🔄 فتح/تحديث المصحف</button>
@@ -1533,12 +1538,12 @@
           </div>
 
           <div class="small" id="mushafStatus" style="margin-top:8px; display:none;">
-            أدخلي مسار مجلد الصور (مثال: mushaf_images) ثم اضغطي "فتح/تحديث المصحف".
+            أدخلي ملف المصحف PDF (مثل: mushaf.pdf) ثم اضغطي "فتح/تحديث المصحف".
           </div>
 
           <div class="viewer-frame-wrap">
             <div class="viewer-page-pill" id="viewerPageBadge">📖 الصفحة: <strong>1</strong> | ⭐ 5 نقاط</div>
-            <img id="mushafFrame" alt="صفحة المصحف" loading="lazy" decoding="async" />
+            <img id="mushafImage" alt="صفحة من المصحف" />
           </div>
 
           <div class="viewer-toolbar viewer-toolbar-bottom">
@@ -1560,7 +1565,7 @@
       settings: {
         dailyPoints: 5,
         pagePoints: 5,
-        mushafPdfPath: 'mushaf_images'
+        mushafPdfPath: 'mushaf.pdf'
       },
       selectedUserId: null,
       users: []
@@ -1615,7 +1620,7 @@
     const viewerSyncBtn = document.getElementById('viewerSyncBtn');
     const viewerOpenNewTabBtn = document.getElementById('viewerOpenNewTabBtn');
     const mushafStatus = document.getElementById('mushafStatus');
-    const mushafFrame = document.getElementById('mushafFrame');
+    const mushafImage = document.getElementById("mushafImage");
     const viewerPageBadge = document.getElementById('viewerPageBadge');
     const mushafViewport = document.querySelector('.viewer-frame-wrap');
 
@@ -1856,10 +1861,10 @@
       // عند فتح صفحة جديدة: ارجاع التمرير لأعلى نفس الصفحة أولًا
       try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
       // إعادة تحميل قسرية للـ iframe لأن بعض عارِضات PDF المحلية تتجاهل تغيير الصفحة داخل نفس الملف
-      try { mushafFrame.src = 'about:blank'; } catch (e) {}
+      try { setMushafImage(targetPage); } catch (e) {}
       setTimeout(() => {
         try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
-        mushafFrame.src = url;
+        setMushafImage(targetPage);
       }, 20);
 
       viewerState.loadedPage = p;
