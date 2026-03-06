@@ -1532,6 +1532,7 @@
   <script>
     const STORAGE_KEY = 'quran_khatma_points_app_v1';
     const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v1';
+    const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v1';
     const MUSHAF_TOTAL_PAGES = 604;
 
     const defaultState = {
@@ -1624,22 +1625,50 @@
 
     try { sessionAuth.unlockedUserId = loadUnlockedUserId(); } catch (_) {}
 
+    function hydrateLoadedState(parsed) {
+      const loaded = {
+        ...structuredClone(defaultState),
+        ...parsed,
+        settings: { ...defaultState.settings, ...(parsed?.settings || {}) },
+        users: Array.isArray(parsed?.users) ? parsed.users.map(sanitizeUser) : []
+      };
+      loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
+      loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
+      return loaded;
+    }
+
+    function readBackupState() {
+      try {
+        const raw = localStorage.getItem(BACKUP_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && parsed.state) return parsed.state;
+      } catch (_) {}
+
+      try {
+        const raw = sessionStorage.getItem(SESSION_STATE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (_) {}
+
+      return null;
+    }
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(defaultState);
-        const parsed = JSON.parse(raw);
-        const loaded = {
-          ...structuredClone(defaultState),
-          ...parsed,
-          settings: { ...defaultState.settings, ...(parsed.settings || {}) },
-          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
-        };
-        loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
-        loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
-                return loaded;
+        if (raw) return hydrateLoadedState(JSON.parse(raw));
+
+        const backupState = readBackupState();
+        if (backupState) return hydrateLoadedState(backupState);
+
+        return structuredClone(defaultState);
       } catch (e) {
         console.error('Failed to load state:', e);
+        try {
+          const backupState = readBackupState();
+          if (backupState) return hydrateLoadedState(backupState);
+        } catch (_) {}
         return structuredClone(defaultState);
       }
     }
@@ -1689,13 +1718,19 @@
     let __dirtySinceFlush = false;
 
     function persistStateToLocalStores() {
-      try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
       try {
-        localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
-          savedAt: new Date().toISOString(),
-          state
-        }));
-      } catch (_) {}
+        const stateJson = JSON.stringify(state);
+        localStorage.setItem(STORAGE_KEY, stateJson);
+        try { sessionStorage.setItem(SESSION_STATE_KEY, stateJson); } catch (_) {}
+        try {
+          localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
+            savedAt: new Date().toISOString(),
+            state: JSON.parse(stateJson)
+          }));
+        } catch (_) {}
+      } catch (e) {
+        console.warn('Local persistence failed:', e);
+      }
     }
 
     function flushStateNow(options = {}) {
@@ -1753,9 +1788,10 @@
       flushStateNow();
     }, 10000);
 
-    window.addEventListener('pagehide', flushStateNow);
+    window.addEventListener('pagehide', () => flushStateNow({ retry: false }));
+    window.addEventListener('beforeunload', () => flushStateNow({ retry: false }));
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') flushStateNow();
+      if (document.visibilityState === 'hidden') flushStateNow({ retry: false });
     });
 
     function cryptoRandomId() {
