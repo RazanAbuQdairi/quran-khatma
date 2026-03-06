@@ -3423,6 +3423,49 @@ function renderQuranPageControls() {
       let lastCloudJson = null;
       let lastPushedJson = null;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
+      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v1';
+      let bc = null;
+
+      function notifyOtherTabs(stateObj) {
+        try {
+          const bridge = getBridge();
+          if (!bridge) return;
+          const normalized = bridge.normalizeState(stateObj);
+          const payload = {
+            sender: clientId,
+            at: Date.now(),
+            state: normalized
+          };
+          if (window.BroadcastChannel) {
+            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
+            bc.postMessage(payload);
+          }
+          try {
+            localStorage.setItem(CROSS_TAB_CHANNEL, JSON.stringify(payload));
+          } catch (_) {}
+        } catch (_) {}
+      }
+
+      function receiveExternalState(payload) {
+        try {
+          if (!payload || payload.sender === clientId || !payload.state) return;
+          const bridge = getBridge();
+          if (!bridge) return;
+          const incoming = bridge.normalizeState(payload.state);
+          const incomingJson = JSON.stringify(incoming);
+          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
+          if (incomingJson === localJson) return;
+          applyingRemote = true;
+          try {
+            bridge.applyRemoteState(incoming);
+            lastCloudJson = incomingJson;
+          } finally {
+            setTimeout(() => { applyingRemote = false; }, 120);
+          }
+        } catch (e) {
+          console.warn('Cross-tab sync apply failed:', e);
+        }
+      }
 
       const COLLECTION_PATH = 'shared_state';
       const DOC_ID = 'quran_khatma_main';
@@ -3432,9 +3475,20 @@ function renderQuranPageControls() {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        try { db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (_) {}
+        // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
         const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
+
+        if (window.BroadcastChannel) {
+          try {
+            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
+            bc.onmessage = (event) => receiveExternalState(event.data);
+          } catch (_) {}
+        }
+        window.addEventListener('storage', (event) => {
+          if (event.key !== CROSS_TAB_CHANNEL || !event.newValue) return;
+          try { receiveExternalState(JSON.parse(event.newValue)); } catch (_) {}
+        });
 
         window.__firebaseSync = window.__firebaseSync || {};
         window.__firebaseSync.pushState = function (stateObj, options = {}) {
@@ -3457,6 +3511,7 @@ function renderQuranPageControls() {
                 const mergedJson = JSON.stringify(mergedState);
                 if (mergedJson === lastPushedJson && !options.immediate) return;
                 lastPushedJson = mergedJson;
+                notifyOtherTabs(mergedState);
                 tx.set(docRef, {
                   state: mergedState,
                   meta: {
@@ -3516,6 +3571,7 @@ function renderQuranPageControls() {
           applyingRemote = true;
           try {
             bridge.applyRemoteState(remoteNormalized);
+            notifyOtherTabs(remoteNormalized);
           } finally {
             setTimeout(() => { applyingRemote = false; }, 150);
           }
