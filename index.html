@@ -1420,7 +1420,17 @@
               <button class="btn ghost" id="renameBtn">✏️ تعديل الاسم</button>
               <button class="btn warn" id="zeroPointsBtn" style="display:none;">🟡 تصفير بيانات المشتركة</button>
               <button class="btn warn" id="zeroAllPointsBtn" style="display:none;">🟠 تصفير بيانات جميع المشتركات</button>
+              <button class="btn ghost" id="hideUserBtn" style="display:none;">🙈 إخفاء المشتركة من الواجهة</button>
               <button class="btn danger" id="deleteBtn">🗑️ حذف المشارك</button>
+            </div>
+
+            <div id="hiddenUsersAdminBox" style="display:none; margin-top:8px; border:1px dashed #cbd5e1; border-radius:12px; padding:10px; background:#f8fafc;">
+              <label for="hiddenUserSelect">المشاركات المخفية</label>
+              <select id="hiddenUserSelect"></select>
+              <div class="row" style="margin-top:8px;">
+                <button class="btn ghost" id="showHiddenUserBtn">👁️ إظهار المشتركة</button>
+              </div>
+              <div class="small" style="margin-top:6px;">الإخفاء يزيل المشتركة من الواجهة ولوحة الصدارة فقط، لكنها تبقى محفوظة داخل أدوات المشرف.</div>
             </div>
 
             <div class="small" id="todayStatus" style="display:none;"></div>
@@ -1561,6 +1571,10 @@
     const zeroPointsBtn = document.getElementById('zeroPointsBtn');
     const zeroAllPointsBtn = document.getElementById('zeroAllPointsBtn');
     const leaderboardZeroAllBtn = document.getElementById('leaderboardZeroAllBtn');
+    const hideUserBtn = document.getElementById('hideUserBtn');
+    const hiddenUserSelect = document.getElementById('hiddenUserSelect');
+    const showHiddenUserBtn = document.getElementById('showHiddenUserBtn');
+    const hiddenUsersAdminBox = document.getElementById('hiddenUsersAdminBox');
     const deleteBtn = document.getElementById('deleteBtn');
     const todayStatus = document.getElementById('todayStatus');
     const tasbeehName = document.getElementById('tasbeehName');
@@ -1659,6 +1673,7 @@
         prayersByDate: (u.prayersByDate && typeof u.prayersByDate === 'object' && !Array.isArray(u.prayersByDate)) ? u.prayersByDate : {},
         createdAt: u.createdAt || new Date().toISOString(),
         history: Array.isArray(u.history) ? u.history.slice(-200) : [],
+        isHidden: !!u.isHidden,
         _updatedAt: Number(u._updatedAt || 0) || 0
       };
     }
@@ -2231,7 +2246,7 @@
       if (!user) return null;
 
       const snapshot = {
-        previousPoints: Math.max(0, Number(user.totalPoints || user.total || user.points || 0)),
+        previousPoints: Math.max(0, Number(user.totalPoints || 0)),
         previousTasbeeh: Math.max(0, Number(user.tasbeeh || 0)),
         previousPages: Math.max(0, Math.floor(Number(user.totalPages || 0))),
         previousCurrentPage: clampQuranPage(Number(user.currentQuranPage || 1)),
@@ -2239,11 +2254,8 @@
       };
 
       user.totalPoints = 0;
-      user.total = 0;
-      user.points = 0;
       user.tasbeeh = 0;
       user.totalPages = 0;
-      user.totalPagesRead = 0;
       user.currentQuranPage = 1;
       user.prayersCount = 0;
       user.prayersByDate = {};
@@ -2273,7 +2285,7 @@
       }
 
       const ok = confirm(`هل تريدين تصفير بيانات المشاركة: ${user.name} ؟
-سيتم تصفير النقاط والمجموع والتسبيح والصلاوات والاستغفار والصفحات وإرجاعها إلى 0.`);
+سيتم تصفير النقاط والتسبيح والصلاوات والاستغفار والصفحات وإرجاعها إلى 0.`);
       if (!ok) return;
 
       const snapshot = resetUserProgress(user);
@@ -2301,7 +2313,7 @@
 
       const ok = confirm(`هل تريدين تصفير بيانات جميع المشتركات؟
 العدد المتأثر: ${affectedUsers.length}
-سيتم تصفير النقاط والمجموع والتسبيح والصلاوات والاستغفار والصفحات وإرجاع الجميع إلى 0.`);
+سيتم تصفير النقاط والتسبيح والصلاوات والاستغفار والصفحات وإرجاع الجميع إلى 0.`);
       if (!ok) return;
 
       affectedUsers.forEach(user => {
@@ -2320,6 +2332,46 @@
       if (zeroAllPointsBtn) flash(zeroAllPointsBtn);
       if (leaderboardZeroAllBtn) flash(leaderboardZeroAllBtn);
       render();
+    }
+
+
+    function hideSelectedUserFromInterface() {
+      const user = getSelectedUser();
+      if (!user) {
+        alert('اختاري مشتركة أولًا.');
+        return;
+      }
+      const ok = confirm(`🙈 هل تريدين إخفاء المشتركة "${user.name}" من الواجهة؟
+
+لن تُحذف بياناتها، وستبقى موجودة داخل أدوات المشرف.`);
+      if (!ok) return;
+
+      user.isHidden = true;
+      touchUser(user);
+
+      const visibleUsers = state.users.filter(u => !u.isHidden);
+      state.selectedUserId = visibleUsers[0]?.id || null;
+      saveUnlockedUserId(state.selectedUserId || null);
+      saveState({ immediate: true });
+      render();
+      alert('✅ تم إخفاء المشتركة من الواجهة، وهي ما زالت محفوظة داخل أدوات المشرف.');
+    }
+
+    function showHiddenUserFromAdmin() {
+      if (!hiddenUserSelect) return;
+      const id = hiddenUserSelect.value;
+      const user = state.users.find(u => u.id === id && u.isHidden);
+      if (!user) {
+        alert('اختاري مشتركة مخفية أولًا.');
+        return;
+      }
+      user.isHidden = false;
+      touchUser(user);
+      state.selectedUserId = user.id;
+      saveUnlockedUserId(user.id);
+      saveState({ immediate: true });
+      render();
+      alert('✅ تم إظهار المشتركة في الواجهة من جديد.');
     }
 
     function deleteSelectedUser() {
@@ -2550,7 +2602,7 @@
     }
 
     function sortedUsers() {
-      return [...state.users].sort((a, b) => {
+      return [...getVisibleUsers()].sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalPages !== a.totalPages) return b.totalPages - a.totalPages;
         return (a.createdAt || '').localeCompare(b.createdAt || '');
@@ -2559,6 +2611,7 @@
 
     function renderUserSelect() {
       const prev = state.selectedUserId;
+      const visibleUsers = sortedUsers();
       userSelect.innerHTML = '';
 
       if (!state.users.length) {
@@ -2567,18 +2620,25 @@
         return;
       }
 
+      if (!visibleUsers.length) {
+        userSelect.innerHTML = '<option value="">كل المشتركات مخفيات حاليًا</option>';
+        userSelect.disabled = true;
+        state.selectedUserId = null;
+        return;
+      }
+
       userSelect.disabled = false;
-      sortedUsers().forEach(u => {
+      visibleUsers.forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id;
         opt.textContent = `${u.name} (${formatNum(u.totalPoints)} نقطة)`;
         userSelect.appendChild(opt);
       });
 
-      if (prev && state.users.some(u => u.id === prev)) {
+      if (prev && visibleUsers.some(u => u.id === prev)) {
         userSelect.value = prev;
       } else {
-        state.selectedUserId = sortedUsers()[0].id;
+        state.selectedUserId = visibleUsers[0].id;
         userSelect.value = state.selectedUserId;
         saveState();
       }
@@ -2696,6 +2756,34 @@
           </div>
         </div>
 `;
+    }
+
+    function getVisibleUsers() {
+      return state.users.filter(u => !u.isHidden);
+    }
+
+    function renderHiddenUsersAdmin() {
+      if (!hiddenUserSelect) return;
+      const hiddenUsers = [...state.users]
+        .filter(u => u.isHidden)
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+
+      hiddenUserSelect.innerHTML = '';
+      if (!hiddenUsers.length) {
+        hiddenUserSelect.innerHTML = '<option value="">لا توجد مشاركات مخفية</option>';
+        hiddenUserSelect.disabled = true;
+        if (showHiddenUserBtn) showHiddenUserBtn.disabled = true;
+        return;
+      }
+
+      hiddenUserSelect.disabled = false;
+      if (showHiddenUserBtn) showHiddenUserBtn.disabled = false;
+      hiddenUsers.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.name} (${formatNum(u.totalPoints || 0)} نقطة)`;
+        hiddenUserSelect.appendChild(opt);
+      });
     }
 
     function renderLeaderboard() {
@@ -2895,6 +2983,11 @@ function renderQuranPageControls() {
 
       const hasUsers = !!state.users.length;
       const unlocked = isSelectedUserUnlocked();
+      renderHiddenUsersAdmin();
+
+      if (hiddenUsersAdminBox) {
+        hiddenUsersAdminBox.style.display = document.body.classList.contains('admin-master-unlocked') ? 'block' : 'none';
+      }
 
       // أزرار العرض/المصحف تصبح متاحة فقط بعد فتح قفل المشاركة المختارة
       [openMushafBtn, viewerSyncBtn, viewerOpenNewTabBtn].forEach(btn => {
@@ -2906,7 +2999,7 @@ function renderQuranPageControls() {
       });
 
       // أزرار تعدّل بيانات المشاركة (محمية بكلمة المرور)
-      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
+      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, hideUserBtn, showHiddenUserBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
         if (!btn) return;
         const canUse = hasUsers && unlocked;
         btn.disabled = !canUse;
@@ -3014,6 +3107,8 @@ function renderQuranPageControls() {
     zeroPointsBtn?.addEventListener('click', zeroSelectedUserPoints);
     leaderboardZeroAllBtn?.addEventListener('click', zeroAllUsersPoints);
     zeroAllPointsBtn?.addEventListener('click', zeroAllUsersPoints);
+    hideUserBtn?.addEventListener('click', hideSelectedUserFromInterface);
+    showHiddenUserBtn?.addEventListener('click', showHiddenUserFromAdmin);
     deleteBtn.addEventListener('click', deleteSelectedUser);
 
     tasbeehPlus1.addEventListener('click', () => incTasbeeh(1));
@@ -3402,6 +3497,8 @@ function renderQuranPageControls() {
       add(document.getElementById('zeroPointsBtn'), 'block');
       add(document.getElementById('zeroAllPointsBtn'), 'block');
       add(document.getElementById('leaderboardZeroAllBtn'), 'block');
+      add(document.getElementById('hideUserBtn'), 'block');
+      add(document.getElementById('hiddenUsersAdminBox'), 'block');
 
       // أزرار تسبيح إضافية
       add(document.getElementById('tasbeehPlus33'), 'block');
