@@ -1684,15 +1684,36 @@
     }
 
     let __saveTimer = null;
+    let __saveRetryTimer = null;
     let __lastFlushAt = 0;
     let __dirtySinceFlush = false;
 
-    function flushStateNow() {
+    function persistStateToLocalStores() {
+      try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+      try {
+        localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
+          savedAt: new Date().toISOString(),
+          state
+        }));
+      } catch (_) {}
+    }
+
+    function flushStateNow(options = {}) {
       __lastFlushAt = Date.now();
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+      persistStateToLocalStores();
       try {
         if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
           window.__firebaseSync.pushState(state, { immediate: true });
+          if (options.retry !== false) {
+            clearTimeout(__saveRetryTimer);
+            __saveRetryTimer = setTimeout(() => {
+              try {
+                if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
+                  window.__firebaseSync.pushState(state, { immediate: true });
+                }
+              } catch (_) {}
+            }, 180);
+          }
         }
       } catch (e) {
         console.warn('Firebase sync push skipped:', e);
@@ -1704,6 +1725,7 @@
       // لا نرفع __clientUpdatedAt إلا عند وجود تغيير محلي فعلي
       __dirtySinceFlush = true;
       try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
+      persistStateToLocalStores();
 
       try {
         if (window.__firebaseSync && typeof window.__firebaseSync.broadcastLocal === 'function') {
@@ -1713,10 +1735,14 @@
 
       clearTimeout(__saveTimer);
       if (options && options.immediate) {
-        flushStateNow();
+        flushStateNow(options);
         return;
       }
-      __saveTimer = setTimeout(flushStateNow, 10);
+      __saveTimer = setTimeout(() => flushStateNow(options), 10);
+    }
+
+    function saveStateStrong() {
+      saveState({ immediate: true, retry: true });
     }
 
     // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
@@ -2139,7 +2165,7 @@
         });
       }
 
-      saveState({ immediate: true });
+      saveStateStrong();
       const prayerBtnMap = { fajr: prayerFajrBtn, dhuhr: prayerDhuhrBtn, asr: prayerAsrBtn, maghrib: prayerMaghribBtn, isha: prayerIshaBtn };
       flash(prayerBtnMap[prayerKey]);
       render();
@@ -2194,7 +2220,7 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
 
       const result = applyPageReading(user, 1, 'next_quran_page');
-      saveState({ immediate: true });
+      saveStateStrong();
       flash(nextQuranPageBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
@@ -2231,7 +2257,7 @@
       touchUser(user);
       user.currentQuranPage = clampQuranPage(v);
       addHistory(user, 'set_current_page', { page: user.currentQuranPage });
-      saveState({ immediate: true });
+      saveStateStrong();
       flash(saveCurrentPageBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
@@ -2264,7 +2290,7 @@
       const wholePages = Math.floor(pages);
       const result = applyPageReading(user, wholePages, 'read_pages');
 
-      saveState({ immediate: true });
+      saveStateStrong();
       flash(addPagesBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
@@ -2362,7 +2388,7 @@
         newCurrentPage: 1,
         newPrayers: 0
       });
-      saveState({ immediate: true });
+      saveStateStrong();
       if (zeroPointsBtn) flash(zeroPointsBtn);
       render();
     }
@@ -2393,7 +2419,7 @@
         });
       });
 
-      saveState({ immediate: true });
+      saveStateStrong();
       if (zeroAllPointsBtn) flash(zeroAllPointsBtn);
       if (leaderboardZeroAllBtn) flash(leaderboardZeroAllBtn);
       render();
@@ -2417,7 +2443,7 @@
       const visibleUsers = state.users.filter(u => !u.isHidden);
       state.selectedUserId = visibleUsers[0]?.id || null;
       saveUnlockedUserId(state.selectedUserId || null);
-      saveState({ immediate: true });
+      saveStateStrong();
       render();
       alert('✅ تم إخفاء المشتركة من الواجهة، وهي ما زالت محفوظة داخل أدوات المشرف.');
     }
@@ -2434,7 +2460,7 @@
       touchUser(user);
       state.selectedUserId = user.id;
       saveUnlockedUserId(user.id);
-      saveState({ immediate: true });
+      saveStateStrong();
       render();
       alert('✅ تم إظهار المشتركة في الواجهة من جديد.');
     }
@@ -2477,7 +2503,7 @@
       user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
 
       addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
-      saveState({ immediate: true });
+      saveStateStrong();
       flash(document.getElementById('tasbeehBox'));
       render();
 
@@ -2505,7 +2531,7 @@
       touchUser(user);
       user.tasbeeh = 0;
       addHistory(user, 'tasbeeh_reset');
-      saveState({ immediate: true });
+      saveStateStrong();
       render();
 
       try {
@@ -2631,7 +2657,7 @@
         if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
           state.selectedUserId = state.users[0]?.id || null;
         }
-        saveState({ immediate: true });
+        saveStateStrong();
         render();
         updateBackupStatus();
         alert('تم استرجاع النسخة الاحتياطية بنجاح ✅');
@@ -3800,7 +3826,7 @@ function renderQuranPageControls() {
         } catch (_) {}
 
         // Save locally WITHOUT triggering another cloud push (Firebase code already guards loops)
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+        try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
         try { if (typeof render === 'function') render(); } catch (_) {}
       }
 
@@ -4227,7 +4253,7 @@ function renderQuranPageControls() {
           user._updatedAt = Math.max(Number(user._updatedAt || 0), Number(event.userUpdatedAt || 0), Number(event.at || 0), Date.now());
           state.users[idx] = user;
           try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+          try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
           try { if (typeof render === 'function') render(); } catch (_) {}
           try { showLiveEventToast(user, event); } catch (_) {}
         } catch (e) {
