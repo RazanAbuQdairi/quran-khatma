@@ -2233,6 +2233,20 @@
       saveState({ immediate: true });
       flash(document.getElementById('tasbeehBox'));
       render();
+
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'tasbeeh_delta',
+            userId: user.id,
+            delta,
+            pointsDelta: delta,
+            tasbeeh: Number(user.tasbeeh || 0),
+            totalPoints: Number(user.totalPoints || 0),
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
     }
 
     function resetTasbeehCount() {
@@ -2240,10 +2254,26 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
       const ok = confirm(`إعادة ضبط المسبحة للمشارك ${user.name} إلى 0؟`);
       if (!ok) return;
+      const previousTasbeeh = Number(user.tasbeeh || 0);
+      touchUser(user);
       user.tasbeeh = 0;
       addHistory(user, 'tasbeeh_reset');
-      saveState();
+      saveState({ immediate: true });
       render();
+
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'tasbeeh_reset',
+            userId: user.id,
+            previousTasbeeh,
+            currentTasbeeh: 0,
+            tasbeeh: 0,
+            totalPoints: Number(user.totalPoints || 0),
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
     }
 
     function exportData() {
@@ -3618,6 +3648,8 @@ function renderQuranPageControls() {
       const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
       window.__liveClientId = clientId;
       const seenEvents = new Set();
+      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v2';
+      let localEventBc = null;
 
       function getDb() {
         try {
@@ -3627,13 +3659,26 @@ function renderQuranPageControls() {
         } catch (_) { return null; }
       }
 
-      function getUsersMap() {
-        try { return new Map((state.users || []).map(u => [u.id, u])); } catch (_) { return new Map(); }
+      function rememberEventKey(key) {
+        if (!key) return false;
+        if (seenEvents.has(key)) return true;
+        seenEvents.add(key);
+        if (seenEvents.size > 500) {
+          const first = seenEvents.values().next().value;
+          if (first) seenEvents.delete(first);
+        }
+        return false;
+      }
+
+      function getEventKey(event) {
+        return String((event && (event.clientEventId || event.id || event.eventId)) || '');
       }
 
       function applyLiveEvent(event) {
         try {
           if (!event || !event.type || !event.userId) return;
+          const eventKey = getEventKey(event);
+          if (rememberEventKey(eventKey)) return;
           if (!Array.isArray(state.users)) return;
           const idx = state.users.findIndex(u => u.id === event.userId);
           if (idx === -1) return;
@@ -3641,16 +3686,39 @@ function renderQuranPageControls() {
           let changed = false;
 
           if (event.type === 'tasbeeh_delta') {
-            const nextTasbeeh = Math.max(0, Number(user.tasbeeh || 0) + Number(event.delta || 0));
-            const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
-            if (nextTasbeeh !== Number(user.tasbeeh || 0) || nextPoints !== Number(user.totalPoints || 0)) {
-              user.tasbeeh = nextTasbeeh;
-              user.totalPoints = nextPoints;
-              changed = true;
+            const incomingTasbeeh = Number(event.tasbeeh);
+            const incomingPoints = Number(event.totalPoints);
+            if (Number.isFinite(incomingTasbeeh)) {
+              if (incomingTasbeeh !== Number(user.tasbeeh || 0)) {
+                user.tasbeeh = Math.max(0, incomingTasbeeh);
+                changed = true;
+              }
+            } else {
+              const nextTasbeeh = Math.max(0, Number(user.tasbeeh || 0) + Number(event.delta || 0));
+              if (nextTasbeeh !== Number(user.tasbeeh || 0)) {
+                user.tasbeeh = nextTasbeeh;
+                changed = true;
+              }
+            }
+            if (Number.isFinite(incomingPoints)) {
+              if (incomingPoints !== Number(user.totalPoints || 0)) {
+                user.totalPoints = Math.max(0, incomingPoints);
+                changed = true;
+              }
+            } else {
+              const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
+              if (nextPoints !== Number(user.totalPoints || 0)) {
+                user.totalPoints = nextPoints;
+                changed = true;
+              }
             }
           } else if (event.type === 'tasbeeh_reset') {
             if (Number(user.tasbeeh || 0) !== 0) {
               user.tasbeeh = 0;
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
+              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
               changed = true;
             }
           } else if (event.type === 'points_delta') {
@@ -3673,6 +3741,7 @@ function renderQuranPageControls() {
             if (!current[event.prayerKey]) {
               current[event.prayerKey] = true;
               current.pointsGranted = Number(event.pointsGranted || current.pointsGranted || 0);
+              user.prayersByDate[event.dateKey] = current;
               const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
               user.totalPoints = nextPoints;
               changed = true;
@@ -3680,8 +3749,9 @@ function renderQuranPageControls() {
           }
 
           if (!changed) return;
-          user._updatedAt = Math.max(Number(user._updatedAt || 0), Number(event.at || 0), Date.now());
+          user._updatedAt = Math.max(Number(user._updatedAt || 0), Number(event.userUpdatedAt || 0), Number(event.at || 0), Date.now());
           state.users[idx] = user;
+          try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
           try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
           try { if (typeof render === 'function') render(); } catch (_) {}
         } catch (e) {
@@ -3689,20 +3759,60 @@ function renderQuranPageControls() {
         }
       }
 
+      function sendLocalEvent(event) {
+        try {
+          if (window.BroadcastChannel) {
+            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
+            localEventBc.postMessage(event);
+          }
+          try { localStorage.setItem(LOCAL_EVENT_CHANNEL, JSON.stringify(event)); } catch (_) {}
+        } catch (_) {}
+      }
+
       function publishLiveEvent(payload) {
         try {
-          const db = getDb();
-          if (!db) return;
           const event = {
             ...payload,
+            clientEventId: payload.clientEventId || ('evt_' + clientId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)),
             sender: clientId,
-            at: Date.now(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            at: Date.now()
           };
-          db.collection('shared_state').doc('quran_khatma_main').collection('live_events').add(event).catch((e) => console.warn('live event publish failed', e));
+
+          sendLocalEvent(event);
+
+          const db = getDb();
+          if (!db) return;
+          db.collection('shared_state').doc('quran_khatma_main').collection('live_events').add({
+            ...event,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch((e) => console.warn('live event publish failed', e));
         } catch (e) {
           console.warn('live event publish setup failed', e);
         }
+      }
+
+      function receiveLocalEvent(event) {
+        try {
+          if (!event || !event.type || !event.userId) return;
+          if (event.sender === clientId) return;
+          applyLiveEvent(event);
+        } catch (e) {
+          console.warn('receiveLocalEvent failed', e);
+        }
+      }
+
+      function subscribeLocalEvents() {
+        try {
+          if (window.BroadcastChannel) {
+            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
+            localEventBc.onmessage = (event) => receiveLocalEvent(event.data);
+          }
+        } catch (_) {}
+
+        window.addEventListener('storage', (event) => {
+          if (event.key !== LOCAL_EVENT_CHANNEL || !event.newValue) return;
+          try { receiveLocalEvent(JSON.parse(event.newValue)); } catch (_) {}
+        });
       }
 
       function subscribeLiveEvents() {
@@ -3712,26 +3822,31 @@ function renderQuranPageControls() {
           window.__liveEventsSubscribed = true;
           db.collection('shared_state').doc('quran_khatma_main').collection('live_events')
             .orderBy('createdAt', 'desc')
-            .limit(40)
+            .limit(80)
             .onSnapshot((snap) => {
               const docs = snap.docChanges().slice().reverse();
               docs.forEach((change) => {
                 if (change.type !== 'added') return;
                 const data = change.doc.data() || {};
                 const id = change.doc.id;
-                if (seenEvents.has(id)) return;
-                seenEvents.add(id);
-                if (seenEvents.size > 300) {
-                  const first = seenEvents.values().next().value;
-                  if (first) seenEvents.delete(first);
+                if (data.sender === clientId) {
+                  rememberEventKey(String(data.clientEventId || id || ''));
+                  return;
                 }
-                if (data.sender === clientId) return;
                 applyLiveEvent({ id, ...data });
               });
             }, (err) => console.warn('live events snapshot failed', err));
         } catch (e) {
           console.warn('subscribeLiveEvents failed', e);
         }
+      }
+
+      window.__liveSync = window.__liveSync || {};
+      window.__liveSync.publishEvent = publishLiveEvent;
+      window.__liveSync.applyEvent = applyLiveEvent;
+
+      function getUsersMap() {
+        try { return new Map((state.users || []).map(u => [u.id, u])); } catch (_) { return new Map(); }
       }
 
       function patchAction(name, handler) {
@@ -3756,69 +3871,14 @@ function renderQuranPageControls() {
       }
 
       function patchAll() {
-        patchAction('incTasbeeh', (args, beforeUsers) => {
-          const amount = Number(args[0] || 0);
-          const user = selectedUserAfter();
-          const before = user ? beforeUsers.get(user.id) : null;
-          if (!user || !before) return;
-          const deltaTasbeeh = Number(user.tasbeeh || 0) - Number(before.tasbeeh || 0);
-          const deltaPoints = Number(user.totalPoints || 0) - Number(before.totalPoints || 0);
-          if (!deltaTasbeeh && !deltaPoints) return;
-          publishLiveEvent({ type: 'tasbeeh_delta', userId: user.id, delta: deltaTasbeeh, pointsDelta: deltaPoints, amount });
-        });
-
-        patchAction('resetTasbeehCount', (args, beforeUsers) => {
-          const user = selectedUserAfter();
-          const before = user ? beforeUsers.get(user.id) : null;
-          if (!user || !before) return;
-          if (Number(before.tasbeeh || 0) === Number(user.tasbeeh || 0)) return;
-          publishLiveEvent({ type: 'tasbeeh_reset', userId: user.id, previousTasbeeh: Number(before.tasbeeh || 0), currentTasbeeh: Number(user.tasbeeh || 0) });
-        });
-
-        patchAction('grantPrayer', (args, beforeUsers) => {
-          const prayerKey = args[0];
-          const user = selectedUserAfter();
-          const before = user ? beforeUsers.get(user.id) : null;
-          if (!user || !before) return;
-          const deltaPoints = Number(user.totalPoints || 0) - Number(before.totalPoints || 0);
-          if (!deltaPoints) return;
-          publishLiveEvent({ type: 'prayer_done', userId: user.id, prayerKey, dateKey: localDateKey(), pointsDelta: deltaPoints, pointsGranted: deltaPoints });
-        });
-
-        patchAction('saveCurrentQuranPage', (args, beforeUsers) => {
-          const user = selectedUserAfter();
-          const before = user ? beforeUsers.get(user.id) : null;
-          if (!user || !before) return;
-          const deltaPoints = Number(user.totalPoints || 0) - Number(before.totalPoints || 0);
-          const currentChanged = Number(user.currentQuranPage || 0) !== Number(before.currentQuranPage || 0);
-          if (!deltaPoints && !currentChanged) return;
-          publishLiveEvent({ type: 'points_delta', userId: user.id, pointsDelta: deltaPoints, currentQuranPage: Number(user.currentQuranPage || 1), totalPagesRead: Number(user.totalPagesRead || 0) });
-        });
-
-        patchAction('goToNextQuranPage', (args, beforeUsers) => {
-          const user = selectedUserAfter();
-          const before = user ? beforeUsers.get(user.id) : null;
-          if (!user || !before) return;
-          const deltaPoints = Number(user.totalPoints || 0) - Number(before.totalPoints || 0);
-          const totalPagesRead = Number(user.totalPagesRead || 0);
-          if (!deltaPoints && totalPagesRead === Number(before.totalPagesRead || 0)) return;
-          publishLiveEvent({ type: 'points_delta', userId: user.id, pointsDelta: deltaPoints, currentQuranPage: Number(user.currentQuranPage || 1), totalPagesRead });
-        });
-
-        patchAction('addPagesReading', (args, beforeUsers) => {
-          const user = selectedUserAfter();
-          const before = user ? beforeUsers.get(user.id) : null;
-          if (!user || !before) return;
-          const deltaPoints = Number(user.totalPoints || 0) - Number(before.totalPoints || 0);
-          const totalPagesRead = Number(user.totalPagesRead || 0);
-          if (!deltaPoints && totalPagesRead === Number(before.totalPagesRead || 0)) return;
-          publishLiveEvent({ type: 'points_delta', userId: user.id, pointsDelta: deltaPoints, currentQuranPage: Number(user.currentQuranPage || 1), totalPagesRead });
-        });
+        // تم الإبقاء على هذه الطبقة كاحتياط للتوسعات القادمة فقط.
+        // أحداث التسبيح تُنشر الآن مباشرة من الدوال الأصلية نفسها لمنع أي تأخير أو ازدواج.
       }
 
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => { subscribeLiveEvents(); patchAll(); });
+        document.addEventListener('DOMContentLoaded', () => { subscribeLocalEvents(); subscribeLiveEvents(); patchAll(); });
       } else {
+        subscribeLocalEvents();
         subscribeLiveEvents();
         patchAll();
       }
