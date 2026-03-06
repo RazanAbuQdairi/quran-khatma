@@ -1672,12 +1672,12 @@
       __saveTimer = setTimeout(flushStateNow, 140);
     }
 
-    // حفظ احتياطي دوري كل 20 ثانية حتى لا تضيع آخر التحديثات
+    // حفظ احتياطي دوري كل 10 ثوانٍ حتى لا تضيع آخر التحديثات
     setInterval(() => {
       if (document.visibilityState === 'hidden') return;
-      if (Date.now() - __lastFlushAt < 18000) return;
+      if (Date.now() - __lastFlushAt < 8000) return;
       flushStateNow();
-    }, 20000);
+    }, 10000);
 
     window.addEventListener('pagehide', flushStateNow);
     document.addEventListener('visibilitychange', () => {
