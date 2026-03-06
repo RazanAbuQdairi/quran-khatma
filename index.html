@@ -1675,7 +1675,7 @@
         flushStateNow();
         return;
       }
-      __saveTimer = setTimeout(flushStateNow, 140);
+      __saveTimer = setTimeout(flushStateNow, 25);
     }
 
     // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
@@ -3463,7 +3463,7 @@ function renderQuranPageControls() {
             bridge.applyRemoteState(incoming);
             lastCloudJson = incomingJson;
           } finally {
-            setTimeout(() => { applyingRemote = false; }, 120);
+            setTimeout(() => { applyingRemote = false; }, 40);
           }
         } catch (e) {
           console.warn('Cross-tab sync apply failed:', e);
@@ -3528,7 +3528,7 @@ function renderQuranPageControls() {
             } catch (e) {
               console.error('Firebase push failed:', e);
             }
-          }, options.immediate ? 0 : 60);
+          }, options.immediate ? 0 : 10);
         };
 
         docRef.onSnapshot((snap) => {
@@ -3576,7 +3576,7 @@ function renderQuranPageControls() {
             bridge.applyRemoteState(remoteNormalized);
             notifyOtherTabs(remoteNormalized);
           } finally {
-            setTimeout(() => { applyingRemote = false; }, 150);
+            setTimeout(() => { applyingRemote = false; }, 50);
           }
         }, (err) => {
           console.error('Firebase onSnapshot error:', err);
