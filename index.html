@@ -1650,9 +1650,9 @@
 
     let __saveTimer = null;
     let __lastFlushAt = 0;
+    let __dirtySinceFlush = false;
 
     function flushStateNow() {
-      try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
       __lastFlushAt = Date.now();
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
       try {
@@ -1662,10 +1662,12 @@
       } catch (e) {
         console.warn('Firebase sync push skipped:', e);
       }
+      __dirtySinceFlush = false;
     }
 
     function saveState(options = {}) {
-      // Mark local update time to protect against older cloud snapshots overwriting recent local changes
+      // لا نرفع __clientUpdatedAt إلا عند وجود تغيير محلي فعلي
+      __dirtySinceFlush = true;
       try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
 
       clearTimeout(__saveTimer);
@@ -1676,9 +1678,10 @@
       __saveTimer = setTimeout(flushStateNow, 140);
     }
 
-    // حفظ احتياطي دوري كل 10 ثوانٍ حتى لا تضيع آخر التحديثات
+    // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
     setInterval(() => {
       if (document.visibilityState === 'hidden') return;
+      if (!__dirtySinceFlush) return;
       if (Date.now() - __lastFlushAt < 8000) return;
       flushStateNow();
     }, 10000);
