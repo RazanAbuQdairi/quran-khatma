@@ -1664,11 +1664,15 @@
       }
     }
 
-    function saveState() {
+    function saveState(options = {}) {
       // Mark local update time to protect against older cloud snapshots overwriting recent local changes
       try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
 
       clearTimeout(__saveTimer);
+      if (options && options.immediate) {
+        flushStateNow();
+        return;
+      }
       __saveTimer = setTimeout(flushStateNow, 140);
     }
 
@@ -2217,7 +2221,7 @@
       user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
 
       addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
-      saveState();
+      saveState({ immediate: true });
       flash(document.getElementById('tasbeehBox'));
       render();
     }
@@ -3466,7 +3470,7 @@ function renderQuranPageControls() {
             } catch (e) {
               console.error('Firebase push failed:', e);
             }
-          }, options.immediate ? 0 : 350);
+          }, options.immediate ? 0 : 60);
         };
 
         docRef.onSnapshot((snap) => {
