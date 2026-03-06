@@ -1531,7 +1531,8 @@
         mushafPdfPath: 'mushaf.pdf'
       },
       selectedUserId: null,
-      users: []
+      users: [],
+      deletedUsers: {}
     };
 
     let state = loadState();
@@ -1619,7 +1620,8 @@
           ...structuredClone(defaultState),
           ...parsed,
           settings: { ...defaultState.settings, ...(parsed.settings || {}) },
-          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
+          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : [],
+          deletedUsers: (parsed.deletedUsers && typeof parsed.deletedUsers === 'object' && !Array.isArray(parsed.deletedUsers)) ? parsed.deletedUsers : {}
         };
         loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
         loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
@@ -2326,12 +2328,15 @@
       const ok = confirm(`هل أنتِ متأكدة من حذف المشاركة: ${user.name} ؟\nسيتم حذف نقاطه وبياناته.`);
       if (!ok) return;
 
+      const deletedAt = Date.now();
+      state.deletedUsers = (state.deletedUsers && typeof state.deletedUsers === 'object' && !Array.isArray(state.deletedUsers)) ? state.deletedUsers : {};
+      state.deletedUsers[user.id] = deletedAt;
       state.users = state.users.filter(u => u.id !== user.id);
       if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
       saveUnlockedUserId(null);
       if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
-      saveState();
+      saveState({ immediate: true });
       render();
     }
 
@@ -3559,7 +3564,8 @@ function renderQuranPageControls() {
             ...base,
             ...s,
             settings: { ...base.settings, ...(s.settings || {}) },
-            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
+            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : [],
+            deletedUsers: (s.deletedUsers && typeof s.deletedUsers === 'object' && !Array.isArray(s.deletedUsers)) ? s.deletedUsers : {}
           };
           // enforce fixed points if your app expects it
           out.settings.dailyPoints = 5;
@@ -3597,11 +3603,21 @@ function renderQuranPageControls() {
       function mergeStates(remoteState, localState){
         const remote = normalizeState(remoteState || {});
         const local = normalizeState(localState || {});
+
+        const deletedUsers = {};
+        [remote.deletedUsers || {}, local.deletedUsers || {}].forEach(map => {
+          Object.entries(map).forEach(([id, ts]) => {
+            const n = Number(ts || 0);
+            if (n > Number(deletedUsers[id] || 0)) deletedUsers[id] = n;
+          });
+        });
+
         const merged = {
           ...remote,
           ...local,
           settings: { ...remote.settings, ...local.settings },
           users: [],
+          deletedUsers,
           __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0))
         };
 
@@ -3611,8 +3627,14 @@ function renderQuranPageControls() {
         ]);
 
         merged.users = Array.from(ids).map(id => {
+          const deletedAt = Number(deletedUsers[id] || 0);
           const remoteUser = (remote.users || []).find(u => u.id === id);
           const localUser = (local.users || []).find(u => u.id === id);
+          const latestUserTs = Math.max(
+            Number(remoteUser && remoteUser._updatedAt || 0),
+            Number(localUser && localUser._updatedAt || 0)
+          );
+          if (deletedAt && deletedAt >= latestUserTs) return null;
           return mergeUserRecords(remoteUser, localUser);
         }).filter(Boolean);
 
