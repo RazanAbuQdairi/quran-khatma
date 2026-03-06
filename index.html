@@ -1691,12 +1691,6 @@
       __lastFlushAt = Date.now();
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
       try {
-        localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
-          savedAt: new Date().toISOString(),
-          state: JSON.parse(JSON.stringify(state))
-        }));
-      } catch (_) {}
-      try {
         if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
           window.__firebaseSync.pushState(state, { immediate: true });
         }
@@ -1734,12 +1728,9 @@
     }, 10000);
 
     window.addEventListener('pagehide', flushStateNow);
-    window.addEventListener('beforeunload', flushStateNow);
-    window.addEventListener('blur', () => { if (__dirtySinceFlush) flushStateNow(); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') flushStateNow();
     });
-    document.addEventListener('freeze', flushStateNow);
 
     function cryptoRandomId() {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -2011,7 +2002,7 @@
 
     function saveMushafPathAndRefresh() {
       state.settings.mushafPdfPath = normalizeMushafPath(mushafPdfPathInput.value);
-      saveState({ immediate: true });
+      saveState();
       syncMushafToSelectedUser();
     }
 
@@ -2037,7 +2028,7 @@
       }
 
       addHistory(user, 'prev_quran_page_nav', { fromPage, toPage, removedPages, removedPoints });
-      saveState({ immediate: true });
+      saveState();
       render();
       loadMushafAtPage(toPage, { silent: true });
     }
@@ -2110,6 +2101,7 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
       if (!PRAYER_ORDER.includes(prayerKey)) return;
 
+      touchUser(user);
       ensurePrayerTracking(user);
       const today = localDateKey();
       const todayPrayers = getPrayerStateForDate(user, today);
@@ -2151,6 +2143,23 @@
       const prayerBtnMap = { fajr: prayerFajrBtn, dhuhr: prayerDhuhrBtn, asr: prayerAsrBtn, maghrib: prayerMaghribBtn, isha: prayerIshaBtn };
       flash(prayerBtnMap[prayerKey]);
       render();
+
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'prayer_toggle',
+            userId: user.id,
+            prayerKey,
+            prayerName: PRAYER_LABELS[prayerKey],
+            dateKey: today,
+            isDone: !!todayPrayers[prayerKey],
+            prayersCount: Number(user.prayersCount || 0),
+            totalPoints: Number(user.totalPoints || 0),
+            dayState: { ...todayPrayers },
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
     }
 
     // تم استبدال هذه الميزة بالصلوات الخمس (الإبقاء على الدالة للتوافق مع النسخ السابقة)
@@ -2159,6 +2168,7 @@
     }
 
     function applyPageReading(user, wholePages, historyType = 'read_pages') {
+      touchUser(user);
       const pages = Math.max(0, Math.floor(Number(wholePages || 0)));
       if (!pages) return { pages: 0, gained: 0, fromPage: clampQuranPage(user.currentQuranPage || 1), toPage: clampQuranPage(user.currentQuranPage || 1), completedKhatmas: 0 };
 
@@ -2189,6 +2199,21 @@
       render();
       syncMushafToSelectedUser({ silent: true });
 
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'page_progress',
+            userId: user.id,
+            pagesDelta: 1,
+            actionLabel: 'read_next_page',
+            totalPages: Number(user.totalPages || 0),
+            currentQuranPage: Number(user.currentQuranPage || 1),
+            totalPoints: Number(user.totalPoints || 0),
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
+
       if (result.completedKhatmas > 0) {
         alert('ما شاء الله 🌟 تم إكمال ختمة كاملة! تم البدء من الصفحة 1 تلقائيًا.');
       }
@@ -2203,12 +2228,28 @@
         return alert('أدخلي رقم صفحة صحيح من 1 إلى 604.');
       }
 
+      touchUser(user);
       user.currentQuranPage = clampQuranPage(v);
       addHistory(user, 'set_current_page', { page: user.currentQuranPage });
       saveState({ immediate: true });
       flash(saveCurrentPageBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
+
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'page_progress',
+            userId: user.id,
+            pagesDelta: 0,
+            actionLabel: 'set_current_page',
+            totalPages: Number(user.totalPages || 0),
+            currentQuranPage: Number(user.currentQuranPage || 1),
+            totalPoints: Number(user.totalPoints || 0),
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
     }
 
     function addPagesReading() {
@@ -2227,6 +2268,21 @@
       flash(addPagesBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
+
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'page_progress',
+            userId: user.id,
+            pagesDelta: wholePages,
+            actionLabel: 'read_pages',
+            totalPages: Number(user.totalPages || 0),
+            currentQuranPage: Number(user.currentQuranPage || 1),
+            totalPoints: Number(user.totalPoints || 0),
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
 
       if (result.completedKhatmas > 0) {
         alert(`ما شاء الله 🌟 تم إكمال ${formatNum(result.completedKhatmas)} ختمة أثناء إضافة الصفحات.`);
@@ -2247,7 +2303,7 @@
 
       user.name = clean;
       addHistory(user, 'rename_user', { newName: clean });
-      saveState({ immediate: true });
+      saveState();
       render();
     }
 
@@ -2395,7 +2451,7 @@
       saveUnlockedUserId(null);
       if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
-      saveState({ immediate: true });
+      saveState();
       render();
     }
 
@@ -2403,7 +2459,7 @@
       state.settings.dailyPoints = 5; // ثابت لكل صلاة
       state.settings.pagePoints = 5; // ثابت لكل صفحة
       if (dailyPointsInput) dailyPointsInput.value = '5';
-      saveState({ immediate: true });
+      saveState();
       renderTodayStatus();
       updatePrayerTodayHeading();
     }
@@ -3205,6 +3261,7 @@ function renderQuranPageControls() {
         }, duration);
       }
       window.__appToast = showToast;
+      window.showToast = showToast;
 
       // Confetti
       function confettiBurst(count=18, emoji='🎉'){
@@ -4011,6 +4068,43 @@ function renderQuranPageControls() {
         return String((event && (event.clientEventId || event.id || event.eventId)) || '');
       }
 
+      function formatLiveEventMessage(user, event) {
+        try {
+          const name = String((user && user.name) || 'المشاركة');
+          if (event.type === 'prayer_toggle' && event.prayerKey) {
+            const prayerName = event.prayerName || (typeof PRAYER_LABELS !== 'undefined' ? PRAYER_LABELS[event.prayerKey] : event.prayerKey);
+            return event.isDone
+              ? `🕌 ${name} صلّت ${prayerName}`
+              : `↩️ ${name} أزالت صلاة ${prayerName}`;
+          }
+          if (event.type === 'page_progress') {
+            const pagesDelta = Math.max(0, Number(event.pagesDelta || 0));
+            if (pagesDelta > 0) {
+              return pagesDelta === 1
+                ? `📖 ${name} قرأت صفحة قرآن`
+                : `📖 ${name} قرأت ${toHindiDigits(String(pagesDelta))} صفحات قرآن`;
+            }
+            if (Number.isFinite(Number(event.currentQuranPage))) {
+              return `📍 ${name} أصبحت عند صفحة ${toHindiDigits(String(event.currentQuranPage))}`;
+            }
+          }
+          if (event.type === 'tasbeeh_delta') {
+            return `📿 ${name} زاد تسبيحها`;
+          }
+          return '';
+        } catch (_) { return ''; }
+      }
+
+      function showLiveEventToast(user, event) {
+        try {
+          const msg = formatLiveEventMessage(user, event);
+          if (!msg) return;
+          if (typeof window.showToast === 'function') {
+            window.showToast(msg, 'success', 2200);
+          }
+        } catch (_) {}
+      }
+
       function applyLiveEvent(event) {
         try {
           if (!event || !event.type || !event.userId) return;
@@ -4083,6 +4177,50 @@ function renderQuranPageControls() {
               user.totalPoints = nextPoints;
               changed = true;
             }
+          } else if (event.type === 'prayer_toggle' && event.prayerKey && event.dateKey) {
+            ensurePrayerTracking(user);
+            const current = getPrayerStateForDate(user, event.dateKey);
+            const incomingDayState = (event.dayState && typeof event.dayState === 'object') ? event.dayState : null;
+            const nextValue = !!event.isDone;
+            if (!!current[event.prayerKey] !== nextValue) {
+              current[event.prayerKey] = nextValue;
+              changed = true;
+            }
+            if (incomingDayState) {
+              const normalized = {
+                fajr: !!incomingDayState.fajr,
+                dhuhr: !!incomingDayState.dhuhr,
+                asr: !!incomingDayState.asr,
+                maghrib: !!incomingDayState.maghrib,
+                isha: !!incomingDayState.isha
+              };
+              if (JSON.stringify(current) !== JSON.stringify(normalized)) {
+                Object.assign(current, normalized);
+                changed = true;
+              }
+            }
+            user.prayersByDate[event.dateKey] = current;
+            if (Number.isFinite(Number(event.prayersCount)) && Number(event.prayersCount) !== Number(user.prayersCount || 0)) {
+              user.prayersCount = Math.max(0, Number(event.prayersCount || 0));
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
+              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
+              changed = true;
+            }
+          } else if (event.type === 'page_progress') {
+            if (Number.isFinite(Number(event.totalPages)) && Number(event.totalPages) !== Number(user.totalPages || 0)) {
+              user.totalPages = Math.max(0, Number(event.totalPages || 0));
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.currentQuranPage)) && Number(event.currentQuranPage) !== Number(user.currentQuranPage || 0)) {
+              user.currentQuranPage = clampQuranPage(Number(event.currentQuranPage || 1));
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
+              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
+              changed = true;
+            }
           }
 
           if (!changed) return;
@@ -4091,6 +4229,7 @@ function renderQuranPageControls() {
           try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
           try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
           try { if (typeof render === 'function') render(); } catch (_) {}
+          try { showLiveEventToast(user, event); } catch (_) {}
         } catch (e) {
           console.warn('applyLiveEvent failed', e);
         }
@@ -4119,10 +4258,11 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          db.collection('shared_state').doc('quran_khatma_main').collection('live_events').add({
+          db.collection('shared_state').doc('quran_khatma_main').collection('live_events').doc(String(event.clientEventId)).set({
             ...event,
+            createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          }).catch((e) => console.warn('live event publish failed', e));
+          }, { merge: true }).catch((e) => console.warn('live event publish failed', e));
         } catch (e) {
           console.warn('live event publish setup failed', e);
         }
@@ -4158,8 +4298,8 @@ function renderQuranPageControls() {
           if (!db || window.__liveEventsSubscribed) return;
           window.__liveEventsSubscribed = true;
           db.collection('shared_state').doc('quran_khatma_main').collection('live_events')
-            .orderBy('createdAt', 'desc')
-            .limit(80)
+            .orderBy('createdAtClient', 'desc')
+            .limit(120)
             .onSnapshot((snap) => {
               const docs = snap.docChanges().slice().reverse();
               docs.forEach((change) => {
