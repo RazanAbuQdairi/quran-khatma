@@ -1188,8 +1188,8 @@
 
   /* زر للمشرف - أوضح وأجمل */
   .leaderboard-admin-actions{display:flex;justify-content:center;align-items:center;margin:14px 0 10px;}
-.leaderboard-zero-all-btn{font-size:1.12rem !important;font-weight:800 !important;padding:16px 28px !important;min-width:min(100%,360px);border-radius:18px !important;box-shadow:0 12px 24px rgba(220,38,38,.18);}
-.leaderboard-zero-all-btn:hover{transform:translateY(-1px);}
+.leaderboard-zero-all-btn,.leaderboard-delete-user-btn{font-size:1.12rem !important;font-weight:800 !important;padding:16px 28px !important;min-width:min(100%,360px);border-radius:18px !important;box-shadow:0 12px 24px rgba(220,38,38,.18);}
+.leaderboard-zero-all-btn:hover,.leaderboard-delete-user-btn:hover{transform:translateY(-1px);}
 #adminMasterBtn, #adminToolsBtn {
     font-size: .96rem !important;
     min-height: 42px !important;
@@ -1475,8 +1475,9 @@
           <h2>🏆 لوحة الصدارة والترتيب</h2>
           <p class="sub">الترتيب بحسب المجموع الكلي للنقاط (ثم عدد الصفحات).</p>
           <div id="participantsCountBadge" class="tag" style="position:absolute; top:14px; left:14px; margin:0; display:inline-flex; align-items:center; gap:6px; font-size:.88rem; padding:6px 10px; z-index:2;">👥 عدد المشاركات: 0</div>
-          <div class="leaderboard-admin-actions">
+          <div class="leaderboard-admin-actions" style="gap:10px; flex-wrap:wrap;">
             <button class="btn danger leaderboard-zero-all-btn" id="leaderboardZeroAllBtn" style="display:none;">🔴 تصفير كل النقاط</button>
+            <button class="btn danger leaderboard-delete-user-btn" id="leaderboardDeleteUserBtn" style="display:none;">🗑️ حذف المشاركة نهائيًا</button>
           </div>
 
           <div id="leaderboardWrap" class="table-wrap"></div>
@@ -1531,8 +1532,7 @@
         mushafPdfPath: 'mushaf.pdf'
       },
       selectedUserId: null,
-      users: [],
-      deletedUsers: {}
+      users: []
     };
 
     let state = loadState();
@@ -1562,6 +1562,7 @@
     const zeroPointsBtn = document.getElementById('zeroPointsBtn');
     const zeroAllPointsBtn = document.getElementById('zeroAllPointsBtn');
     const leaderboardZeroAllBtn = document.getElementById('leaderboardZeroAllBtn');
+    const leaderboardDeleteUserBtn = document.getElementById('leaderboardDeleteUserBtn');
     const deleteBtn = document.getElementById('deleteBtn');
     const todayStatus = document.getElementById('todayStatus');
     const tasbeehName = document.getElementById('tasbeehName');
@@ -1620,8 +1621,7 @@
           ...structuredClone(defaultState),
           ...parsed,
           settings: { ...defaultState.settings, ...(parsed.settings || {}) },
-          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : [],
-          deletedUsers: (parsed.deletedUsers && typeof parsed.deletedUsers === 'object' && !Array.isArray(parsed.deletedUsers)) ? parsed.deletedUsers : {}
+          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
         };
         loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
         loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
@@ -2328,15 +2328,12 @@
       const ok = confirm(`هل أنتِ متأكدة من حذف المشاركة: ${user.name} ؟\nسيتم حذف نقاطه وبياناته.`);
       if (!ok) return;
 
-      const deletedAt = Date.now();
-      state.deletedUsers = (state.deletedUsers && typeof state.deletedUsers === 'object' && !Array.isArray(state.deletedUsers)) ? state.deletedUsers : {};
-      state.deletedUsers[user.id] = deletedAt;
       state.users = state.users.filter(u => u.id !== user.id);
       if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
       saveUnlockedUserId(null);
       if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
-      saveState({ immediate: true });
+      saveState();
       render();
     }
 
@@ -2908,7 +2905,7 @@ function renderQuranPageControls() {
       });
 
       // أزرار تعدّل بيانات المشاركة (محمية بكلمة المرور)
-      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
+      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, leaderboardDeleteUserBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
         if (!btn) return;
         const canUse = hasUsers && unlocked;
         btn.disabled = !canUse;
@@ -3016,6 +3013,7 @@ function renderQuranPageControls() {
     zeroPointsBtn?.addEventListener('click', zeroSelectedUserPoints);
     leaderboardZeroAllBtn?.addEventListener('click', zeroAllUsersPoints);
     zeroAllPointsBtn?.addEventListener('click', zeroAllUsersPoints);
+    leaderboardDeleteUserBtn?.addEventListener('click', deleteSelectedUser);
     deleteBtn.addEventListener('click', deleteSelectedUser);
 
     tasbeehPlus1.addEventListener('click', () => incTasbeeh(1));
@@ -3404,6 +3402,7 @@ function renderQuranPageControls() {
       add(document.getElementById('zeroPointsBtn'), 'block');
       add(document.getElementById('zeroAllPointsBtn'), 'block');
       add(document.getElementById('leaderboardZeroAllBtn'), 'block');
+      add(document.getElementById('leaderboardDeleteUserBtn'), 'block');
 
       // أزرار تسبيح إضافية
       add(document.getElementById('tasbeehPlus33'), 'block');
@@ -3564,8 +3563,7 @@ function renderQuranPageControls() {
             ...base,
             ...s,
             settings: { ...base.settings, ...(s.settings || {}) },
-            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : [],
-            deletedUsers: (s.deletedUsers && typeof s.deletedUsers === 'object' && !Array.isArray(s.deletedUsers)) ? s.deletedUsers : {}
+            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
           };
           // enforce fixed points if your app expects it
           out.settings.dailyPoints = 5;
@@ -3603,21 +3601,11 @@ function renderQuranPageControls() {
       function mergeStates(remoteState, localState){
         const remote = normalizeState(remoteState || {});
         const local = normalizeState(localState || {});
-
-        const deletedUsers = {};
-        [remote.deletedUsers || {}, local.deletedUsers || {}].forEach(map => {
-          Object.entries(map).forEach(([id, ts]) => {
-            const n = Number(ts || 0);
-            if (n > Number(deletedUsers[id] || 0)) deletedUsers[id] = n;
-          });
-        });
-
         const merged = {
           ...remote,
           ...local,
           settings: { ...remote.settings, ...local.settings },
           users: [],
-          deletedUsers,
           __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0))
         };
 
@@ -3627,14 +3615,8 @@ function renderQuranPageControls() {
         ]);
 
         merged.users = Array.from(ids).map(id => {
-          const deletedAt = Number(deletedUsers[id] || 0);
           const remoteUser = (remote.users || []).find(u => u.id === id);
           const localUser = (local.users || []).find(u => u.id === id);
-          const latestUserTs = Math.max(
-            Number(remoteUser && remoteUser._updatedAt || 0),
-            Number(localUser && localUser._updatedAt || 0)
-          );
-          if (deletedAt && deletedAt >= latestUserTs) return null;
           return mergeUserRecords(remoteUser, localUser);
         }).filter(Boolean);
 
