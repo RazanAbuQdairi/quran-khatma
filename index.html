@@ -1421,7 +1421,6 @@
               <button class="btn warn" id="zeroPointsBtn" style="display:none;">🟡 تصفير بيانات المشتركة</button>
               <button class="btn warn" id="zeroAllPointsBtn" style="display:none;">🟠 تصفير بيانات جميع المشتركات</button>
               <button class="btn danger" id="deleteBtn">🗑️ حذف المشارك</button>
-              <button class="btn danger" id="deletePermanentBtn">⛔ حذف المشترك نهائي</button>
             </div>
 
             <div class="small" id="todayStatus" style="display:none;"></div>
@@ -1563,7 +1562,6 @@
     const zeroAllPointsBtn = document.getElementById('zeroAllPointsBtn');
     const leaderboardZeroAllBtn = document.getElementById('leaderboardZeroAllBtn');
     const deleteBtn = document.getElementById('deleteBtn');
-    const deletePermanentBtn = document.getElementById('deletePermanentBtn');
     const todayStatus = document.getElementById('todayStatus');
     const tasbeehName = document.getElementById('tasbeehName');
     const tasbeehCount = document.getElementById('tasbeehCount');
@@ -2233,7 +2231,7 @@
       if (!user) return null;
 
       const snapshot = {
-        previousPoints: Math.max(0, Number(user.totalPoints || 0)),
+        previousPoints: Math.max(0, Number(user.totalPoints || user.total || user.points || 0)),
         previousTasbeeh: Math.max(0, Number(user.tasbeeh || 0)),
         previousPages: Math.max(0, Math.floor(Number(user.totalPages || 0))),
         previousCurrentPage: clampQuranPage(Number(user.currentQuranPage || 1)),
@@ -2241,8 +2239,11 @@
       };
 
       user.totalPoints = 0;
+      user.total = 0;
+      user.points = 0;
       user.tasbeeh = 0;
       user.totalPages = 0;
+      user.totalPagesRead = 0;
       user.currentQuranPage = 1;
       user.prayersCount = 0;
       user.prayersByDate = {};
@@ -2272,7 +2273,7 @@
       }
 
       const ok = confirm(`هل تريدين تصفير بيانات المشاركة: ${user.name} ؟
-سيتم تصفير النقاط والتسبيح والصلاوات والاستغفار والصفحات وإرجاعها إلى 0.`);
+سيتم تصفير النقاط والمجموع والتسبيح والصلاوات والاستغفار والصفحات وإرجاعها إلى 0.`);
       if (!ok) return;
 
       const snapshot = resetUserProgress(user);
@@ -2300,7 +2301,7 @@
 
       const ok = confirm(`هل تريدين تصفير بيانات جميع المشتركات؟
 العدد المتأثر: ${affectedUsers.length}
-سيتم تصفير النقاط والتسبيح والصلاوات والاستغفار والصفحات وإرجاع الجميع إلى 0.`);
+سيتم تصفير النقاط والمجموع والتسبيح والصلاوات والاستغفار والصفحات وإرجاع الجميع إلى 0.`);
       if (!ok) return;
 
       affectedUsers.forEach(user => {
@@ -2326,23 +2327,6 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
 
       const ok = confirm(`هل أنتِ متأكدة من حذف المشاركة: ${user.name} ؟\nسيتم حذف نقاطه وبياناته.`);
-      if (!ok) return;
-
-      state.users = state.users.filter(u => u.id !== user.id);
-      if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
-      saveUnlockedUserId(null);
-      if (!state.users.length) state.selectedUserId = null;
-      else state.selectedUserId = state.users[0].id;
-      saveState();
-      render();
-    }
-
-    function deleteSelectedUserPermanent() {
-      const user = getSelectedUser();
-      if (!user) return alert('اختاري مشاركة أولًا.');
-
-      const ok = confirm(`هل أنتِ متأكدة من حذف المشترك نهائي: ${user.name} ؟
-سيتم حذف الاسم وكل البيانات نهائيًا من المسابقة.`);
       if (!ok) return;
 
       state.users = state.users.filter(u => u.id !== user.id);
@@ -2922,7 +2906,7 @@ function renderQuranPageControls() {
       });
 
       // أزرار تعدّل بيانات المشاركة (محمية بكلمة المرور)
-      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, deleteBtn, deletePermanentBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
+      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
         if (!btn) return;
         const canUse = hasUsers && unlocked;
         btn.disabled = !canUse;
@@ -3031,7 +3015,6 @@ function renderQuranPageControls() {
     leaderboardZeroAllBtn?.addEventListener('click', zeroAllUsersPoints);
     zeroAllPointsBtn?.addEventListener('click', zeroAllUsersPoints);
     deleteBtn.addEventListener('click', deleteSelectedUser);
-    deletePermanentBtn?.addEventListener('click', deleteSelectedUserPermanent);
 
     tasbeehPlus1.addEventListener('click', () => incTasbeeh(1));
     tasbeehPlus33.addEventListener('click', () => incTasbeeh(33));
