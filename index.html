@@ -1650,8 +1650,11 @@
     }
 
     let __saveTimer = null;
+    let __lastFlushAt = 0;
 
     function flushStateNow() {
+      try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
+      __lastFlushAt = Date.now();
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
       try {
         if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
@@ -1669,6 +1672,13 @@
       clearTimeout(__saveTimer);
       __saveTimer = setTimeout(flushStateNow, 140);
     }
+
+    // حفظ احتياطي دوري كل 20 ثانية حتى لا تضيع آخر التحديثات
+    setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      if (Date.now() - __lastFlushAt < 18000) return;
+      flushStateNow();
+    }, 20000);
 
     window.addEventListener('pagehide', flushStateNow);
     document.addEventListener('visibilitychange', () => {
