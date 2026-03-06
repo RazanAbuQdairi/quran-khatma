@@ -1670,12 +1670,18 @@
       __dirtySinceFlush = true;
       try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
 
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.broadcastLocal === 'function') {
+          window.__firebaseSync.broadcastLocal(state);
+        }
+      } catch (_) {}
+
       clearTimeout(__saveTimer);
       if (options && options.immediate) {
         flushStateNow();
         return;
       }
-      __saveTimer = setTimeout(flushStateNow, 25);
+      __saveTimer = setTimeout(flushStateNow, 10);
     }
 
     // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
@@ -3463,7 +3469,7 @@ function renderQuranPageControls() {
             bridge.applyRemoteState(incoming);
             lastCloudJson = incomingJson;
           } finally {
-            setTimeout(() => { applyingRemote = false; }, 40);
+            setTimeout(() => { applyingRemote = false; }, 10);
           }
         } catch (e) {
           console.warn('Cross-tab sync apply failed:', e);
@@ -3494,6 +3500,13 @@ function renderQuranPageControls() {
         });
 
         window.__firebaseSync = window.__firebaseSync || {};
+        window.__firebaseSync.broadcastLocal = function (stateObj) {
+          try {
+            const bridge = getBridge();
+            if (!bridge) return;
+            notifyOtherTabs(bridge.normalizeState(stateObj));
+          } catch (_) {}
+        };
         window.__firebaseSync.pushState = function (stateObj, options = {}) {
           if (!ready || applyingRemote) return;
           const bridge = getBridge();
@@ -3576,7 +3589,7 @@ function renderQuranPageControls() {
             bridge.applyRemoteState(remoteNormalized);
             notifyOtherTabs(remoteNormalized);
           } finally {
-            setTimeout(() => { applyingRemote = false; }, 50);
+            setTimeout(() => { applyingRemote = false; }, 10);
           }
         }, (err) => {
           console.error('Firebase onSnapshot error:', err);
