@@ -1691,6 +1691,12 @@
       __lastFlushAt = Date.now();
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
       try {
+        localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
+          savedAt: new Date().toISOString(),
+          state: JSON.parse(JSON.stringify(state))
+        }));
+      } catch (_) {}
+      try {
         if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
           window.__firebaseSync.pushState(state, { immediate: true });
         }
@@ -1728,9 +1734,12 @@
     }, 10000);
 
     window.addEventListener('pagehide', flushStateNow);
+    window.addEventListener('beforeunload', flushStateNow);
+    window.addEventListener('blur', () => { if (__dirtySinceFlush) flushStateNow(); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') flushStateNow();
     });
+    document.addEventListener('freeze', flushStateNow);
 
     function cryptoRandomId() {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -2002,7 +2011,7 @@
 
     function saveMushafPathAndRefresh() {
       state.settings.mushafPdfPath = normalizeMushafPath(mushafPdfPathInput.value);
-      saveState();
+      saveState({ immediate: true });
       syncMushafToSelectedUser();
     }
 
@@ -2028,7 +2037,7 @@
       }
 
       addHistory(user, 'prev_quran_page_nav', { fromPage, toPage, removedPages, removedPoints });
-      saveState();
+      saveState({ immediate: true });
       render();
       loadMushafAtPage(toPage, { silent: true });
     }
@@ -2138,7 +2147,7 @@
         });
       }
 
-      saveState();
+      saveState({ immediate: true });
       const prayerBtnMap = { fajr: prayerFajrBtn, dhuhr: prayerDhuhrBtn, asr: prayerAsrBtn, maghrib: prayerMaghribBtn, isha: prayerIshaBtn };
       flash(prayerBtnMap[prayerKey]);
       render();
@@ -2175,7 +2184,7 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
 
       const result = applyPageReading(user, 1, 'next_quran_page');
-      saveState();
+      saveState({ immediate: true });
       flash(nextQuranPageBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
@@ -2196,7 +2205,7 @@
 
       user.currentQuranPage = clampQuranPage(v);
       addHistory(user, 'set_current_page', { page: user.currentQuranPage });
-      saveState();
+      saveState({ immediate: true });
       flash(saveCurrentPageBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
@@ -2214,7 +2223,7 @@
       const wholePages = Math.floor(pages);
       const result = applyPageReading(user, wholePages, 'read_pages');
 
-      saveState();
+      saveState({ immediate: true });
       flash(addPagesBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
@@ -2238,7 +2247,7 @@
 
       user.name = clean;
       addHistory(user, 'rename_user', { newName: clean });
-      saveState();
+      saveState({ immediate: true });
       render();
     }
 
@@ -2386,7 +2395,7 @@
       saveUnlockedUserId(null);
       if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
-      saveState();
+      saveState({ immediate: true });
       render();
     }
 
@@ -2394,7 +2403,7 @@
       state.settings.dailyPoints = 5; // ثابت لكل صلاة
       state.settings.pagePoints = 5; // ثابت لكل صفحة
       if (dailyPointsInput) dailyPointsInput.value = '5';
-      saveState();
+      saveState({ immediate: true });
       renderTodayStatus();
       updatePrayerTodayHeading();
     }
