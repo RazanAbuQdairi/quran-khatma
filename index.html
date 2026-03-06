@@ -1514,7 +1514,7 @@
       settings: {
         dailyPoints: 5,
         pagePoints: 5,
-        mushafPdfPath: 'mushaf-pages'
+        mushafPdfPath: 'mushaf.pdf'
       },
       selectedUserId: null,
       users: []
@@ -1603,8 +1603,7 @@
         };
         loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
         loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
-        if (/\.pdf$/i.test(String(loaded.settings.mushafPdfPath || ''))) loaded.settings.mushafPdfPath = 'mushaf-pages';
-        return loaded;
+                return loaded;
       } catch (e) {
         console.error('Failed to load state:', e);
         return structuredClone(defaultState);
@@ -3382,6 +3381,7 @@ function renderQuranPageControls() {
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script id="firebaseSharedSyncScript">
     (function () {
+      // Using the same Firebase config and shared document as the uploaded v81 file
       const firebaseConfig = {
         apiKey: "AIzaSyAsam8wactjTxuGrHmzXyrbTkIFymZ7CMU",
         authDomain: "quran-khatma-live.firebaseapp.com",
