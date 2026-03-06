@@ -1188,8 +1188,8 @@
 
   /* زر للمشرف - أوضح وأجمل */
   .leaderboard-admin-actions{display:flex;justify-content:center;align-items:center;margin:14px 0 10px;}
-.leaderboard-zero-all-btn,.leaderboard-delete-user-btn{font-size:1.12rem !important;font-weight:800 !important;padding:16px 28px !important;min-width:min(100%,360px);border-radius:18px !important;box-shadow:0 12px 24px rgba(220,38,38,.18);}
-.leaderboard-zero-all-btn:hover,.leaderboard-delete-user-btn:hover{transform:translateY(-1px);}
+.leaderboard-zero-all-btn{font-size:1.12rem !important;font-weight:800 !important;padding:16px 28px !important;min-width:min(100%,360px);border-radius:18px !important;box-shadow:0 12px 24px rgba(220,38,38,.18);}
+.leaderboard-zero-all-btn:hover{transform:translateY(-1px);}
 #adminMasterBtn, #adminToolsBtn {
     font-size: .96rem !important;
     min-height: 42px !important;
@@ -1421,6 +1421,7 @@
               <button class="btn warn" id="zeroPointsBtn" style="display:none;">🟡 تصفير بيانات المشتركة</button>
               <button class="btn warn" id="zeroAllPointsBtn" style="display:none;">🟠 تصفير بيانات جميع المشتركات</button>
               <button class="btn danger" id="deleteBtn">🗑️ حذف المشارك</button>
+              <button class="btn danger" id="deletePermanentBtn">⛔ حذف المشترك نهائي</button>
             </div>
 
             <div class="small" id="todayStatus" style="display:none;"></div>
@@ -1475,9 +1476,8 @@
           <h2>🏆 لوحة الصدارة والترتيب</h2>
           <p class="sub">الترتيب بحسب المجموع الكلي للنقاط (ثم عدد الصفحات).</p>
           <div id="participantsCountBadge" class="tag" style="position:absolute; top:14px; left:14px; margin:0; display:inline-flex; align-items:center; gap:6px; font-size:.88rem; padding:6px 10px; z-index:2;">👥 عدد المشاركات: 0</div>
-          <div class="leaderboard-admin-actions" style="gap:10px; flex-wrap:wrap;">
+          <div class="leaderboard-admin-actions">
             <button class="btn danger leaderboard-zero-all-btn" id="leaderboardZeroAllBtn" style="display:none;">🔴 تصفير كل النقاط</button>
-            <button class="btn danger leaderboard-delete-user-btn" id="leaderboardDeleteUserBtn" style="display:none;">🗑️ حذف المشاركة نهائيًا</button>
           </div>
 
           <div id="leaderboardWrap" class="table-wrap"></div>
@@ -1562,8 +1562,8 @@
     const zeroPointsBtn = document.getElementById('zeroPointsBtn');
     const zeroAllPointsBtn = document.getElementById('zeroAllPointsBtn');
     const leaderboardZeroAllBtn = document.getElementById('leaderboardZeroAllBtn');
-    const leaderboardDeleteUserBtn = document.getElementById('leaderboardDeleteUserBtn');
     const deleteBtn = document.getElementById('deleteBtn');
+    const deletePermanentBtn = document.getElementById('deletePermanentBtn');
     const todayStatus = document.getElementById('todayStatus');
     const tasbeehName = document.getElementById('tasbeehName');
     const tasbeehCount = document.getElementById('tasbeehCount');
@@ -2337,6 +2337,23 @@
       render();
     }
 
+    function deleteSelectedUserPermanent() {
+      const user = getSelectedUser();
+      if (!user) return alert('اختاري مشاركة أولًا.');
+
+      const ok = confirm(`هل أنتِ متأكدة من حذف المشترك نهائي: ${user.name} ؟
+سيتم حذف الاسم وكل البيانات نهائيًا من المسابقة.`);
+      if (!ok) return;
+
+      state.users = state.users.filter(u => u.id !== user.id);
+      if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
+      saveUnlockedUserId(null);
+      if (!state.users.length) state.selectedUserId = null;
+      else state.selectedUserId = state.users[0].id;
+      saveState();
+      render();
+    }
+
     function updateSettingsFromInputs() {
       state.settings.dailyPoints = 5; // ثابت لكل صلاة
       state.settings.pagePoints = 5; // ثابت لكل صفحة
@@ -2905,7 +2922,7 @@ function renderQuranPageControls() {
       });
 
       // أزرار تعدّل بيانات المشاركة (محمية بكلمة المرور)
-      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, leaderboardDeleteUserBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
+      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, deleteBtn, deletePermanentBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
         if (!btn) return;
         const canUse = hasUsers && unlocked;
         btn.disabled = !canUse;
@@ -3013,8 +3030,8 @@ function renderQuranPageControls() {
     zeroPointsBtn?.addEventListener('click', zeroSelectedUserPoints);
     leaderboardZeroAllBtn?.addEventListener('click', zeroAllUsersPoints);
     zeroAllPointsBtn?.addEventListener('click', zeroAllUsersPoints);
-    leaderboardDeleteUserBtn?.addEventListener('click', deleteSelectedUser);
     deleteBtn.addEventListener('click', deleteSelectedUser);
+    deletePermanentBtn?.addEventListener('click', deleteSelectedUserPermanent);
 
     tasbeehPlus1.addEventListener('click', () => incTasbeeh(1));
     tasbeehPlus33.addEventListener('click', () => incTasbeeh(33));
@@ -3402,7 +3419,6 @@ function renderQuranPageControls() {
       add(document.getElementById('zeroPointsBtn'), 'block');
       add(document.getElementById('zeroAllPointsBtn'), 'block');
       add(document.getElementById('leaderboardZeroAllBtn'), 'block');
-      add(document.getElementById('leaderboardDeleteUserBtn'), 'block');
 
       // أزرار تسبيح إضافية
       add(document.getElementById('tasbeehPlus33'), 'block');
