@@ -60605,10 +60605,50 @@
       return null;
     }
 
+    const HARD_RESET_MARKER_KEY = STORAGE_KEY + '::hard_reset_marker_v1';
+
+    function readHardResetMarker() {
+      try { return Number(localStorage.getItem(HARD_RESET_MARKER_KEY) || 0) || 0; } catch (_) { return 0; }
+    }
+
+    function writeHardResetMarker(ts) {
+      const value = Number(ts || Date.now()) || Date.now();
+      try { localStorage.setItem(HARD_RESET_MARKER_KEY, String(value)); } catch (_) {}
+      try { sessionStorage.setItem(HARD_RESET_MARKER_KEY, String(value)); } catch (_) {}
+      return value;
+    }
+
+    function clearStoredAppState() {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+      try { localStorage.removeItem(BACKUP_STORAGE_KEY); } catch (_) {}
+      try { sessionStorage.removeItem(SESSION_STATE_KEY); } catch (_) {}
+    }
+
+    function createEmptyState(resetTs = 0) {
+      return hydrateLoadedState({
+        ...structuredClone(defaultState),
+        users: [],
+        deletedUsers: {},
+        deletedUserIds: {},
+        __clientUpdatedAt: Number(resetTs || 0) || 0,
+        __hardResetAt: Number(resetTs || 0) || 0
+      });
+    }
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return hydrateLoadedState(JSON.parse(raw));
+        if (raw) {
+          const parsed = hydrateLoadedState(JSON.parse(raw));
+          const resetMarker = readHardResetMarker();
+          if (resetMarker && Number(parsed.__hardResetAt || 0) < resetMarker && !parsed.users?.length) {
+            return createEmptyState(resetMarker);
+          }
+          return parsed;
+        }
+
+        const resetMarker = readHardResetMarker();
+        if (resetMarker) return createEmptyState(resetMarker);
 
         const backupState = readBackupState();
         if (backupState) return hydrateLoadedState(backupState);
@@ -60617,6 +60657,8 @@
       } catch (e) {
         console.error('Failed to load state:', e);
         try {
+          const resetMarker = readHardResetMarker();
+          if (resetMarker) return createEmptyState(resetMarker);
           const backupState = readBackupState();
           if (backupState) return hydrateLoadedState(backupState);
         } catch (_) {}
@@ -61655,13 +61697,39 @@
     }
 
     function resetAllData() {
-      const ok = confirm('هل أنتِ متأكدة من حذف جميع المشاركات والبيانات؟');
+      const ok = confirm('هل أنتِ متأكدة من حذف جميع المشاركات والبيانات نهائيًا؟ لن يمكن استرجاعها من هذا الجهاز بعد الآن.');
       if (!ok) return;
-      state = structuredClone(defaultState);
+
+      const resetTs = writeHardResetMarker(Date.now());
+      clearTimeout(__saveTimer);
+      clearTimeout(__saveRetryTimer);
+      clearStoredAppState();
+
+      state = createEmptyState(resetTs);
       sessionAuth.unlockedUserId = null;
       saveUnlockedUserId(null);
-      saveState();
+
+      saveStateStrong();
       render();
+      updateBackupStatus();
+      alert('تم حذف جميع البيانات نهائيًا من هذا الجهاز ومن المزامنة الحالية ✅');
+    }
+
+    const AUTO_PURGE_DONE_KEY = STORAGE_KEY + '::install_uploaded_state_once_v2';
+
+    function autoPurgeAllDataOnFirstOpen() {
+      try {
+        if (localStorage.getItem(AUTO_PURGE_DONE_KEY) === '1') return;
+      } catch (_) {}
+
+      const cleanState = hydrateLoadedState(EMBEDDED_INITIAL_STATE);
+      try { localStorage.removeItem(BACKUP_STORAGE_KEY); } catch (_) {}
+      try { localStorage.removeItem(HARD_RESET_MARKER_KEY); } catch (_) {}
+      try { sessionStorage.removeItem(SESSION_STATE_KEY); } catch (_) {}
+      try { sessionStorage.removeItem(HARD_RESET_MARKER_KEY); } catch (_) {}
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanState)); } catch (_) {}
+      try { sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify(cleanState)); } catch (_) {}
+      try { localStorage.setItem(AUTO_PURGE_DONE_KEY, '1'); } catch (_) {}
     }
 
     function formatNum(n) {
@@ -62203,6 +62271,7 @@ function renderQuranPageControls() {
       e.target.value = '';
     });
     resetAllBtn.addEventListener('click', resetAllData);
+    setTimeout(autoPurgeAllDataOnFirstOpen, 0);
 
     openMushafBtn.addEventListener('click', saveMushafPathAndRefresh);
     mushafPdfPathInput.addEventListener('keydown', (e) => {
@@ -62738,13 +62807,21 @@ function renderQuranPageControls() {
             ...base,
             ...s,
             settings: { ...base.settings, ...(s.settings || {}) },
-            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
+            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : [],
+            deletedUsers: (s.deletedUsers && typeof s.deletedUsers === 'object') ? s.deletedUsers : {},
+            deletedUserIds: (s.deletedUserIds && typeof s.deletedUserIds === 'object') ? s.deletedUserIds : {},
+            __clientUpdatedAt: Number(s.__clientUpdatedAt || 0) || 0,
+            __hardResetAt: Number(s.__hardResetAt || 0) || 0
           };
           // enforce fixed points if your app expects it
           out.settings.dailyPoints = 5;
           out.settings.pagePoints = 5;
           if (out.selectedUserId && !out.users.some(u => u.id === out.selectedUserId)) {
             out.selectedUserId = out.users[0]?.id || null;
+          }
+          if (out.__hardResetAt && out.users.length) {
+            out.users = [];
+            out.selectedUserId = null;
           }
           return out;
         } catch (e) {
@@ -62776,12 +62853,35 @@ function renderQuranPageControls() {
       function mergeStates(remoteState, localState){
         const remote = normalizeState(remoteState || {});
         const local = normalizeState(localState || {});
+        const remoteResetTs = Number(remote.__hardResetAt || 0);
+        const localResetTs = Number(local.__hardResetAt || 0);
+
+        if (remoteResetTs || localResetTs) {
+          const resetWinner = remoteResetTs >= localResetTs ? remote : local;
+          const resetTs = Math.max(remoteResetTs, localResetTs);
+          if (resetTs) {
+            return normalizeState({
+              ...structuredClone(defaultState),
+              settings: { ...defaultState.settings, ...(resetWinner.settings || {}) },
+              users: [],
+              deletedUsers: {},
+              deletedUserIds: {},
+              selectedUserId: null,
+              __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0), resetTs),
+              __hardResetAt: resetTs
+            });
+          }
+        }
+
         const merged = {
           ...remote,
           ...local,
           settings: { ...remote.settings, ...local.settings },
           users: [],
-          __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0))
+          deletedUsers: { ...(remote.deletedUsers || {}), ...(local.deletedUsers || {}) },
+          deletedUserIds: { ...(remote.deletedUserIds || {}), ...(local.deletedUserIds || {}) },
+          __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0)),
+          __hardResetAt: 0
         };
 
         const ids = new Set([
