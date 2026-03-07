@@ -1530,8 +1530,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'quran_khatma_points_app_v1';
-    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v1';
+    const STORAGE_KEY = 'quran_khatma_points_app_v2_official_reset_20260307';
+    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v2_official_reset_20260307';
     const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v1';
     const MUSHAF_TOTAL_PAGES = 604;
 
@@ -60605,50 +60605,10 @@
       return null;
     }
 
-    const HARD_RESET_MARKER_KEY = STORAGE_KEY + '::hard_reset_marker_v1';
-
-    function readHardResetMarker() {
-      try { return Number(localStorage.getItem(HARD_RESET_MARKER_KEY) || 0) || 0; } catch (_) { return 0; }
-    }
-
-    function writeHardResetMarker(ts) {
-      const value = Number(ts || Date.now()) || Date.now();
-      try { localStorage.setItem(HARD_RESET_MARKER_KEY, String(value)); } catch (_) {}
-      try { sessionStorage.setItem(HARD_RESET_MARKER_KEY, String(value)); } catch (_) {}
-      return value;
-    }
-
-    function clearStoredAppState() {
-      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
-      try { localStorage.removeItem(BACKUP_STORAGE_KEY); } catch (_) {}
-      try { sessionStorage.removeItem(SESSION_STATE_KEY); } catch (_) {}
-    }
-
-    function createEmptyState(resetTs = 0) {
-      return hydrateLoadedState({
-        ...structuredClone(defaultState),
-        users: [],
-        deletedUsers: {},
-        deletedUserIds: {},
-        __clientUpdatedAt: Number(resetTs || 0) || 0,
-        __hardResetAt: Number(resetTs || 0) || 0
-      });
-    }
-
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = hydrateLoadedState(JSON.parse(raw));
-          const resetMarker = readHardResetMarker();
-          if (resetMarker && Number(parsed.__hardResetAt || 0) < resetMarker && !parsed.users?.length) {
-            return createEmptyState(resetMarker);
-          }
-          return parsed;
-        }
-
-        const resetMarker = readHardResetMarker();
-        if (resetMarker) return createEmptyState(resetMarker);
+        if (raw) return hydrateLoadedState(JSON.parse(raw));
 
         const backupState = readBackupState();
         if (backupState) return hydrateLoadedState(backupState);
@@ -60657,8 +60617,6 @@
       } catch (e) {
         console.error('Failed to load state:', e);
         try {
-          const resetMarker = readHardResetMarker();
-          if (resetMarker) return createEmptyState(resetMarker);
           const backupState = readBackupState();
           if (backupState) return hydrateLoadedState(backupState);
         } catch (_) {}
@@ -61697,39 +61655,13 @@
     }
 
     function resetAllData() {
-      const ok = confirm('هل أنتِ متأكدة من حذف جميع المشاركات والبيانات نهائيًا؟ لن يمكن استرجاعها من هذا الجهاز بعد الآن.');
+      const ok = confirm('هل أنتِ متأكدة من حذف جميع المشاركات والبيانات؟');
       if (!ok) return;
-
-      const resetTs = writeHardResetMarker(Date.now());
-      clearTimeout(__saveTimer);
-      clearTimeout(__saveRetryTimer);
-      clearStoredAppState();
-
-      state = createEmptyState(resetTs);
+      state = structuredClone(defaultState);
       sessionAuth.unlockedUserId = null;
       saveUnlockedUserId(null);
-
-      saveStateStrong();
+      saveState();
       render();
-      updateBackupStatus();
-      alert('تم حذف جميع البيانات نهائيًا من هذا الجهاز ومن المزامنة الحالية ✅');
-    }
-
-    const AUTO_PURGE_DONE_KEY = STORAGE_KEY + '::install_uploaded_state_once_v2';
-
-    function autoPurgeAllDataOnFirstOpen() {
-      try {
-        if (localStorage.getItem(AUTO_PURGE_DONE_KEY) === '1') return;
-      } catch (_) {}
-
-      const cleanState = hydrateLoadedState(EMBEDDED_INITIAL_STATE);
-      try { localStorage.removeItem(BACKUP_STORAGE_KEY); } catch (_) {}
-      try { localStorage.removeItem(HARD_RESET_MARKER_KEY); } catch (_) {}
-      try { sessionStorage.removeItem(SESSION_STATE_KEY); } catch (_) {}
-      try { sessionStorage.removeItem(HARD_RESET_MARKER_KEY); } catch (_) {}
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanState)); } catch (_) {}
-      try { sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify(cleanState)); } catch (_) {}
-      try { localStorage.setItem(AUTO_PURGE_DONE_KEY, '1'); } catch (_) {}
     }
 
     function formatNum(n) {
@@ -62271,7 +62203,6 @@ function renderQuranPageControls() {
       e.target.value = '';
     });
     resetAllBtn.addEventListener('click', resetAllData);
-    setTimeout(autoPurgeAllDataOnFirstOpen, 0);
 
     openMushafBtn.addEventListener('click', saveMushafPathAndRefresh);
     mushafPdfPathInput.addEventListener('keydown', (e) => {
@@ -62807,21 +62738,13 @@ function renderQuranPageControls() {
             ...base,
             ...s,
             settings: { ...base.settings, ...(s.settings || {}) },
-            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : [],
-            deletedUsers: (s.deletedUsers && typeof s.deletedUsers === 'object') ? s.deletedUsers : {},
-            deletedUserIds: (s.deletedUserIds && typeof s.deletedUserIds === 'object') ? s.deletedUserIds : {},
-            __clientUpdatedAt: Number(s.__clientUpdatedAt || 0) || 0,
-            __hardResetAt: Number(s.__hardResetAt || 0) || 0
+            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
           };
           // enforce fixed points if your app expects it
           out.settings.dailyPoints = 5;
           out.settings.pagePoints = 5;
           if (out.selectedUserId && !out.users.some(u => u.id === out.selectedUserId)) {
             out.selectedUserId = out.users[0]?.id || null;
-          }
-          if (out.__hardResetAt && out.users.length) {
-            out.users = [];
-            out.selectedUserId = null;
           }
           return out;
         } catch (e) {
@@ -62853,35 +62776,12 @@ function renderQuranPageControls() {
       function mergeStates(remoteState, localState){
         const remote = normalizeState(remoteState || {});
         const local = normalizeState(localState || {});
-        const remoteResetTs = Number(remote.__hardResetAt || 0);
-        const localResetTs = Number(local.__hardResetAt || 0);
-
-        if (remoteResetTs || localResetTs) {
-          const resetWinner = remoteResetTs >= localResetTs ? remote : local;
-          const resetTs = Math.max(remoteResetTs, localResetTs);
-          if (resetTs) {
-            return normalizeState({
-              ...structuredClone(defaultState),
-              settings: { ...defaultState.settings, ...(resetWinner.settings || {}) },
-              users: [],
-              deletedUsers: {},
-              deletedUserIds: {},
-              selectedUserId: null,
-              __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0), resetTs),
-              __hardResetAt: resetTs
-            });
-          }
-        }
-
         const merged = {
           ...remote,
           ...local,
           settings: { ...remote.settings, ...local.settings },
           users: [],
-          deletedUsers: { ...(remote.deletedUsers || {}), ...(local.deletedUsers || {}) },
-          deletedUserIds: { ...(remote.deletedUserIds || {}), ...(local.deletedUserIds || {}) },
-          __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0)),
-          __hardResetAt: 0
+          __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0))
         };
 
         const ids = new Set([
@@ -62969,7 +62869,7 @@ function renderQuranPageControls() {
       let lastCloudJson = null;
       let lastPushedJson = null;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
-      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v1';
+      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v2_official_reset_20260307';
       let bc = null;
 
       function notifyOtherTabs(stateObj) {
@@ -63014,7 +62914,7 @@ function renderQuranPageControls() {
       }
 
       const COLLECTION_PATH = 'shared_state';
-      const DOC_ID = 'quran_khatma_main';
+      const DOC_ID = 'quran_khatma_main_v2_official_reset_20260307';
 
       try {
         if (!window.firebase || !firebase.apps) return;
@@ -63155,7 +63055,7 @@ function renderQuranPageControls() {
       const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
       window.__liveClientId = clientId;
       const seenEvents = new Set();
-      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v2';
+      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v3_official_reset_20260307';
       let localEventBc = null;
 
       function getDb() {
@@ -63371,7 +63271,7 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          db.collection('shared_state').doc('quran_khatma_main').collection('live_events').doc(String(event.clientEventId)).set({
+          db.collection('shared_state').doc('quran_khatma_main_v2_official_reset_20260307').collection('live_events').doc(String(event.clientEventId)).set({
             ...event,
             createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -63410,7 +63310,7 @@ function renderQuranPageControls() {
           const db = getDb();
           if (!db || window.__liveEventsSubscribed) return;
           window.__liveEventsSubscribed = true;
-          db.collection('shared_state').doc('quran_khatma_main').collection('live_events')
+          db.collection('shared_state').doc('quran_khatma_main_v2_official_reset_20260307').collection('live_events')
             .orderBy('createdAtClient', 'desc')
             .limit(120)
             .onSnapshot((snap) => {
