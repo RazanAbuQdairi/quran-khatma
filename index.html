@@ -1530,8 +1530,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'quran_khatma_points_app_v2_official_reset_20260307';
-    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v2_official_reset_20260307';
+    const STORAGE_KEY = 'quran_khatma_points_app_v3_fast_isolated_20260307';
+    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v3_fast_isolated_20260307';
     const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v1';
     const MUSHAF_TOTAL_PAGES = 604;
 
@@ -60698,7 +60698,7 @@
                   window.__firebaseSync.pushState(state, { immediate: true });
                 }
               } catch (_) {}
-            }, 180);
+            }, 80);
           }
         }
       } catch (e) {
@@ -60724,7 +60724,7 @@
         flushStateNow(options);
         return;
       }
-      __saveTimer = setTimeout(() => flushStateNow(options), 10);
+      __saveTimer = setTimeout(() => flushStateNow(options), 0);
     }
 
     function saveStateStrong() {
@@ -60735,9 +60735,9 @@
     setInterval(() => {
       if (document.visibilityState === 'hidden') return;
       if (!__dirtySinceFlush) return;
-      if (Date.now() - __lastFlushAt < 8000) return;
+      if (Date.now() - __lastFlushAt < 2500) return;
       flushStateNow();
-    }, 10000);
+    }, 3000);
 
     window.addEventListener('pagehide', () => flushStateNow({ retry: false }));
     window.addEventListener('beforeunload', () => flushStateNow({ retry: false }));
@@ -62869,7 +62869,7 @@ function renderQuranPageControls() {
       let lastCloudJson = null;
       let lastPushedJson = null;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
-      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v2_official_reset_20260307';
+      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v3_fast_isolated_20260307';
       let bc = null;
 
       function notifyOtherTabs(stateObj) {
@@ -62914,7 +62914,7 @@ function renderQuranPageControls() {
       }
 
       const COLLECTION_PATH = 'shared_state';
-      const DOC_ID = 'quran_khatma_main_v2_official_reset_20260307';
+      const DOC_ID = 'quran_khatma_main_v3_fast_isolated_20260307';
 
       try {
         if (!window.firebase || !firebase.apps) return;
@@ -62978,7 +62978,7 @@ function renderQuranPageControls() {
             } catch (e) {
               console.error('Firebase push failed:', e);
             }
-          }, options.immediate ? 0 : 10);
+          }, options.immediate ? 0 : 0);
         };
 
         docRef.onSnapshot((snap) => {
@@ -63055,7 +63055,7 @@ function renderQuranPageControls() {
       const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
       window.__liveClientId = clientId;
       const seenEvents = new Set();
-      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v3_official_reset_20260307';
+      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v4_fast_isolated_20260307';
       let localEventBc = null;
 
       function getDb() {
@@ -63271,7 +63271,7 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          db.collection('shared_state').doc('quran_khatma_main_v2_official_reset_20260307').collection('live_events').doc(String(event.clientEventId)).set({
+          db.collection('shared_state').doc('quran_khatma_main_v3_fast_isolated_20260307').collection('live_events').doc(String(event.clientEventId)).set({
             ...event,
             createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -63310,7 +63310,7 @@ function renderQuranPageControls() {
           const db = getDb();
           if (!db || window.__liveEventsSubscribed) return;
           window.__liveEventsSubscribed = true;
-          db.collection('shared_state').doc('quran_khatma_main_v2_official_reset_20260307').collection('live_events')
+          db.collection('shared_state').doc('quran_khatma_main_v3_fast_isolated_20260307').collection('live_events')
             .orderBy('createdAtClient', 'desc')
             .limit(120)
             .onSnapshot((snap) => {
