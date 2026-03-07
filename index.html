@@ -60698,7 +60698,7 @@
                   window.__firebaseSync.pushState(state, { immediate: true });
                 }
               } catch (_) {}
-            }, 80);
+            }, 20);
           }
         }
       } catch (e) {
@@ -60724,7 +60724,7 @@
         flushStateNow(options);
         return;
       }
-      __saveTimer = setTimeout(() => flushStateNow(options), 0);
+      flushStateNow(options);
     }
 
     function saveStateStrong() {
@@ -60735,9 +60735,9 @@
     setInterval(() => {
       if (document.visibilityState === 'hidden') return;
       if (!__dirtySinceFlush) return;
-      if (Date.now() - __lastFlushAt < 2500) return;
+      if (Date.now() - __lastFlushAt < 800) return;
       flushStateNow();
-    }, 3000);
+    }, 1000);
 
     window.addEventListener('pagehide', () => flushStateNow({ retry: false }));
     window.addEventListener('beforeunload', () => flushStateNow({ retry: false }));
@@ -62869,7 +62869,7 @@ function renderQuranPageControls() {
       let lastCloudJson = null;
       let lastPushedJson = null;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
-      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v3_fast_isolated_20260307';
+      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v4_ultrafast_isolated_20260307';
       let bc = null;
 
       function notifyOtherTabs(stateObj) {
@@ -62906,7 +62906,7 @@ function renderQuranPageControls() {
             bridge.applyRemoteState(incoming);
             lastCloudJson = incomingJson;
           } finally {
-            setTimeout(() => { applyingRemote = false; }, 10);
+            applyingRemote = false;
           }
         } catch (e) {
           console.warn('Cross-tab sync apply failed:', e);
@@ -62914,7 +62914,7 @@ function renderQuranPageControls() {
       }
 
       const COLLECTION_PATH = 'shared_state';
-      const DOC_ID = 'quran_khatma_main_v3_fast_isolated_20260307';
+      const DOC_ID = 'quran_khatma_main_v4_ultrafast_isolated_20260307';
 
       try {
         if (!window.firebase || !firebase.apps) return;
@@ -62949,7 +62949,7 @@ function renderQuranPageControls() {
           const bridge = getBridge();
           if (!bridge) return;
           clearTimeout(pushTimer);
-          pushTimer = setTimeout(async () => {
+          (async () => {
             try {
               const normalized = bridge.normalizeState(stateObj);
               const json = JSON.stringify(normalized);
@@ -62978,7 +62978,7 @@ function renderQuranPageControls() {
             } catch (e) {
               console.error('Firebase push failed:', e);
             }
-          }, options.immediate ? 0 : 0);
+          })();
         };
 
         docRef.onSnapshot((snap) => {
@@ -63026,7 +63026,7 @@ function renderQuranPageControls() {
             bridge.applyRemoteState(remoteNormalized);
             notifyOtherTabs(remoteNormalized);
           } finally {
-            setTimeout(() => { applyingRemote = false; }, 10);
+            applyingRemote = false;
           }
         }, (err) => {
           console.error('Firebase onSnapshot error:', err);
@@ -63271,7 +63271,7 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          db.collection('shared_state').doc('quran_khatma_main_v3_fast_isolated_20260307').collection('live_events').doc(String(event.clientEventId)).set({
+          db.collection('shared_state').doc('quran_khatma_main_v4_ultrafast_isolated_20260307').collection('live_events').doc(String(event.clientEventId)).set({
             ...event,
             createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -63310,7 +63310,7 @@ function renderQuranPageControls() {
           const db = getDb();
           if (!db || window.__liveEventsSubscribed) return;
           window.__liveEventsSubscribed = true;
-          db.collection('shared_state').doc('quran_khatma_main_v3_fast_isolated_20260307').collection('live_events')
+          db.collection('shared_state').doc('quran_khatma_main_v4_ultrafast_isolated_20260307').collection('live_events')
             .orderBy('createdAtClient', 'desc')
             .limit(120)
             .onSnapshot((snap) => {
