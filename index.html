@@ -1530,8 +1530,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'quran_khatma_points_app_v6_same_second_20260307_new12';
-    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v6_same_second_20260307_new12';
+    const STORAGE_KEY = 'quran_khatma_points_app_v6_livefast_20260307_a';
+    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v6_livefast_20260307_a';
     const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v1';
     const MUSHAF_TOTAL_PAGES = 604;
 
@@ -60731,6 +60731,24 @@
       saveState({ immediate: true, retry: true });
     }
 
+
+    let __liveFastFlushTimer = null;
+    function scheduleFastCloudFlush(delay = 120) {
+      clearTimeout(__liveFastFlushTimer);
+      __liveFastFlushTimer = setTimeout(() => {
+        try { flushStateNow({ retry: true }); } catch (_) {}
+      }, Math.max(0, Number(delay || 0)));
+    }
+
+    function applyFastLocalRefresh() {
+      try { renderLeaderboard(); } catch (_) {}
+      try { renderSelectedSummary(); } catch (_) {}
+      try { renderTodayStatus(); } catch (_) {}
+      try { renderPrayerControls(); } catch (_) {}
+      try { renderQuranPageControls(); } catch (_) {}
+      try { renderTasbeeh(); } catch (_) {}
+    }
+
     // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
     setInterval(() => {
       if (document.visibilityState === 'hidden') return;
@@ -61490,9 +61508,15 @@
       user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
 
       addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
-      saveStateStrong();
+      try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
+      try { persistStateToLocalStores(); } catch (_) {}
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.broadcastLocal === 'function') {
+          window.__firebaseSync.broadcastLocal(state);
+        }
+      } catch (_) {}
       flash(document.getElementById('tasbeehBox'));
-      render();
+      applyFastLocalRefresh();
 
       try {
         if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
@@ -61507,6 +61531,8 @@
           });
         }
       } catch (_) {}
+
+      scheduleFastCloudFlush(90);
     }
 
     function resetTasbeehCount() {
@@ -62869,7 +62895,7 @@ function renderQuranPageControls() {
       let lastCloudJson = null;
       let lastPushedJson = null;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
-      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v6_same_second_20260307_new12';
+      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v6_livefast_20260307_a';
       let bc = null;
 
       function notifyOtherTabs(stateObj) {
@@ -62914,7 +62940,7 @@ function renderQuranPageControls() {
       }
 
       const COLLECTION_PATH = 'shared_state';
-      const DOC_ID = 'quran_khatma_main_v6_same_second_20260307_new12';
+      const DOC_ID = 'quran_khatma_main_v6_livefast_20260307_a';
 
       try {
         if (!window.firebase || !firebase.apps) return;
@@ -62949,37 +62975,35 @@ function renderQuranPageControls() {
           const bridge = getBridge();
           if (!bridge) return;
           clearTimeout(pushTimer);
-          (async () => {
+          const runPush = async () => {
             try {
               const normalized = bridge.normalizeState(stateObj);
               const json = JSON.stringify(normalized);
               if (json === lastPushedJson && !options.immediate) return;
-
-              await db.runTransaction(async (tx) => {
-                const snap = await tx.get(docRef);
-                const remoteState = snap.exists ? ((snap.data() || {}).state || null) : null;
-                const mergedState = typeof bridge.mergeStates === 'function'
-                  ? bridge.mergeStates(remoteState, normalized)
-                  : normalized;
-                const mergedJson = JSON.stringify(mergedState);
-                if (mergedJson === lastPushedJson && !options.immediate) return;
-                lastPushedJson = mergedJson;
-                notifyOtherTabs(mergedState);
-                tx.set(docRef, {
-                  state: mergedState,
-                  meta: {
-                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                     updatedBy: clientId,
-                     version: 2,
-                     clientUpdatedAt: (mergedState && mergedState.__clientUpdatedAt) || Date.now()
-                   }
-                }, { merge: true });
-              });
+              lastPushedJson = json;
+              lastCloudJson = json;
+              notifyOtherTabs(normalized);
+              await docRef.set({
+                state: normalized,
+                meta: {
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  updatedBy: clientId,
+                  version: 3,
+                  clientUpdatedAt: (normalized && normalized.__clientUpdatedAt) || Date.now()
+                }
+              }, { merge: true });
             } catch (e) {
               console.error('Firebase push failed:', e);
             }
-          })();
+          };
+          if (options.immediate) {
+            runPush();
+            return;
+          }
+          pushTimer = setTimeout(runPush, 60);
         };
+
+                };
 
         docRef.onSnapshot((snap) => {
           const bridge = getBridge();
@@ -63056,7 +63080,7 @@ function renderQuranPageControls() {
       const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
       window.__liveClientId = clientId;
       const seenEvents = new Set();
-      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v6_same_second_20260307_new12';
+      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v6_livefast_20260307_a';
       let localEventBc = null;
 
       function getDb() {
@@ -63242,7 +63266,7 @@ function renderQuranPageControls() {
           state.users[idx] = user;
           try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
           try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
-          try { if (typeof render === 'function') render(); } catch (_) {}
+          try { if (typeof applyFastLocalRefresh === 'function') applyFastLocalRefresh(); } catch (_) {}
           try { requestAnimationFrame(() => { try { if (typeof render === 'function') render(); } catch (_) {} }); } catch (_) {}
           try { showLiveEventToast(user, event); } catch (_) {}
         } catch (e) {
@@ -63273,7 +63297,7 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          db.collection('shared_state').doc('quran_khatma_main_v6_same_second_20260307_new12').collection('live_events').doc(String(event.clientEventId)).set({
+          db.collection('shared_state').doc('quran_khatma_main_v6_livefast_20260307_a').collection('live_events').doc(String(event.clientEventId)).set({
             ...event,
             createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -63312,10 +63336,10 @@ function renderQuranPageControls() {
           const db = getDb();
           if (!db || window.__liveEventsSubscribed) return;
           window.__liveEventsSubscribed = true;
-          db.collection('shared_state').doc('quran_khatma_main_v6_same_second_20260307_new12').collection('live_events')
+          db.collection('shared_state').doc('quran_khatma_main_v6_livefast_20260307_a').collection('live_events')
             .orderBy('createdAtClient', 'desc')
-            .limit(120)
-            .onSnapshot((snap) => {
+            .limit(300)
+            .onSnapshot({ includeMetadataChanges: true }, (snap) => {
               const docs = snap.docChanges().slice().reverse();
               docs.forEach((change) => {
                 if (change.type !== 'added') return;
