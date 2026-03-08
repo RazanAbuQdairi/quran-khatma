@@ -3,10 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="app-build-version" content="2026-03-08-syncfix-v1" />
   <title>تحدّي ختم القرآن المبارك | لوحة التلاوة والمتابعة</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1298,31 +1294,6 @@
   }
 
 </style>
-
-  <script>
-    window.__APP_BUILD_VERSION__ = '2026-03-08-syncfix-v1';
-    (function () {
-      try {
-        const KEY = 'khatma_app_build_version';
-        const current = window.__APP_BUILD_VERSION__;
-        const previous = localStorage.getItem(KEY);
-        if (previous && previous !== current) {
-          sessionStorage.setItem('khatma_force_reload_once', '1');
-        }
-        localStorage.setItem(KEY, current);
-        window.addEventListener('pageshow', function (event) {
-          try {
-            const shouldReload = sessionStorage.getItem('khatma_force_reload_once') === '1';
-            if (event.persisted || shouldReload) {
-              sessionStorage.removeItem('khatma_force_reload_once');
-              location.reload();
-            }
-          } catch (_) {}
-        });
-      } catch (_) {}
-    })();
-  </script>
-
 </head>
 <body>
   <div class="wrap">
@@ -4704,7 +4675,9 @@ function renderQuranPageControls() {
       }
 
       function applyRemoteState(remoteState){
-        const next = mergeStates(remoteState, state);
+        // Important: when a newer remote snapshot arrives, treat it as the source of truth.
+        // Merging it again with local state can cause stale local copies to keep winning.
+        const next = normalizeState(remoteState || {});
         state = next;
         try {
           const unlocked = sessionAuth.unlockedUserId && next.users.some(u => u.id === sessionAuth.unlockedUserId)
@@ -4824,16 +4797,13 @@ function renderQuranPageControls() {
 
       function shouldPreferLocalState(localState, remoteNormalized, dataMeta) {
         try {
+          // Prefer local only when we are reasonably sure it contains a newer unsynced change.
+          // Do NOT prefer local merely because counts differ; that can block real remote updates.
           const remoteMetaTs = Number((dataMeta && dataMeta.clientUpdatedAt) || 0);
           const localMetaTs = Number((localState && localState.__clientUpdatedAt) || 0);
-          const localUsersCount = Array.isArray(localState && localState.users) ? localState.users.length : 0;
-          const remoteUsersCount = Array.isArray(remoteNormalized && remoteNormalized.users) ? remoteNormalized.users.length : 0;
-          const localPoints = (Array.isArray(localState && localState.users) ? localState.users : []).reduce((s, u) => s + Number((u && u.totalPoints) || 0), 0);
-          const remotePoints = (Array.isArray(remoteNormalized && remoteNormalized.users) ? remoteNormalized.users : []).reduce((s, u) => s + Number((u && u.totalPoints) || 0), 0);
-          if (localMetaTs && remoteMetaTs && remoteMetaTs < localMetaTs) return true;
-          if (localUsersCount > remoteUsersCount) return true;
-          if (localPoints > remotePoints && remoteMetaTs <= localMetaTs) return true;
-          return false;
+          if (!localMetaTs) return false;
+          if (!remoteMetaTs) return false;
+          return localMetaTs > (remoteMetaTs + 1500);
         } catch (_) {
           return false;
         }
@@ -4881,11 +4851,8 @@ function renderQuranPageControls() {
         if (!window.firebase || !firebase.apps) return;
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const APP_BUILD_VERSION = window.__APP_BUILD_VERSION__ || '2026-03-08-syncfix-v1';
-        let lastSnapshotAt = 0;
 
-        // IndexedDB tab-persistence intentionally remains disabled to reduce stale-tab behavior.
-        // الاعتماد هنا على server snapshots + live events + بث محلي بين التبويبات.
+        // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
         const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
 
@@ -4936,9 +4903,7 @@ function renderQuranPageControls() {
                   meta: {
                      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                      updatedBy: clientId,
-                     version: 4,
-                     buildVersion: APP_BUILD_VERSION,
-                     lastSnapshotAtClient: Date.now(),
+                     version: 3,
                      clientUpdatedAt: (mergedState && mergedState.__clientUpdatedAt) || Date.now()
                    }
                 }, { merge: true });
@@ -4983,7 +4948,6 @@ function renderQuranPageControls() {
         window.__firebaseSync.pullState = fetchRemoteStateNow;
 
         docRef.onSnapshot({ includeMetadataChanges: true }, (snap) => {
-          lastSnapshotAt = Date.now();
           const bridge = getBridge();
           if (!bridge) return;
 
@@ -5017,13 +4981,7 @@ function renderQuranPageControls() {
         setInterval(() => {
           if (document.visibilityState === 'hidden') return;
           fetchRemoteStateNow('interval');
-        }, 2500);
-
-        setInterval(() => {
-          if (document.visibilityState === 'hidden') return;
-          const age = Date.now() - Number(lastSnapshotAt || 0);
-          if (age > 6000) fetchRemoteStateNow('watchdog');
-        }, 3000);
+        }, 7000);
       } catch (e) {
         console.error('Firebase init failed:', e);
       }
@@ -5263,21 +5221,11 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          const rootRef = db.collection('shared_state_zero_20260308_v2').doc('quran_khatma_main_zero_20260308_v2');
-          rootRef.collection('live_events').doc(String(event.clientEventId)).set({
+          db.collection('shared_state_zero_20260308_v2').doc('quran_khatma_main_zero_20260308_v2').collection('live_events').doc(String(event.clientEventId)).set({
             ...event,
             createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true }).catch((e) => console.warn('live event publish failed', e));
-
-          rootRef.set({
-            liveMeta: {
-              lastEventAt: firebase.firestore.FieldValue.serverTimestamp(),
-              lastEventAtClient: Number(event.at || Date.now()),
-              lastEventBy: clientId,
-              buildVersion: window.__APP_BUILD_VERSION__ || '2026-03-08-syncfix-v1'
-            }
-          }, { merge: true }).catch((e) => console.warn('live meta ping failed', e));
         } catch (e) {
           console.warn('live event publish setup failed', e);
         }
@@ -5378,23 +5326,7 @@ function renderQuranPageControls() {
       }
 
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => { subscribeLocalEvents(); subscribeLiveEvents();
-      window.addEventListener('online', () => {
-        try {
-          if (window.__firebaseSync && typeof window.__firebaseSync.pullState === 'function') {
-            setTimeout(() => window.__firebaseSync.pullState('force'), 120);
-          }
-        } catch (_) {}
-      });
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          try {
-            if (window.__firebaseSync && typeof window.__firebaseSync.pullState === 'function') {
-              setTimeout(() => window.__firebaseSync.pullState('force'), 120);
-            }
-          } catch (_) {}
-        }
-      }); patchAll(); });
+        document.addEventListener('DOMContentLoaded', () => { subscribeLocalEvents(); subscribeLiveEvents(); patchAll(); });
       } else {
         subscribeLocalEvents();
         subscribeLiveEvents();
