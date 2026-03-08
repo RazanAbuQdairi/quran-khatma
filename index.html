@@ -1530,8 +1530,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'wafaabuqdairi_points_app_v2_isolated';
-    const BACKUP_STORAGE_KEY = 'wafaabuqdairi_points_app_backup_v2_isolated';
+    const STORAGE_KEY = 'quran_khatma_points_app_v1';
+    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v1';
     const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v1';
     const MUSHAF_TOTAL_PAGES = 604;
 
@@ -62833,14 +62833,14 @@ function renderQuranPageControls() {
     (function () {
       // Using the same Firebase config and shared document as the uploaded v81 file
       const firebaseConfig = {
-        apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
-        authDomain: "wafaabuqdairi.firebaseapp.com",
-        projectId: "wafaabuqdairi",
-        storageBucket: "wafaabuqdairi.firebasestorage.app",
-        messagingSenderId: "147376328852",
-        appId: "1:147376328852:web:859440af34e4bb14dc6481",
-        measurementId: "G-L6QHBLNVMJ"
-      };
+  apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
+  authDomain: "wafaabuqdairi.firebaseapp.com",
+  projectId: "wafaabuqdairi",
+  storageBucket: "wafaabuqdairi.firebasestorage.app",
+  messagingSenderId: "147376328852",
+  appId: "1:147376328852:web:859440af34e4bb14dc6481",
+  measurementId: "G-L6QHBLNVMJ"
+};
 
       const FIREBASE_SYNC_ENABLED = true;
       if (!FIREBASE_SYNC_ENABLED) return;
@@ -62869,7 +62869,7 @@ function renderQuranPageControls() {
       let lastCloudJson = null;
       let lastPushedJson = null;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
-      const CROSS_TAB_CHANNEL = 'wafaabuqdairi_live_cross_tab_v2_isolated';
+      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v1';
       let bc = null;
 
       function notifyOtherTabs(stateObj) {
@@ -62920,13 +62920,6 @@ function renderQuranPageControls() {
         if (!window.firebase || !firebase.apps) return;
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        try {
-          db.settings({
-            experimentalAutoDetectLongPolling: true,
-            useFetchStreams: false,
-            ignoreUndefinedProperties: true
-          });
-        } catch (_) {}
 
         // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
@@ -63050,34 +63043,26 @@ function renderQuranPageControls() {
   <script id="firebaseRealtimeEventsPatch">
     (function () {
       const firebaseConfig = {
-        apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
-        authDomain: "wafaabuqdairi.firebaseapp.com",
-        projectId: "wafaabuqdairi",
-        storageBucket: "wafaabuqdairi.firebasestorage.app",
-        messagingSenderId: "147376328852",
-        appId: "1:147376328852:web:859440af34e4bb14dc6481",
-        measurementId: "G-L6QHBLNVMJ"
-      };
+  apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
+  authDomain: "wafaabuqdairi.firebaseapp.com",
+  projectId: "wafaabuqdairi",
+  storageBucket: "wafaabuqdairi.firebasestorage.app",
+  messagingSenderId: "147376328852",
+  appId: "1:147376328852:web:859440af34e4bb14dc6481",
+  measurementId: "G-L6QHBLNVMJ"
+};
 
       const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
       window.__liveClientId = clientId;
       const seenEvents = new Set();
-      const LOCAL_EVENT_CHANNEL = 'wafaabuqdairi_live_events_v2_cross_tab_v3_isolated';
+      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v2';
       let localEventBc = null;
 
       function getDb() {
         try {
           if (!window.firebase || !firebase.apps) return null;
           if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-          const db = firebase.firestore();
-          try {
-            db.settings({
-              experimentalAutoDetectLongPolling: true,
-              useFetchStreams: false,
-              ignoreUndefinedProperties: true
-            });
-          } catch (_) {}
-          return db;
+          return firebase.firestore();
         } catch (_) { return null; }
       }
 
