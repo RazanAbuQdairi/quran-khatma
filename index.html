@@ -3370,6 +3370,11 @@
           });
         }
       } catch (_) {}
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function' && window.__quranAppBridge) {
+          window.__firebaseSync.pushState(window.__quranAppBridge.getState(), { immediate: true, force: true });
+        }
+      } catch (_) {}
     }
 
     function resetTasbeehCount() {
@@ -3395,6 +3400,11 @@
             totalPoints: Number(user.totalPoints || 0),
             userUpdatedAt: Number(user._updatedAt || Date.now())
           });
+        }
+      } catch (_) {}
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function' && window.__quranAppBridge) {
+          window.__firebaseSync.pushState(window.__quranAppBridge.getState(), { immediate: true, force: true });
         }
       } catch (_) {}
     }
@@ -5227,6 +5237,11 @@ function renderQuranPageControls() {
           if (!event || !event.type || !event.userId) return;
           if (event.sender === clientId) return;
           applyLiveEvent(event);
+          try {
+            if (window.__firebaseSync && typeof window.__firebaseSync.pullState === 'function') {
+              setTimeout(() => window.__firebaseSync.pullState('force'), 120);
+            }
+          } catch (_) {}
         } catch (e) {
           console.warn('receiveLocalEvent failed', e);
         }
@@ -5265,6 +5280,11 @@ function renderQuranPageControls() {
                   return;
                 }
                 applyLiveEvent({ id, ...data });
+                try {
+                  if (window.__firebaseSync && typeof window.__firebaseSync.pullState === 'function') {
+                    setTimeout(() => window.__firebaseSync.pullState('force'), 150);
+                  }
+                } catch (_) {}
               });
             }, (err) => console.warn('live events snapshot failed', err));
         } catch (e) {
