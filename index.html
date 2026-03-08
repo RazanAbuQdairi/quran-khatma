@@ -62920,6 +62920,13 @@ function renderQuranPageControls() {
         if (!window.firebase || !firebase.apps) return;
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        try {
+          db.settings({
+            experimentalAutoDetectLongPolling: true,
+            useFetchStreams: false,
+            ignoreUndefinedProperties: true
+          });
+        } catch (_) {}
 
         // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
@@ -63062,7 +63069,15 @@ function renderQuranPageControls() {
         try {
           if (!window.firebase || !firebase.apps) return null;
           if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-          return firebase.firestore();
+          const db = firebase.firestore();
+          try {
+            db.settings({
+              experimentalAutoDetectLongPolling: true,
+              useFetchStreams: false,
+              ignoreUndefinedProperties: true
+            });
+          } catch (_) {}
+          return db;
         } catch (_) { return null; }
       }
 
