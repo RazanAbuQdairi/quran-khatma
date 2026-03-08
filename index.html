@@ -1530,9 +1530,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'wafa_quran_khatma_points_app_v1';
-    const BACKUP_STORAGE_KEY = 'wafa_quran_khatma_points_app_backup_v1';
-    const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v1';
+    const STORAGE_KEY = 'wafa_quran_khatma_points_app_v2';
+    const BACKUP_STORAGE_KEY = 'wafa_quran_khatma_points_app_backup_v2';
+    const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v2';
     const MUSHAF_TOTAL_PAGES = 604;
 
     const EMBEDDED_INITIAL_STATE = {
@@ -3975,14 +3975,31 @@ function renderQuranPageControls() {
       const COLLECTION_PATH = 'shared_state';
       const DOC_ID = 'global';
 
+      function getOrCreateFirebaseApp() {
+        if (!window.firebase || !firebase.apps) return null;
+        const existing = firebase.apps.find(app => app && app.name === 'wafa-shared-app');
+        return existing || firebase.initializeApp(firebaseConfig, 'wafa-shared-app');
+      }
+
+      async function fetchServerState(docRef) {
+        try {
+          const snap = await docRef.get({ source: 'server' });
+          return snap;
+        } catch (_) {
+          try { return await docRef.get(); } catch (_) { return null; }
+        }
+      }
+
       try {
-        if (!window.firebase || !firebase.apps) return;
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const app = getOrCreateFirebaseApp();
+        if (!app) return;
+        const db = firebase.firestore(app);
 
         // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
         const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
+        let serverPollTimer = null;
+        let lastServerMetaTs = 0;
 
         if (window.BroadcastChannel) {
           try {
@@ -4040,6 +4057,41 @@ function renderQuranPageControls() {
           }, options.immediate ? 0 : 10);
         };
 
+        async function refreshFromServer(forceApply = false) {
+          try {
+            const bridge = getBridge();
+            if (!bridge) return;
+            const snap = await fetchServerState(docRef);
+            if (!snap || !snap.exists) return;
+            const data = snap.data() || {};
+            if (!data.state) return;
+            const remoteNormalized = bridge.normalizeState(data.state);
+            const remoteJson = JSON.stringify(remoteNormalized);
+            const remoteMetaTs = Number((data.meta && data.meta.clientUpdatedAt) || 0);
+            const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
+            if (!forceApply && remoteJson === localJson) {
+              lastServerMetaTs = Math.max(lastServerMetaTs, remoteMetaTs);
+              return;
+            }
+            if (!forceApply && remoteMetaTs && lastServerMetaTs && remoteMetaTs <= lastServerMetaTs) return;
+            lastServerMetaTs = Math.max(lastServerMetaTs, remoteMetaTs);
+            lastCloudJson = remoteJson;
+            applyingRemote = true;
+            try {
+              bridge.applyRemoteState(remoteNormalized);
+              notifyOtherTabs(remoteNormalized);
+            } finally {
+              setTimeout(() => { applyingRemote = false; }, 10);
+            }
+          } catch (e) {
+            console.warn('Server refresh failed:', e);
+          }
+        }
+
+
+        serverPollTimer = setInterval(() => { refreshFromServer(false); }, 2000);
+        window.addEventListener('focus', () => { refreshFromServer(true); });
+
         docRef.onSnapshot((snap) => {
           const bridge = getBridge();
           if (!bridge) return;
@@ -4066,6 +4118,7 @@ function renderQuranPageControls() {
           }
           const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
           lastCloudJson = remoteJson;
+          lastServerMetaTs = Math.max(lastServerMetaTs, Number((data.meta && data.meta.clientUpdatedAt) || 0));
           ready = true;
 
           if (remoteJson === localJson) return;
@@ -4120,8 +4173,8 @@ function renderQuranPageControls() {
       function getDb() {
         try {
           if (!window.firebase || !firebase.apps) return null;
-          if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-          return firebase.firestore();
+          const app = firebase.apps.find(app => app && app.name === 'wafa-shared-app') || firebase.initializeApp(firebaseConfig, 'wafa-shared-app');
+          return firebase.firestore(app);
         } catch (_) { return null; }
       }
 
