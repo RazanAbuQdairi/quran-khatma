@@ -1420,17 +1420,7 @@
               <button class="btn ghost" id="renameBtn">✏️ تعديل الاسم</button>
               <button class="btn warn" id="zeroPointsBtn" style="display:none;">🟡 تصفير بيانات المشتركة</button>
               <button class="btn warn" id="zeroAllPointsBtn" style="display:none;">🟠 تصفير بيانات جميع المشتركات</button>
-              <button class="btn ghost" id="hideUserBtn" style="display:none;">🙈 إخفاء المشتركة من الواجهة</button>
               <button class="btn danger" id="deleteBtn">🗑️ حذف المشارك</button>
-            </div>
-
-            <div id="hiddenUsersAdminBox" style="display:none; margin-top:8px; border:1px dashed #cbd5e1; border-radius:12px; padding:10px; background:#f8fafc;">
-              <label for="hiddenUserSelect">المشاركات المخفية</label>
-              <select id="hiddenUserSelect"></select>
-              <div class="row" style="margin-top:8px;">
-                <button class="btn ghost" id="showHiddenUserBtn">👁️ إظهار المشتركة</button>
-              </div>
-              <div class="small" style="margin-top:6px;">الإخفاء يزيل المشتركة من الواجهة ولوحة الصدارة فقط، لكنها تبقى محفوظة داخل أدوات المشرف.</div>
             </div>
 
             <div class="small" id="todayStatus" style="display:none;"></div>
@@ -1530,20 +1520,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'wafa_quran_khatma_points_app_v2';
-    const BACKUP_STORAGE_KEY = 'wafa_quran_khatma_points_app_backup_v2';
-    const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v2';
+    const STORAGE_KEY = 'wafa_quran_khatma_points_app_v1';
+    const BACKUP_STORAGE_KEY = 'wafa_quran_khatma_points_app_backup_v1';
     const MUSHAF_TOTAL_PAGES = 604;
-
-    const EMBEDDED_INITIAL_STATE = {
-  "settings": {
-    "dailyPoints": 5,
-    "pagePoints": 5,
-    "mushafPdfPath": "mushaf-pages"
-  },
-  "selectedUserId": null,
-  "users": []
-};
 
     const defaultState = {
       settings: {
@@ -1582,10 +1561,6 @@
     const zeroPointsBtn = document.getElementById('zeroPointsBtn');
     const zeroAllPointsBtn = document.getElementById('zeroAllPointsBtn');
     const leaderboardZeroAllBtn = document.getElementById('leaderboardZeroAllBtn');
-    const hideUserBtn = document.getElementById('hideUserBtn');
-    const hiddenUserSelect = document.getElementById('hiddenUserSelect');
-    const showHiddenUserBtn = document.getElementById('showHiddenUserBtn');
-    const hiddenUsersAdminBox = document.getElementById('hiddenUsersAdminBox');
     const deleteBtn = document.getElementById('deleteBtn');
     const todayStatus = document.getElementById('todayStatus');
     const tasbeehName = document.getElementById('tasbeehName');
@@ -1635,51 +1610,23 @@
 
     try { sessionAuth.unlockedUserId = loadUnlockedUserId(); } catch (_) {}
 
-    function hydrateLoadedState(parsed) {
-      const loaded = {
-        ...structuredClone(defaultState),
-        ...parsed,
-        settings: { ...defaultState.settings, ...(parsed?.settings || {}) },
-        users: Array.isArray(parsed?.users) ? parsed.users.map(sanitizeUser) : []
-      };
-      loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
-      loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
-      return loaded;
-    }
-
-    function readBackupState() {
-      try {
-        const raw = localStorage.getItem(BACKUP_STORAGE_KEY);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object' && parsed.state) return parsed.state;
-      } catch (_) {}
-
-      try {
-        const raw = sessionStorage.getItem(SESSION_STATE_KEY);
-        if (!raw) return null;
-        return JSON.parse(raw);
-      } catch (_) {}
-
-      return null;
-    }
-
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return hydrateLoadedState(JSON.parse(raw));
-
-        const backupState = readBackupState();
-        if (backupState) return hydrateLoadedState(backupState);
-
-        return hydrateLoadedState(EMBEDDED_INITIAL_STATE);
+        if (!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        const loaded = {
+          ...structuredClone(defaultState),
+          ...parsed,
+          settings: { ...defaultState.settings, ...(parsed.settings || {}) },
+          users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
+        };
+        loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
+        loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
+                return loaded;
       } catch (e) {
         console.error('Failed to load state:', e);
-        try {
-          const backupState = readBackupState();
-          if (backupState) return hydrateLoadedState(backupState);
-        } catch (_) {}
-        return hydrateLoadedState(EMBEDDED_INITIAL_STATE);
+        return structuredClone(defaultState);
       }
     }
 
@@ -1712,7 +1659,6 @@
         prayersByDate: (u.prayersByDate && typeof u.prayersByDate === 'object' && !Array.isArray(u.prayersByDate)) ? u.prayersByDate : {},
         createdAt: u.createdAt || new Date().toISOString(),
         history: Array.isArray(u.history) ? u.history.slice(-200) : [],
-        isHidden: !!u.isHidden,
         _updatedAt: Number(u._updatedAt || 0) || 0
       };
     }
@@ -1723,42 +1669,15 @@
     }
 
     let __saveTimer = null;
-    let __saveRetryTimer = null;
     let __lastFlushAt = 0;
     let __dirtySinceFlush = false;
 
-    function persistStateToLocalStores() {
-      try {
-        const stateJson = JSON.stringify(state);
-        localStorage.setItem(STORAGE_KEY, stateJson);
-        try { sessionStorage.setItem(SESSION_STATE_KEY, stateJson); } catch (_) {}
-        try {
-          localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
-            savedAt: new Date().toISOString(),
-            state: JSON.parse(stateJson)
-          }));
-        } catch (_) {}
-      } catch (e) {
-        console.warn('Local persistence failed:', e);
-      }
-    }
-
-    function flushStateNow(options = {}) {
+    function flushStateNow() {
       __lastFlushAt = Date.now();
-      persistStateToLocalStores();
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
       try {
         if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
           window.__firebaseSync.pushState(state, { immediate: true });
-          if (options.retry !== false) {
-            clearTimeout(__saveRetryTimer);
-            __saveRetryTimer = setTimeout(() => {
-              try {
-                if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
-                  window.__firebaseSync.pushState(state, { immediate: true });
-                }
-              } catch (_) {}
-            }, 180);
-          }
         }
       } catch (e) {
         console.warn('Firebase sync push skipped:', e);
@@ -1770,7 +1689,6 @@
       // لا نرفع __clientUpdatedAt إلا عند وجود تغيير محلي فعلي
       __dirtySinceFlush = true;
       try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
-      persistStateToLocalStores();
 
       try {
         if (window.__firebaseSync && typeof window.__firebaseSync.broadcastLocal === 'function') {
@@ -1780,14 +1698,10 @@
 
       clearTimeout(__saveTimer);
       if (options && options.immediate) {
-        flushStateNow(options);
+        flushStateNow();
         return;
       }
-      __saveTimer = setTimeout(() => flushStateNow(options), 10);
-    }
-
-    function saveStateStrong() {
-      saveState({ immediate: true, retry: true });
+      __saveTimer = setTimeout(flushStateNow, 10);
     }
 
     // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
@@ -1798,10 +1712,9 @@
       flushStateNow();
     }, 10000);
 
-    window.addEventListener('pagehide', () => flushStateNow({ retry: false }));
-    window.addEventListener('beforeunload', () => flushStateNow({ retry: false }));
+    window.addEventListener('pagehide', flushStateNow);
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') flushStateNow({ retry: false });
+      if (document.visibilityState === 'hidden') flushStateNow();
     });
 
     function cryptoRandomId() {
@@ -2173,7 +2086,6 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
       if (!PRAYER_ORDER.includes(prayerKey)) return;
 
-      touchUser(user);
       ensurePrayerTracking(user);
       const today = localDateKey();
       const todayPrayers = getPrayerStateForDate(user, today);
@@ -2211,27 +2123,10 @@
         });
       }
 
-      saveStateStrong();
+      saveState();
       const prayerBtnMap = { fajr: prayerFajrBtn, dhuhr: prayerDhuhrBtn, asr: prayerAsrBtn, maghrib: prayerMaghribBtn, isha: prayerIshaBtn };
       flash(prayerBtnMap[prayerKey]);
       render();
-
-      try {
-        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
-          window.__liveSync.publishEvent({
-            type: 'prayer_toggle',
-            userId: user.id,
-            prayerKey,
-            prayerName: PRAYER_LABELS[prayerKey],
-            dateKey: today,
-            isDone: !!todayPrayers[prayerKey],
-            prayersCount: Number(user.prayersCount || 0),
-            totalPoints: Number(user.totalPoints || 0),
-            dayState: { ...todayPrayers },
-            userUpdatedAt: Number(user._updatedAt || Date.now())
-          });
-        }
-      } catch (_) {}
     }
 
     // تم استبدال هذه الميزة بالصلوات الخمس (الإبقاء على الدالة للتوافق مع النسخ السابقة)
@@ -2240,7 +2135,6 @@
     }
 
     function applyPageReading(user, wholePages, historyType = 'read_pages') {
-      touchUser(user);
       const pages = Math.max(0, Math.floor(Number(wholePages || 0)));
       if (!pages) return { pages: 0, gained: 0, fromPage: clampQuranPage(user.currentQuranPage || 1), toPage: clampQuranPage(user.currentQuranPage || 1), completedKhatmas: 0 };
 
@@ -2266,25 +2160,10 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
 
       const result = applyPageReading(user, 1, 'next_quran_page');
-      saveStateStrong();
+      saveState();
       flash(nextQuranPageBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
-
-      try {
-        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
-          window.__liveSync.publishEvent({
-            type: 'page_progress',
-            userId: user.id,
-            pagesDelta: 1,
-            actionLabel: 'read_next_page',
-            totalPages: Number(user.totalPages || 0),
-            currentQuranPage: Number(user.currentQuranPage || 1),
-            totalPoints: Number(user.totalPoints || 0),
-            userUpdatedAt: Number(user._updatedAt || Date.now())
-          });
-        }
-      } catch (_) {}
 
       if (result.completedKhatmas > 0) {
         alert('ما شاء الله 🌟 تم إكمال ختمة كاملة! تم البدء من الصفحة 1 تلقائيًا.');
@@ -2300,28 +2179,12 @@
         return alert('أدخلي رقم صفحة صحيح من 1 إلى 604.');
       }
 
-      touchUser(user);
       user.currentQuranPage = clampQuranPage(v);
       addHistory(user, 'set_current_page', { page: user.currentQuranPage });
-      saveStateStrong();
+      saveState();
       flash(saveCurrentPageBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
-
-      try {
-        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
-          window.__liveSync.publishEvent({
-            type: 'page_progress',
-            userId: user.id,
-            pagesDelta: 0,
-            actionLabel: 'set_current_page',
-            totalPages: Number(user.totalPages || 0),
-            currentQuranPage: Number(user.currentQuranPage || 1),
-            totalPoints: Number(user.totalPoints || 0),
-            userUpdatedAt: Number(user._updatedAt || Date.now())
-          });
-        }
-      } catch (_) {}
     }
 
     function addPagesReading() {
@@ -2336,25 +2199,10 @@
       const wholePages = Math.floor(pages);
       const result = applyPageReading(user, wholePages, 'read_pages');
 
-      saveStateStrong();
+      saveState();
       flash(addPagesBtn);
       render();
       syncMushafToSelectedUser({ silent: true });
-
-      try {
-        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
-          window.__liveSync.publishEvent({
-            type: 'page_progress',
-            userId: user.id,
-            pagesDelta: wholePages,
-            actionLabel: 'read_pages',
-            totalPages: Number(user.totalPages || 0),
-            currentQuranPage: Number(user.currentQuranPage || 1),
-            totalPoints: Number(user.totalPoints || 0),
-            userUpdatedAt: Number(user._updatedAt || Date.now())
-          });
-        }
-      } catch (_) {}
 
       if (result.completedKhatmas > 0) {
         alert(`ما شاء الله 🌟 تم إكمال ${formatNum(result.completedKhatmas)} ختمة أثناء إضافة الصفحات.`);
@@ -2434,7 +2282,7 @@
         newCurrentPage: 1,
         newPrayers: 0
       });
-      saveStateStrong();
+      saveState({ immediate: true });
       if (zeroPointsBtn) flash(zeroPointsBtn);
       render();
     }
@@ -2465,50 +2313,10 @@
         });
       });
 
-      saveStateStrong();
+      saveState({ immediate: true });
       if (zeroAllPointsBtn) flash(zeroAllPointsBtn);
       if (leaderboardZeroAllBtn) flash(leaderboardZeroAllBtn);
       render();
-    }
-
-
-    function hideSelectedUserFromInterface() {
-      const user = getSelectedUser();
-      if (!user) {
-        alert('اختاري مشتركة أولًا.');
-        return;
-      }
-      const ok = confirm(`🙈 هل تريدين إخفاء المشتركة "${user.name}" من الواجهة؟
-
-لن تُحذف بياناتها، وستبقى موجودة داخل أدوات المشرف.`);
-      if (!ok) return;
-
-      user.isHidden = true;
-      touchUser(user);
-
-      const visibleUsers = state.users.filter(u => !u.isHidden);
-      state.selectedUserId = visibleUsers[0]?.id || null;
-      saveUnlockedUserId(state.selectedUserId || null);
-      saveStateStrong();
-      render();
-      alert('✅ تم إخفاء المشتركة من الواجهة، وهي ما زالت محفوظة داخل أدوات المشرف.');
-    }
-
-    function showHiddenUserFromAdmin() {
-      if (!hiddenUserSelect) return;
-      const id = hiddenUserSelect.value;
-      const user = state.users.find(u => u.id === id && u.isHidden);
-      if (!user) {
-        alert('اختاري مشتركة مخفية أولًا.');
-        return;
-      }
-      user.isHidden = false;
-      touchUser(user);
-      state.selectedUserId = user.id;
-      saveUnlockedUserId(user.id);
-      saveStateStrong();
-      render();
-      alert('✅ تم إظهار المشتركة في الواجهة من جديد.');
     }
 
     function deleteSelectedUser() {
@@ -2549,7 +2357,7 @@
       user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
 
       addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
-      saveStateStrong();
+      saveState({ immediate: true });
       flash(document.getElementById('tasbeehBox'));
       render();
 
@@ -2577,7 +2385,7 @@
       touchUser(user);
       user.tasbeeh = 0;
       addHistory(user, 'tasbeeh_reset');
-      saveStateStrong();
+      saveState({ immediate: true });
       render();
 
       try {
@@ -2703,7 +2511,7 @@
         if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
           state.selectedUserId = state.users[0]?.id || null;
         }
-        saveStateStrong();
+        saveState({ immediate: true });
         render();
         updateBackupStatus();
         alert('تم استرجاع النسخة الاحتياطية بنجاح ✅');
@@ -2739,7 +2547,7 @@
     }
 
     function sortedUsers() {
-      return [...getVisibleUsers()].sort((a, b) => {
+      return [...state.users].sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalPages !== a.totalPages) return b.totalPages - a.totalPages;
         return (a.createdAt || '').localeCompare(b.createdAt || '');
@@ -2748,7 +2556,6 @@
 
     function renderUserSelect() {
       const prev = state.selectedUserId;
-      const visibleUsers = sortedUsers();
       userSelect.innerHTML = '';
 
       if (!state.users.length) {
@@ -2757,25 +2564,18 @@
         return;
       }
 
-      if (!visibleUsers.length) {
-        userSelect.innerHTML = '<option value="">كل المشتركات مخفيات حاليًا</option>';
-        userSelect.disabled = true;
-        state.selectedUserId = null;
-        return;
-      }
-
       userSelect.disabled = false;
-      visibleUsers.forEach(u => {
+      sortedUsers().forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id;
         opt.textContent = `${u.name} (${formatNum(u.totalPoints)} نقطة)`;
         userSelect.appendChild(opt);
       });
 
-      if (prev && visibleUsers.some(u => u.id === prev)) {
+      if (prev && state.users.some(u => u.id === prev)) {
         userSelect.value = prev;
       } else {
-        state.selectedUserId = visibleUsers[0].id;
+        state.selectedUserId = sortedUsers()[0].id;
         userSelect.value = state.selectedUserId;
         saveState();
       }
@@ -2893,34 +2693,6 @@
           </div>
         </div>
 `;
-    }
-
-    function getVisibleUsers() {
-      return state.users.filter(u => !u.isHidden);
-    }
-
-    function renderHiddenUsersAdmin() {
-      if (!hiddenUserSelect) return;
-      const hiddenUsers = [...state.users]
-        .filter(u => u.isHidden)
-        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
-
-      hiddenUserSelect.innerHTML = '';
-      if (!hiddenUsers.length) {
-        hiddenUserSelect.innerHTML = '<option value="">لا توجد مشاركات مخفية</option>';
-        hiddenUserSelect.disabled = true;
-        if (showHiddenUserBtn) showHiddenUserBtn.disabled = true;
-        return;
-      }
-
-      hiddenUserSelect.disabled = false;
-      if (showHiddenUserBtn) showHiddenUserBtn.disabled = false;
-      hiddenUsers.forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.id;
-        opt.textContent = `${u.name} (${formatNum(u.totalPoints || 0)} نقطة)`;
-        hiddenUserSelect.appendChild(opt);
-      });
     }
 
     function renderLeaderboard() {
@@ -3120,11 +2892,6 @@ function renderQuranPageControls() {
 
       const hasUsers = !!state.users.length;
       const unlocked = isSelectedUserUnlocked();
-      renderHiddenUsersAdmin();
-
-      if (hiddenUsersAdminBox) {
-        hiddenUsersAdminBox.style.display = document.body.classList.contains('admin-master-unlocked') ? 'block' : 'none';
-      }
 
       // أزرار العرض/المصحف تصبح متاحة فقط بعد فتح قفل المشاركة المختارة
       [openMushafBtn, viewerSyncBtn, viewerOpenNewTabBtn].forEach(btn => {
@@ -3136,7 +2903,7 @@ function renderQuranPageControls() {
       });
 
       // أزرار تعدّل بيانات المشاركة (محمية بكلمة المرور)
-      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, hideUserBtn, showHiddenUserBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
+      [dailyCheckBtn, prayerFajrBtn, prayerDhuhrBtn, prayerAsrBtn, prayerMaghribBtn, prayerIshaBtn, saveCurrentPageBtn, nextQuranPageBtn, addPagesBtn, renameBtn, zeroPointsBtn, zeroAllPointsBtn, leaderboardZeroAllBtn, deleteBtn, tasbeehPlus1, tasbeehPlus33, tasbeehReset, viewerPrevBtn, viewerNextBtn].forEach(btn => {
         if (!btn) return;
         const canUse = hasUsers && unlocked;
         btn.disabled = !canUse;
@@ -3244,8 +3011,6 @@ function renderQuranPageControls() {
     zeroPointsBtn?.addEventListener('click', zeroSelectedUserPoints);
     leaderboardZeroAllBtn?.addEventListener('click', zeroAllUsersPoints);
     zeroAllPointsBtn?.addEventListener('click', zeroAllUsersPoints);
-    hideUserBtn?.addEventListener('click', hideSelectedUserFromInterface);
-    showHiddenUserBtn?.addEventListener('click', showHiddenUserFromAdmin);
     deleteBtn.addEventListener('click', deleteSelectedUser);
 
     tasbeehPlus1.addEventListener('click', () => incTasbeeh(1));
@@ -3333,7 +3098,6 @@ function renderQuranPageControls() {
         }, duration);
       }
       window.__appToast = showToast;
-      window.showToast = showToast;
 
       // Confetti
       function confettiBurst(count=18, emoji='🎉'){
@@ -3635,8 +3399,6 @@ function renderQuranPageControls() {
       add(document.getElementById('zeroPointsBtn'), 'block');
       add(document.getElementById('zeroAllPointsBtn'), 'block');
       add(document.getElementById('leaderboardZeroAllBtn'), 'block');
-      add(document.getElementById('hideUserBtn'), 'block');
-      add(document.getElementById('hiddenUsersAdminBox'), 'block');
 
       // أزرار تسبيح إضافية
       add(document.getElementById('tasbeehPlus33'), 'block');
@@ -3872,7 +3634,7 @@ function renderQuranPageControls() {
         } catch (_) {}
 
         // Save locally WITHOUT triggering another cloud push (Firebase code already guards loops)
-        try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
         try { if (typeof render === 'function') render(); } catch (_) {}
       }
 
@@ -3890,7 +3652,7 @@ function renderQuranPageControls() {
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script id="firebaseSharedSyncScript">
     (function () {
-      // Using the new Firebase config and clean shared document
+      // Using the updated Firebase config and shared document for the new site
       const firebaseConfig = {
         apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
         authDomain: "wafaabuqdairi.firebaseapp.com",
@@ -3975,31 +3737,14 @@ function renderQuranPageControls() {
       const COLLECTION_PATH = 'shared_state';
       const DOC_ID = 'global';
 
-      function getOrCreateFirebaseApp() {
-        if (!window.firebase || !firebase.apps) return null;
-        const existing = firebase.apps.find(app => app && app.name === 'wafa-shared-app');
-        return existing || firebase.initializeApp(firebaseConfig, 'wafa-shared-app');
-      }
-
-      async function fetchServerState(docRef) {
-        try {
-          const snap = await docRef.get({ source: 'server' });
-          return snap;
-        } catch (_) {
-          try { return await docRef.get(); } catch (_) { return null; }
-        }
-      }
-
       try {
-        const app = getOrCreateFirebaseApp();
-        if (!app) return;
-        const db = firebase.firestore(app);
+        if (!window.firebase || !firebase.apps) return;
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
         const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
-        let serverPollTimer = null;
-        let lastServerMetaTs = 0;
 
         if (window.BroadcastChannel) {
           try {
@@ -4057,41 +3802,6 @@ function renderQuranPageControls() {
           }, options.immediate ? 0 : 10);
         };
 
-        async function refreshFromServer(forceApply = false) {
-          try {
-            const bridge = getBridge();
-            if (!bridge) return;
-            const snap = await fetchServerState(docRef);
-            if (!snap || !snap.exists) return;
-            const data = snap.data() || {};
-            if (!data.state) return;
-            const remoteNormalized = bridge.normalizeState(data.state);
-            const remoteJson = JSON.stringify(remoteNormalized);
-            const remoteMetaTs = Number((data.meta && data.meta.clientUpdatedAt) || 0);
-            const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
-            if (!forceApply && remoteJson === localJson) {
-              lastServerMetaTs = Math.max(lastServerMetaTs, remoteMetaTs);
-              return;
-            }
-            if (!forceApply && remoteMetaTs && lastServerMetaTs && remoteMetaTs <= lastServerMetaTs) return;
-            lastServerMetaTs = Math.max(lastServerMetaTs, remoteMetaTs);
-            lastCloudJson = remoteJson;
-            applyingRemote = true;
-            try {
-              bridge.applyRemoteState(remoteNormalized);
-              notifyOtherTabs(remoteNormalized);
-            } finally {
-              setTimeout(() => { applyingRemote = false; }, 10);
-            }
-          } catch (e) {
-            console.warn('Server refresh failed:', e);
-          }
-        }
-
-
-        serverPollTimer = setInterval(() => { refreshFromServer(false); }, 2000);
-        window.addEventListener('focus', () => { refreshFromServer(true); });
-
         docRef.onSnapshot((snap) => {
           const bridge = getBridge();
           if (!bridge) return;
@@ -4118,7 +3828,6 @@ function renderQuranPageControls() {
           }
           const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
           lastCloudJson = remoteJson;
-          lastServerMetaTs = Math.max(lastServerMetaTs, Number((data.meta && data.meta.clientUpdatedAt) || 0));
           ready = true;
 
           if (remoteJson === localJson) return;
@@ -4167,14 +3876,14 @@ function renderQuranPageControls() {
       const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
       window.__liveClientId = clientId;
       const seenEvents = new Set();
-      const LOCAL_EVENT_CHANNEL = 'wafa_quran_live_events_cross_tab_v2';
+      const LOCAL_EVENT_CHANNEL = 'wafa_quran_live_events_cross_tab_v1';
       let localEventBc = null;
 
       function getDb() {
         try {
           if (!window.firebase || !firebase.apps) return null;
-          const app = firebase.apps.find(app => app && app.name === 'wafa-shared-app') || firebase.initializeApp(firebaseConfig, 'wafa-shared-app');
-          return firebase.firestore(app);
+          if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+          return firebase.firestore();
         } catch (_) { return null; }
       }
 
@@ -4191,43 +3900,6 @@ function renderQuranPageControls() {
 
       function getEventKey(event) {
         return String((event && (event.clientEventId || event.id || event.eventId)) || '');
-      }
-
-      function formatLiveEventMessage(user, event) {
-        try {
-          const name = String((user && user.name) || 'المشاركة');
-          if (event.type === 'prayer_toggle' && event.prayerKey) {
-            const prayerName = event.prayerName || (typeof PRAYER_LABELS !== 'undefined' ? PRAYER_LABELS[event.prayerKey] : event.prayerKey);
-            return event.isDone
-              ? `🕌 ${name} صلّت ${prayerName}`
-              : `↩️ ${name} أزالت صلاة ${prayerName}`;
-          }
-          if (event.type === 'page_progress') {
-            const pagesDelta = Math.max(0, Number(event.pagesDelta || 0));
-            if (pagesDelta > 0) {
-              return pagesDelta === 1
-                ? `📖 ${name} قرأت صفحة قرآن`
-                : `📖 ${name} قرأت ${toHindiDigits(String(pagesDelta))} صفحات قرآن`;
-            }
-            if (Number.isFinite(Number(event.currentQuranPage))) {
-              return `📍 ${name} أصبحت عند صفحة ${toHindiDigits(String(event.currentQuranPage))}`;
-            }
-          }
-          if (event.type === 'tasbeeh_delta') {
-            return `📿 ${name} زاد تسبيحها`;
-          }
-          return '';
-        } catch (_) { return ''; }
-      }
-
-      function showLiveEventToast(user, event) {
-        try {
-          const msg = formatLiveEventMessage(user, event);
-          if (!msg) return;
-          if (typeof window.showToast === 'function') {
-            window.showToast(msg, 'success', 2200);
-          }
-        } catch (_) {}
       }
 
       function applyLiveEvent(event) {
@@ -4302,59 +3974,14 @@ function renderQuranPageControls() {
               user.totalPoints = nextPoints;
               changed = true;
             }
-          } else if (event.type === 'prayer_toggle' && event.prayerKey && event.dateKey) {
-            ensurePrayerTracking(user);
-            const current = getPrayerStateForDate(user, event.dateKey);
-            const incomingDayState = (event.dayState && typeof event.dayState === 'object') ? event.dayState : null;
-            const nextValue = !!event.isDone;
-            if (!!current[event.prayerKey] !== nextValue) {
-              current[event.prayerKey] = nextValue;
-              changed = true;
-            }
-            if (incomingDayState) {
-              const normalized = {
-                fajr: !!incomingDayState.fajr,
-                dhuhr: !!incomingDayState.dhuhr,
-                asr: !!incomingDayState.asr,
-                maghrib: !!incomingDayState.maghrib,
-                isha: !!incomingDayState.isha
-              };
-              if (JSON.stringify(current) !== JSON.stringify(normalized)) {
-                Object.assign(current, normalized);
-                changed = true;
-              }
-            }
-            user.prayersByDate[event.dateKey] = current;
-            if (Number.isFinite(Number(event.prayersCount)) && Number(event.prayersCount) !== Number(user.prayersCount || 0)) {
-              user.prayersCount = Math.max(0, Number(event.prayersCount || 0));
-              changed = true;
-            }
-            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
-              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
-              changed = true;
-            }
-          } else if (event.type === 'page_progress') {
-            if (Number.isFinite(Number(event.totalPages)) && Number(event.totalPages) !== Number(user.totalPages || 0)) {
-              user.totalPages = Math.max(0, Number(event.totalPages || 0));
-              changed = true;
-            }
-            if (Number.isFinite(Number(event.currentQuranPage)) && Number(event.currentQuranPage) !== Number(user.currentQuranPage || 0)) {
-              user.currentQuranPage = clampQuranPage(Number(event.currentQuranPage || 1));
-              changed = true;
-            }
-            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
-              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
-              changed = true;
-            }
           }
 
           if (!changed) return;
           user._updatedAt = Math.max(Number(user._updatedAt || 0), Number(event.userUpdatedAt || 0), Number(event.at || 0), Date.now());
           state.users[idx] = user;
           try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
-          try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
           try { if (typeof render === 'function') render(); } catch (_) {}
-          try { showLiveEventToast(user, event); } catch (_) {}
         } catch (e) {
           console.warn('applyLiveEvent failed', e);
         }
@@ -4383,11 +4010,10 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          db.collection('shared_state').doc('global').collection('live_events').doc(String(event.clientEventId)).set({
+          db.collection('shared_state').doc('global').collection('live_events').add({
             ...event,
-            createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true }).catch((e) => console.warn('live event publish failed', e));
+          }).catch((e) => console.warn('live event publish failed', e));
         } catch (e) {
           console.warn('live event publish setup failed', e);
         }
@@ -4423,8 +4049,8 @@ function renderQuranPageControls() {
           if (!db || window.__liveEventsSubscribed) return;
           window.__liveEventsSubscribed = true;
           db.collection('shared_state').doc('global').collection('live_events')
-            .orderBy('createdAtClient', 'desc')
-            .limit(120)
+            .orderBy('createdAt', 'desc')
+            .limit(80)
             .onSnapshot((snap) => {
               const docs = snap.docChanges().slice().reverse();
               docs.forEach((change) => {
