@@ -2,9 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>تحدّي ختم القرآن المبارك | لوحة التلاوة والمتابعة</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1315,10 +1312,6 @@
       <p>
         ابدؤوا رحلتكم مع التلاوة والذِّكر، واغتنموا هذه الأيام المباركة بالطاعة وابتغاء الأجر من الله تعالى 💚
       </p>
-      <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-        <span class="pill">🔄 المزامنة المباشرة مفعّلة</span>
-        <button class="btn ghost" id="manualSyncBtn" type="button" style="width:auto; min-width:180px;">تحديث فوري للجميع</button>
-      </div>
 
       <div class="hero-announce">
         <div class="hero-announce-title">🏆 جوائز قيّمة بإذن الله ستكون:</div>
@@ -4736,13 +4729,14 @@ function renderQuranPageControls() {
       let ready = false;
       let applyingRemote = false;
       let pushTimer = null;
+      let pushRetryTimer = null;
+      let pushFailureCount = 0;
+      let pullTimer = null;
+      let lastPullAt = 0;
       let lastCloudJson = null;
       let lastPushedJson = null;
-      let forceFetchTimer = null;
-      let lastSuccessfulServerFetchAt = 0;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
       const CROSS_TAB_CHANNEL = 'khatma_cross_tab_detached_20260308_x91';
-      const APP_SYNC_VERSION = '2026-03-08-syncfix-r1';
       let bc = null;
 
       function notifyOtherTabs(stateObj) {
@@ -4789,6 +4783,61 @@ function renderQuranPageControls() {
       const COLLECTION_PATH = 'shared_state_zero_20260308_v2';
       const DOC_ID = 'quran_khatma_main_zero_20260308_v2';
 
+      function shouldPreferLocalState(localState, remoteNormalized, dataMeta) {
+        try {
+          const remoteMetaTs = Number((dataMeta && dataMeta.clientUpdatedAt) || 0);
+          const localMetaTs = Number((localState && localState.__clientUpdatedAt) || 0);
+          const localUsersCount = Array.isArray(localState && localState.users) ? localState.users.length : 0;
+          const remoteUsersCount = Array.isArray(remoteNormalized && remoteNormalized.users) ? remoteNormalized.users.length : 0;
+          const localPoints = (Array.isArray(localState && localState.users) ? localState.users : []).reduce((s, u) => s + Number((u && u.totalPoints) || 0), 0);
+          const remotePoints = (Array.isArray(remoteNormalized && remoteNormalized.users) ? remoteNormalized.users : []).reduce((s, u) => s + Number((u && u.totalPoints) || 0), 0);
+          if (localMetaTs && remoteMetaTs && remoteMetaTs < localMetaTs) return true;
+          if (localUsersCount > remoteUsersCount) return true;
+          if (localPoints > remotePoints && remoteMetaTs <= localMetaTs) return true;
+          return false;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function applyRemoteSnapshotPayload(data, sourceLabel) {
+        const bridge = getBridge();
+        if (!bridge) return;
+
+        if (!data || !data.state) {
+          ready = true;
+          try { window.__firebaseSync.pushState(bridge.getState(), { immediate: true, force: true }); } catch (_) {}
+          return;
+        }
+
+        const remoteNormalized = bridge.normalizeState(data.state);
+        const remoteJson = JSON.stringify(remoteNormalized);
+        if (remoteJson === lastCloudJson) {
+          ready = true;
+          return;
+        }
+
+        const localState = bridge.getState();
+        const localJson = JSON.stringify(bridge.normalizeState(localState));
+        lastCloudJson = remoteJson;
+        ready = true;
+
+        if (remoteJson === localJson) return;
+
+        if (shouldPreferLocalState(localState, remoteNormalized, data.meta || {})) {
+          try { window.__firebaseSync.pushState(localState, { immediate: true, force: true }); } catch (_) {}
+          return;
+        }
+
+        applyingRemote = true;
+        try {
+          bridge.applyRemoteState(remoteNormalized);
+          notifyOtherTabs(remoteNormalized);
+        } finally {
+          setTimeout(() => { applyingRemote = false; }, 10);
+        }
+      }
+
       try {
         if (!window.firebase || !firebase.apps) return;
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -4797,50 +4846,6 @@ function renderQuranPageControls() {
         // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
         const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
-
-        async function forceFetchFromServer(reason = 'manual') {
-          try {
-            if (applyingRemote) return;
-            const bridge = getBridge();
-            if (!bridge) return;
-            const snap = await docRef.get({ source: 'server' });
-            if (!snap.exists) return;
-            const data = snap.data() || {};
-            if (!data.state) return;
-            const remoteNormalized = bridge.normalizeState(data.state);
-            const remoteJson = JSON.stringify(remoteNormalized);
-            const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
-            lastSuccessfulServerFetchAt = Date.now();
-            if (remoteJson === localJson) {
-              lastCloudJson = remoteJson;
-              return;
-            }
-            applyingRemote = true;
-            try {
-              bridge.applyRemoteState(remoteNormalized);
-              lastCloudJson = remoteJson;
-              notifyOtherTabs(remoteNormalized);
-              try {
-                if (typeof window.showToast === 'function' && reason !== 'poll') {
-                  window.showToast('🔄 تم تحديث البيانات من الخادم', 'success', 1500);
-                }
-              } catch (_) {}
-            } finally {
-              setTimeout(() => { applyingRemote = false; }, 10);
-            }
-          } catch (e) {
-            console.warn('forceFetchFromServer failed:', reason, e);
-          }
-        }
-
-        function scheduleForceFetch(reason = 'poll', delay = 0) {
-          clearTimeout(forceFetchTimer);
-          forceFetchTimer = setTimeout(() => { forceFetchFromServer(reason); }, Math.max(0, Number(delay || 0)));
-        }
-
-        window.__firebaseSync = window.__firebaseSync || {};
-        window.__firebaseSync.forceRefresh = forceFetchFromServer;
-        window.__firebaseSync.scheduleForceRefresh = scheduleForceFetch;
 
         if (window.BroadcastChannel) {
           try {
@@ -4852,15 +4857,6 @@ function renderQuranPageControls() {
           if (event.key !== CROSS_TAB_CHANNEL || !event.newValue) return;
           try { receiveExternalState(JSON.parse(event.newValue)); } catch (_) {}
         });
-        window.addEventListener('focus', () => scheduleForceFetch('focus', 40));
-        window.addEventListener('online', () => scheduleForceFetch('online', 120));
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') scheduleForceFetch('visible', 40);
-        });
-        setInterval(() => {
-          if (document.visibilityState === 'hidden') return;
-          scheduleForceFetch('poll', 0);
-        }, 4000);
 
         window.__firebaseSync = window.__firebaseSync || {};
         window.__firebaseSync.broadcastLocal = function (stateObj) {
@@ -4918,79 +4914,65 @@ function renderQuranPageControls() {
           }, options.immediate ? 0 : 10);
         };
 
+        async function fetchRemoteStateNow(reason = 'manual') {
+          if (!docRef) return;
+          if (pullTimer) clearTimeout(pullTimer);
+          const now = Date.now();
+          if ((now - lastPullAt) < 900 && reason !== 'force') return;
+          lastPullAt = now;
+          try {
+            const snap = await docRef.get({ source: 'server' });
+            if (!snap.exists) {
+              const bridge = getBridge();
+              ready = true;
+              if (bridge) {
+                try { window.__firebaseSync.pushState(bridge.getState(), { immediate: true, force: true }); } catch (_) {}
+              }
+              return;
+            }
+            applyRemoteSnapshotPayload(snap.data() || {}, reason);
+          } catch (err) {
+            console.warn('Firebase forced pull failed:', err);
+          }
+        }
+
+        window.__firebaseSync.pullState = fetchRemoteStateNow;
+
         docRef.onSnapshot((snap) => {
           const bridge = getBridge();
           if (!bridge) return;
 
           if (!snap.exists) {
             ready = true;
-            window.__firebaseSync.pushState(bridge.getState());
+            window.__firebaseSync.pushState(bridge.getState(), { immediate: true, force: true });
             toast('☁️ تم تفعيل المزامنة المباشرة');
             return;
           }
 
-          const data = snap.data() || {};
-          if (!data.state) {
-            scheduleForceFetch('bootstrap-empty', 80);
-            ready = true;
-            window.__firebaseSync.pushState(bridge.getState());
-            return;
-          }
-
-          const remoteNormalized = bridge.normalizeState(data.state);
-          const remoteJson = JSON.stringify(remoteNormalized);
-          if (remoteJson === lastCloudJson) {
-            ready = true;
-            return;
-          }
-          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
-          lastCloudJson = remoteJson;
-          ready = true;
-
-          if (remoteJson === localJson) return;
-
-          // Conflict guard: don't overwrite newer or richer local changes with older/emptier cloud snapshot
-          try {
-            const localState = bridge.getState() || {};
-            const remoteMetaTs = Number((data.meta && data.meta.clientUpdatedAt) || 0);
-            const localMetaTs = Number((localState && localState.__clientUpdatedAt) || 0);
-            const localUsersCount = Array.isArray(localState.users) ? localState.users.length : 0;
-            const remoteUsersCount = Array.isArray(remoteNormalized.users) ? remoteNormalized.users.length : 0;
-            const localPoints = (Array.isArray(localState.users) ? localState.users : []).reduce((s, u) => s + Number((u && u.totalPoints) || 0), 0);
-            const remotePoints = (Array.isArray(remoteNormalized.users) ? remoteNormalized.users : []).reduce((s, u) => s + Number((u && u.totalPoints) || 0), 0);
-
-            if (localMetaTs && remoteMetaTs && remoteMetaTs < localMetaTs) {
-              ready = true;
-              try { window.__firebaseSync.pushState(localState, { immediate: true, force: true }); } catch (_) {}
-              return;
-            }
-            if (localUsersCount > remoteUsersCount) {
-              ready = true;
-              try { window.__firebaseSync.pushState(localState, { immediate: true, force: true }); } catch (_) {}
-              return;
-            }
-            if (localPoints > remotePoints && remoteMetaTs <= localMetaTs) {
-              ready = true;
-              try { window.__firebaseSync.pushState(localState, { immediate: true, force: true }); } catch (_) {}
-              return;
-            }
-          } catch (_) {}
-
-          applyingRemote = true;
-          try {
-            bridge.applyRemoteState(remoteNormalized);
-            notifyOtherTabs(remoteNormalized);
-          } finally {
-            setTimeout(() => { applyingRemote = false; }, 10);
-          }
-          scheduleForceFetch('after-snapshot-apply', 120);
+          applyRemoteSnapshotPayload(snap.data() || {}, 'snapshot');
         }, (err) => {
           console.error('Firebase onSnapshot error:', err);
           toast('⚠️ فشل ربط المزامنة. افحصي قواعد Firestore');
-          scheduleForceFetch('snapshot-error', 250);
         });
 
-        scheduleForceFetch('startup', 250);
+        window.addEventListener('focus', () => {
+          pullTimer = setTimeout(() => fetchRemoteStateNow('focus'), 60);
+        });
+        window.addEventListener('pageshow', () => {
+          pullTimer = setTimeout(() => fetchRemoteStateNow('pageshow'), 80);
+        });
+        window.addEventListener('online', () => {
+          pullTimer = setTimeout(() => fetchRemoteStateNow('online'), 100);
+        });
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            pullTimer = setTimeout(() => fetchRemoteStateNow('visible'), 70);
+          }
+        });
+        setInterval(() => {
+          if (document.visibilityState === 'hidden') return;
+          fetchRemoteStateNow('interval');
+        }, 7000);
       } catch (e) {
         console.error('Firebase init failed:', e);
       }
@@ -5382,36 +5364,6 @@ function renderQuranPageControls() {
       document.addEventListener('DOMContentLoaded', init);
     } else {
       init();
-    }
-  })();
-  </script>
-
-
-  <script>
-  (function(){
-    function bindManualSync(){
-      var btn = document.getElementById('manualSyncBtn');
-      if (!btn) return;
-      btn.addEventListener('click', function(){
-        try {
-          if (window.__firebaseSync && typeof window.__firebaseSync.forceRefresh === 'function') {
-            window.__firebaseSync.forceRefresh('manual-button');
-          }
-          if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function' && window.state) {
-            window.__firebaseSync.pushState(window.state, { immediate: true, force: true });
-          }
-          if (typeof window.showToast === 'function') {
-            window.showToast('✅ تم طلب تحديث مباشر من الخادم', 'success', 1600);
-          }
-        } catch (e) {
-          console.warn('manual sync failed', e);
-        }
-      });
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', bindManualSync);
-    } else {
-      bindManualSync();
     }
   })();
   </script>
