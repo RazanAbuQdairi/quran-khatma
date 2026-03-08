@@ -2499,112 +2499,42 @@
       try { user._updatedAt = Date.now(); } catch (_) {}
     }
 
-    let __saveTimer = null;
-    let __saveRetryTimer = null;
-    let __lastFlushAt = 0;
-    let __dirtySinceFlush = false;
-    let __lastDurableSnapshotAt = 0;
-    let __lastDurableSnapshotSignature = '';
-
-    function persistDurableSnapshot(stateJson) {
-      try {
-        const now = Date.now();
-        if ((now - __lastDurableSnapshotAt) < 1200 && stateJson === __lastDurableSnapshotSignature) return;
-        const parsedState = JSON.parse(stateJson);
-        const snapshots = readDurableSnapshots().slice(-5);
-        snapshots.push({ savedAt: new Date(now).toISOString(), state: parsedState });
-        localStorage.setItem(DURABLE_SNAPSHOTS_KEY, JSON.stringify(snapshots.slice(-6)));
-        __lastDurableSnapshotAt = now;
-        __lastDurableSnapshotSignature = stateJson;
-      } catch (_) {}
+    
+let __saveTimer = null;
+function saveState() {
+  try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
+  clearTimeout(__saveTimer);
+  __saveTimer = setTimeout(() => {
+    try { persistStateToLocalStores(); } catch (_) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
     }
-
-    function persistStateToLocalStores() {
-      try {
-        const stateJson = JSON.stringify(state);
-        localStorage.setItem(STORAGE_KEY, stateJson);
-        try { sessionStorage.setItem(SESSION_STATE_KEY, stateJson); } catch (_) {}
-        try {
-          localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
-            savedAt: new Date().toISOString(),
-            state: JSON.parse(stateJson)
-          }));
-        } catch (_) {}
-        persistDurableSnapshot(stateJson);
-      } catch (e) {
-        console.warn('Local persistence failed:', e);
+    try {
+      if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
+        window.__firebaseSync.pushState(state);
       }
+    } catch (e) {
+      console.warn('Firebase sync push skipped:', e);
     }
+  }, 140);
+}
 
-    function flushStateNow(options = {}) {
-      __lastFlushAt = Date.now();
-      persistStateToLocalStores();
-      try {
-        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
-          window.__firebaseSync.pushState(state, { immediate: true });
-          if (options.retry !== false) {
-            clearTimeout(__saveRetryTimer);
-            __saveRetryTimer = setTimeout(() => {
-              try {
-                if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
-                  window.__firebaseSync.pushState(state, { immediate: true });
-                }
-              } catch (_) {}
-            }, 180);
-          }
-        }
-      } catch (e) {
-        console.warn('Firebase sync push skipped:', e);
-      }
-      __dirtySinceFlush = false;
-    }
+function saveStateStrong() {
+  saveState();
+}
 
-    function saveState(options = {}) {
-      // لا نرفع __clientUpdatedAt إلا عند وجود تغيير محلي فعلي
-      __dirtySinceFlush = true;
-      try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
-      persistStateToLocalStores();
+window.addEventListener('pagehide', () => {
+  try { persistStateToLocalStores(); } catch (_) {}
+});
+window.addEventListener('beforeunload', () => {
+  try { persistStateToLocalStores(); } catch (_) {}
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    try { persistStateToLocalStores(); } catch (_) {}
+  }
+});
 
-      try {
-        if (window.__firebaseSync && typeof window.__firebaseSync.broadcastLocal === 'function') {
-          window.__firebaseSync.broadcastLocal(state);
-        }
-      } catch (_) {}
-
-      clearTimeout(__saveTimer);
-      if (options && options.immediate) {
-        flushStateNow(options);
-        return;
-      }
-      __saveTimer = setTimeout(() => flushStateNow(options), 10);
-    }
-
-    function saveStateStrong() {
-      saveState({ immediate: true, retry: true });
-    }
-
-    // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
-    setInterval(() => {
-      if (document.visibilityState === 'hidden') return;
-      if (!__dirtySinceFlush) return;
-      if (Date.now() - __lastFlushAt < 8000) return;
-      flushStateNow();
-    }, 10000);
-
-    window.addEventListener('pagehide', () => flushStateNow({ retry: false }));
-    window.addEventListener('beforeunload', () => flushStateNow({ retry: false }));
-    window.addEventListener('blur', () => flushStateNow({ retry: false }));
-    window.addEventListener('freeze', () => flushStateNow({ retry: false }));
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') flushStateNow({ retry: false });
-    });
-    window.addEventListener('pageshow', () => {
-      try { persistStateToLocalStores(); } catch (_) {}
-    });
-    window.addEventListener('online', () => {
-      try { flushStateNow({ immediate: true, retry: true }); } catch (_) {}
-    });
-    setInterval(() => {
+setInterval(() => {
       try { persistStateToLocalStores(); } catch (_) {}
     }, 3000);
 
@@ -4598,224 +4528,182 @@ function renderQuranPageControls() {
   })();
   </script>
 
-  <script id="quranAppBridge">
-    (function(){
-      // Bridge used by Firebase live sync
-      if (window.__quranAppBridge) return;
+  
+<script id="quranAppBridge">
+  (function(){
+    if (window.__quranAppBridge) return;
 
-      function normalizeState(stateObj){
-        try {
-          const base = structuredClone(defaultState);
-          const s = stateObj && typeof stateObj === 'object' ? stateObj : {};
-          const out = {
-            ...base,
-            ...s,
-            settings: { ...base.settings, ...(s.settings || {}) },
-            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
-          };
-          // enforce fixed points if your app expects it
-          out.settings.dailyPoints = 5;
-          out.settings.pagePoints = 5;
-          if (out.selectedUserId && !out.users.some(u => u.id === out.selectedUserId)) {
-            out.selectedUserId = out.users[0]?.id || null;
-          }
-          return out;
-        } catch (e) {
-          console.warn('normalizeState failed:', e);
-          return stateObj;
-        }
-      }
-
-      function mergeUserRecords(remoteUser, localUser){
-        const remoteTs = Number(remoteUser && remoteUser._updatedAt || 0);
-        const localTs = Number(localUser && localUser._updatedAt || 0);
-        const chosen = localTs >= remoteTs ? localUser : remoteUser;
-        const other = chosen === localUser ? remoteUser : localUser;
-        if (!chosen) return other ? sanitizeUser(other) : null;
-        const out = sanitizeUser(chosen);
-        const otherHistory = Array.isArray(other && other.history) ? other.history : [];
-        if (otherHistory.length) {
-          const seen = new Set((out.history || []).map(item => `${item.at || ''}|${item.type || ''}|${JSON.stringify(item)}`));
-          otherHistory.forEach(item => {
-            const key = `${item.at || ''}|${item.type || ''}|${JSON.stringify(item)}`;
-            if (!seen.has(key)) out.history.push(item);
-          });
-          out.history = out.history.slice(-200);
-        }
-        out._updatedAt = Math.max(remoteTs, localTs, Number(out._updatedAt || 0));
-        return out;
-      }
-
-      function mergeStates(remoteState, localState){
-        const remote = normalizeState(remoteState || {});
-        const local = normalizeState(localState || {});
-        const merged = {
-          ...remote,
-          ...local,
-          settings: { ...remote.settings, ...local.settings },
-          users: [],
-          __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0))
+    function normalizeState(stateObj){
+      try {
+        const base = structuredClone(defaultState);
+        const s = stateObj && typeof stateObj === 'object' ? stateObj : {};
+        const out = {
+          ...base,
+          ...s,
+          settings: { ...base.settings, ...(s.settings || {}) },
+          users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
         };
-
-        const ids = new Set([
-          ...((remote.users || []).map(u => u.id)),
-          ...((local.users || []).map(u => u.id))
-        ]);
-
-        merged.users = Array.from(ids).map(id => {
-          const remoteUser = (remote.users || []).find(u => u.id === id);
-          const localUser = (local.users || []).find(u => u.id === id);
-          return mergeUserRecords(remoteUser, localUser);
-        }).filter(Boolean);
-
-        if (merged.selectedUserId && !merged.users.some(u => u.id === merged.selectedUserId)) {
-          merged.selectedUserId = merged.users[0]?.id || null;
+        out.settings.dailyPoints = 5;
+        if (!(Number.isFinite(Number(out.settings.pagePoints)) && Number(out.settings.pagePoints) >= 0)) {
+          out.settings.pagePoints = 5;
         }
-        return merged;
+        if (out.selectedUserId && !out.users.some(u => u.id === out.selectedUserId)) {
+          out.selectedUserId = out.users[0]?.id || null;
+        }
+        return out;
+      } catch (e) {
+        console.warn('normalizeState failed:', e);
+        return stateObj;
       }
+    }
 
-      function applyRemoteState(remoteState){
-        // Important: when a newer remote snapshot arrives, treat it as the source of truth.
-        // Merging it again with local state can cause stale local copies to keep winning.
-        const next = normalizeState(remoteState || {});
-        state = next;
-        try {
-          const unlocked = sessionAuth.unlockedUserId && next.users.some(u => u.id === sessionAuth.unlockedUserId)
-            ? sessionAuth.unlockedUserId
-            : null;
-          sessionAuth.unlockedUserId = unlocked;
-          saveUnlockedUserId(unlocked);
-        } catch (_) {}
+    function applyRemoteState(remoteState){
+      const next = normalizeState(remoteState);
+      state = next;
+      try {
+        const unlocked = sessionAuth.unlockedUserId && next.users.some(u => u.id === sessionAuth.unlockedUserId)
+          ? sessionAuth.unlockedUserId
+          : null;
+        sessionAuth.unlockedUserId = unlocked;
+        saveUnlockedUserId(unlocked);
+      } catch (_) {}
 
-        // Save locally WITHOUT triggering another cloud push (Firebase code already guards loops)
-        try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
-        try { if (typeof render === 'function') render(); } catch (_) {}
-      }
+      try {
+        if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores();
+        else localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (_) {}
+      try { if (typeof render === 'function') render(); } catch (_) {}
+    }
 
-      window.__quranAppBridge = {
-        getState: () => state,
-        normalizeState,
-        mergeStates,
-        applyRemoteState
-      };
-    })();
-  </script>
+    window.__quranAppBridge = {
+      getState: () => state,
+      normalizeState,
+      applyRemoteState
+    };
+  })();
+</script>
+
 
   <!-- Firebase shared sync (Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script id="firebaseSharedSyncScript">
-    (function () {
-      // Using the same Firebase config and shared document as the uploaded v81 file
-      const firebaseConfig = {
-        apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
-        authDomain: "wafaabuqdairi.firebaseapp.com",
-        projectId: "wafaabuqdairi",
-        storageBucket: "wafaabuqdairi.firebasestorage.app",
-        messagingSenderId: "147376328852",
-        appId: "1:147376328852:web:859440af34e4bb14dc6481",
-        measurementId: "G-L6QHBLNVMJ"
-      };
+  
+<script id="firebaseSharedSyncScript">
+  (function () {
+    const firebaseConfig = {
+      apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
+      authDomain: "wafaabuqdairi.firebaseapp.com",
+      projectId: "wafaabuqdairi",
+      storageBucket: "wafaabuqdairi.firebasestorage.app",
+      messagingSenderId: "147376328852",
+      appId: "1:147376328852:web:859440af34e4bb14dc6481",
+      measurementId: "G-L6QHBLNVMJ"
+    };
 
-      const FIREBASE_SYNC_ENABLED = true;
-      if (!FIREBASE_SYNC_ENABLED) return;
+    function getBridge() {
+      return window.__quranAppBridge || null;
+    }
 
-      function getBridge() {
-        return window.__quranAppBridge || null;
-      }
-
-      function toast(msg) {
-        try {
-          const t = document.getElementById('toast');
-          if (t) {
-            t.textContent = msg;
-            t.classList.add('show');
-            clearTimeout(t._timer);
-            t._timer = setTimeout(() => t.classList.remove('show'), 2200);
-            return;
-          }
-        } catch (_) {}
-        console.log(msg);
-      }
-
-      let ready = false;
-      let applyingRemote = false;
-      let pushTimer = null;
-      let pushRetryTimer = null;
-      let pushFailureCount = 0;
-      let pullTimer = null;
-      let lastPullAt = 0;
-      let lastCloudJson = null;
-      let lastPushedJson = null;
-      const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
-      const CROSS_TAB_CHANNEL = 'khatma_cross_tab_detached_20260308_x91';
-      let bc = null;
-
-      function notifyOtherTabs(stateObj) {
-        try {
-          const bridge = getBridge();
-          if (!bridge) return;
-          const normalized = bridge.normalizeState(stateObj);
-          const payload = {
-            sender: clientId,
-            at: Date.now(),
-            state: normalized
-          };
-          if (window.BroadcastChannel) {
-            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
-            bc.postMessage(payload);
-          }
-          try {
-            localStorage.setItem(CROSS_TAB_CHANNEL, JSON.stringify(payload));
-          } catch (_) {}
-        } catch (_) {}
-      }
-
-      function receiveExternalState(payload) {
-        try {
-          if (!payload || payload.sender === clientId || !payload.state) return;
-          const bridge = getBridge();
-          if (!bridge) return;
-          const incoming = bridge.normalizeState(payload.state);
-          const incomingJson = JSON.stringify(incoming);
-          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
-          if (incomingJson === localJson) return;
-          applyingRemote = true;
-          try {
-            bridge.applyRemoteState(incoming);
-            lastCloudJson = incomingJson;
-          } finally {
-            setTimeout(() => { applyingRemote = false; }, 10);
-          }
-        } catch (e) {
-          console.warn('Cross-tab sync apply failed:', e);
+    function toast(msg) {
+      try {
+        const t = document.getElementById('toast');
+        if (t) {
+          t.textContent = msg;
+          t.classList.add('show');
+          clearTimeout(t._timer);
+          t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+          return;
         }
-      }
+      } catch (_) {}
+      console.log(msg);
+    }
 
-      const COLLECTION_PATH = 'shared_state_zero_20260308_v2';
-      const DOC_ID = 'quran_khatma_main_zero_20260308_v2';
+    let ready = false;
+    let applyingRemote = false;
+    let pushTimer = null;
+    let lastCloudJson = null;
+    let lastPushedJson = null;
+    const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
 
-      function shouldPreferLocalState(localState, remoteNormalized, dataMeta) {
-        try {
-          // Prefer local only when we are reasonably sure it contains a newer unsynced change.
-          // Do NOT prefer local merely because counts differ; that can block real remote updates.
-          const remoteMetaTs = Number((dataMeta && dataMeta.clientUpdatedAt) || 0);
-          const localMetaTs = Number((localState && localState.__clientUpdatedAt) || 0);
-          if (!localMetaTs) return false;
-          if (!remoteMetaTs) return false;
-          return localMetaTs > (remoteMetaTs + 1500);
-        } catch (_) {
-          return false;
-        }
-      }
+    const COLLECTION_PATH = 'shared_state_zero_20260308_v2';
+    const DOC_ID = 'quran_khatma_main_zero_20260308_v2';
 
-      function applyRemoteSnapshotPayload(data, sourceLabel) {
+    try {
+      if (!window.firebase || !firebase.apps) return;
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
+
+      window.__firebaseSync = window.__firebaseSync || {};
+      window.__firebaseSync.pushState = function (stateObj, options = {}) {
+        if (!ready || applyingRemote) return;
         const bridge = getBridge();
         if (!bridge) return;
 
-        if (!data || !data.state) {
+        clearTimeout(pushTimer);
+        pushTimer = setTimeout(async () => {
+          try {
+            const normalized = bridge.normalizeState(stateObj);
+            const json = JSON.stringify(normalized);
+            if (json === lastPushedJson && !options.force) return;
+            lastPushedJson = json;
+
+            await docRef.set({
+              state: normalized,
+              meta: {
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: clientId,
+                version: 1,
+                clientUpdatedAt: (normalized && normalized.__clientUpdatedAt) || Date.now()
+              }
+            }, { merge: true });
+          } catch (e) {
+            console.error('Firebase push failed:', e);
+          }
+        }, options.immediate ? 0 : 140);
+      };
+
+      window.__firebaseSync.pullState = async function () {
+        try {
+          const snap = await docRef.get({ source: 'server' });
+          if (!snap.exists) return;
+          const bridge = getBridge();
+          if (!bridge) return;
+          const data = snap.data() || {};
+          if (!data.state) return;
+          const remoteNormalized = bridge.normalizeState(data.state);
+          const remoteJson = JSON.stringify(remoteNormalized);
+          const localState = bridge.getState();
+          const localJson = JSON.stringify(bridge.normalizeState(localState));
+          lastCloudJson = remoteJson;
           ready = true;
-          try { window.__firebaseSync.pushState(bridge.getState(), { immediate: true, force: true }); } catch (_) {}
+          if (remoteJson === localJson) return;
+          applyingRemote = true;
+          try {
+            bridge.applyRemoteState(remoteNormalized);
+          } finally {
+            setTimeout(() => { applyingRemote = false; }, 150);
+          }
+        } catch (err) {
+          console.warn('Firebase forced pull failed:', err);
+        }
+      };
+
+      docRef.onSnapshot((snap) => {
+        const bridge = getBridge();
+        if (!bridge) return;
+
+        if (!snap.exists) {
+          ready = true;
+          window.__firebaseSync.pushState(bridge.getState(), { force: true });
+          toast('☁️ تم تفعيل المزامنة المباشرة');
+          return;
+        }
+
+        const data = snap.data() || {};
+        if (!data.state) {
+          ready = true;
+          window.__firebaseSync.pushState(bridge.getState(), { force: true });
           return;
         }
 
@@ -4833,507 +4721,53 @@ function renderQuranPageControls() {
 
         if (remoteJson === localJson) return;
 
-        if (shouldPreferLocalState(localState, remoteNormalized, data.meta || {})) {
-          try { window.__firebaseSync.pushState(localState, { immediate: true, force: true }); } catch (_) {}
-          return;
-        }
+        try {
+          const remoteMetaTs = Number((data.meta && data.meta.clientUpdatedAt) || 0);
+          const localMetaTs = Number((localState && localState.__clientUpdatedAt) || 0);
+          if (localMetaTs && remoteMetaTs && remoteMetaTs < localMetaTs) {
+            ready = true;
+            return;
+          }
+        } catch (_) {}
 
         applyingRemote = true;
         try {
           bridge.applyRemoteState(remoteNormalized);
-          notifyOtherTabs(remoteNormalized);
         } finally {
-          setTimeout(() => { applyingRemote = false; }, 10);
+          setTimeout(() => { applyingRemote = false; }, 150);
         }
-      }
+      }, (err) => {
+        console.error('Firebase onSnapshot error:', err);
+        toast('⚠️ فشل ربط المزامنة. افحصي قواعد Firestore');
+      });
 
-      try {
-        if (!window.firebase || !firebase.apps) return;
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
-
-        const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
-
-        if (window.BroadcastChannel) {
-          try {
-            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
-            bc.onmessage = (event) => receiveExternalState(event.data);
-          } catch (_) {}
-        }
-        window.addEventListener('storage', (event) => {
-          if (event.key !== CROSS_TAB_CHANNEL || !event.newValue) return;
-          try { receiveExternalState(JSON.parse(event.newValue)); } catch (_) {}
-        });
-
-        window.__firebaseSync = window.__firebaseSync || {};
-        window.__firebaseSync.broadcastLocal = function (stateObj) {
-          try {
-            const bridge = getBridge();
-            if (!bridge) return;
-            notifyOtherTabs(bridge.normalizeState(stateObj));
-          } catch (_) {}
-        };
-        window.__firebaseSync.pushState = function (stateObj, options = {}) {
-          if (!ready || applyingRemote) return;
-          const bridge = getBridge();
-          if (!bridge) return;
-          clearTimeout(pushTimer);
-          pushTimer = setTimeout(async () => {
-            try {
-              const normalized = bridge.normalizeState(stateObj);
-              const json = JSON.stringify(normalized);
-              if (json === lastPushedJson && !options.immediate && !options.force) return;
-
-              await db.runTransaction(async (tx) => {
-                const snap = await tx.get(docRef);
-                const remoteState = snap.exists ? ((snap.data() || {}).state || null) : null;
-                const mergedState = typeof bridge.mergeStates === 'function'
-                  ? bridge.mergeStates(remoteState, normalized)
-                  : normalized;
-                const mergedJson = JSON.stringify(mergedState);
-                if (mergedJson === lastPushedJson && !options.immediate && !options.force) return;
-                lastPushedJson = mergedJson;
-                pushFailureCount = 0;
-                clearTimeout(pushRetryTimer);
-                notifyOtherTabs(mergedState);
-                tx.set(docRef, {
-                  state: mergedState,
-                  meta: {
-                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                     updatedBy: clientId,
-                     version: 3,
-                     clientUpdatedAt: (mergedState && mergedState.__clientUpdatedAt) || Date.now()
-                   }
-                }, { merge: true });
-              });
-            } catch (e) {
-              pushFailureCount += 1;
-              const retryDelay = Math.min(2500, 250 * pushFailureCount);
-              clearTimeout(pushRetryTimer);
-              pushRetryTimer = setTimeout(() => {
-                try {
-                  const latest = bridge.getState();
-                  if (latest) window.__firebaseSync.pushState(latest, { immediate: true, force: true });
-                } catch (_) {}
-              }, retryDelay);
-              console.error('Firebase push failed:', e);
-            }
-          }, options.immediate ? 0 : 10);
-        };
-
-        async function fetchRemoteStateNow(reason = 'manual') {
-          if (!docRef) return;
-          if (pullTimer) clearTimeout(pullTimer);
-          const now = Date.now();
-          if ((now - lastPullAt) < 900 && reason !== 'force') return;
-          lastPullAt = now;
-          try {
-            const snap = await docRef.get({ source: 'server' });
-            if (!snap.exists) {
-              const bridge = getBridge();
-              ready = true;
-              if (bridge) {
-                try { window.__firebaseSync.pushState(bridge.getState(), { immediate: true, force: true }); } catch (_) {}
-              }
-              return;
-            }
-            applyRemoteSnapshotPayload(snap.data() || {}, reason);
-          } catch (err) {
-            console.warn('Firebase forced pull failed:', err);
-          }
-        }
-
-        window.__firebaseSync.pullState = fetchRemoteStateNow;
-
-        docRef.onSnapshot({ includeMetadataChanges: true }, (snap) => {
-          const bridge = getBridge();
-          if (!bridge) return;
-
-          if (!snap.exists) {
-            ready = true;
-            window.__firebaseSync.pushState(bridge.getState(), { immediate: true, force: true });
-            toast('☁️ تم تفعيل المزامنة المباشرة');
-            return;
-          }
-
-          applyRemoteSnapshotPayload(snap.data() || {}, 'snapshot');
-        }, (err) => {
-          console.error('Firebase onSnapshot error:', err);
-          toast('⚠️ فشل ربط المزامنة. افحصي قواعد Firestore');
-        });
-
-        window.addEventListener('focus', () => {
-          pullTimer = setTimeout(() => fetchRemoteStateNow('focus'), 60);
-        });
-        window.addEventListener('pageshow', () => {
-          pullTimer = setTimeout(() => fetchRemoteStateNow('pageshow'), 80);
-        });
-        window.addEventListener('online', () => {
-          pullTimer = setTimeout(() => fetchRemoteStateNow('online'), 100);
-        });
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') {
-            pullTimer = setTimeout(() => fetchRemoteStateNow('visible'), 70);
-          }
-        });
-        setInterval(() => {
-          if (document.visibilityState === 'hidden') return;
-          fetchRemoteStateNow('interval');
-        }, 7000);
-      } catch (e) {
-        console.error('Firebase init failed:', e);
-      }
-    })();
-  </script>
+      window.addEventListener('focus', () => {
+        try { window.__firebaseSync.pullState(); } catch (_) {}
+      });
+      window.addEventListener('pageshow', () => {
+        try { window.__firebaseSync.pullState(); } catch (_) {}
+      });
+      window.addEventListener('online', () => {
+        try { window.__firebaseSync.pullState(); } catch (_) {}
+      });
+    } catch (e) {
+      console.error('Firebase init failed:', e);
+    }
+  })();
+</script>
 
 
 
+
+  
   <script id="firebaseRealtimeEventsPatch">
     (function () {
-      const firebaseConfig = {
-        apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
-        authDomain: "wafaabuqdairi.firebaseapp.com",
-        projectId: "wafaabuqdairi",
-        storageBucket: "wafaabuqdairi.firebasestorage.app",
-        messagingSenderId: "147376328852",
-        appId: "1:147376328852:web:859440af34e4bb14dc6481",
-        measurementId: "G-L6QHBLNVMJ"
-      };
-
-      const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
-      window.__liveClientId = clientId;
-      const seenEvents = new Set();
-      const LOCAL_EVENT_CHANNEL = 'khatma_events_detached_20260308_x91';
-      let localEventBc = null;
-
-      function getDb() {
-        try {
-          if (!window.firebase || !firebase.apps) return null;
-          if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-          return firebase.firestore();
-        } catch (_) { return null; }
-      }
-
-      function rememberEventKey(key) {
-        if (!key) return false;
-        if (seenEvents.has(key)) return true;
-        seenEvents.add(key);
-        if (seenEvents.size > 500) {
-          const first = seenEvents.values().next().value;
-          if (first) seenEvents.delete(first);
-        }
-        return false;
-      }
-
-      function getEventKey(event) {
-        return String((event && (event.clientEventId || event.id || event.eventId)) || '');
-      }
-
-      function formatLiveEventMessage(user, event) {
-        try {
-          const name = String((user && user.name) || 'المشاركة');
-          if (event.type === 'prayer_toggle' && event.prayerKey) {
-            const prayerName = event.prayerName || (typeof PRAYER_LABELS !== 'undefined' ? PRAYER_LABELS[event.prayerKey] : event.prayerKey);
-            return event.isDone
-              ? `🕌 ${name} صلّت ${prayerName}`
-              : `↩️ ${name} أزالت صلاة ${prayerName}`;
-          }
-          if (event.type === 'page_progress') {
-            const pagesDelta = Math.max(0, Number(event.pagesDelta || 0));
-            if (pagesDelta > 0) {
-              return pagesDelta === 1
-                ? `📖 ${name} قرأت صفحة قرآن`
-                : `📖 ${name} قرأت ${toHindiDigits(String(pagesDelta))} صفحات قرآن`;
-            }
-            if (Number.isFinite(Number(event.currentQuranPage))) {
-              return `📍 ${name} أصبحت عند صفحة ${toHindiDigits(String(event.currentQuranPage))}`;
-            }
-          }
-          if (event.type === 'tasbeeh_delta') {
-            return `📿 ${name} زاد تسبيحها`;
-          }
-          return '';
-        } catch (_) { return ''; }
-      }
-
-      function showLiveEventToast(user, event) {
-        try {
-          const msg = formatLiveEventMessage(user, event);
-          if (!msg) return;
-          if (typeof window.showToast === 'function') {
-            window.showToast(msg, 'success', 2200);
-          }
-        } catch (_) {}
-      }
-
-      function applyLiveEvent(event) {
-        try {
-          if (!event || !event.type || !event.userId) return;
-          const eventKey = getEventKey(event);
-          if (rememberEventKey(eventKey)) return;
-          if (!Array.isArray(state.users)) return;
-          const idx = state.users.findIndex(u => u.id === event.userId);
-          if (idx === -1) return;
-          const user = sanitizeUser(state.users[idx]);
-          let changed = false;
-
-          if (event.type === 'tasbeeh_delta') {
-            const incomingTasbeeh = Number(event.tasbeeh);
-            const incomingPoints = Number(event.totalPoints);
-            if (Number.isFinite(incomingTasbeeh)) {
-              if (incomingTasbeeh !== Number(user.tasbeeh || 0)) {
-                user.tasbeeh = Math.max(0, incomingTasbeeh);
-                changed = true;
-              }
-            } else {
-              const nextTasbeeh = Math.max(0, Number(user.tasbeeh || 0) + Number(event.delta || 0));
-              if (nextTasbeeh !== Number(user.tasbeeh || 0)) {
-                user.tasbeeh = nextTasbeeh;
-                changed = true;
-              }
-            }
-            if (Number.isFinite(incomingPoints)) {
-              if (incomingPoints !== Number(user.totalPoints || 0)) {
-                user.totalPoints = Math.max(0, incomingPoints);
-                changed = true;
-              }
-            } else {
-              const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
-              if (nextPoints !== Number(user.totalPoints || 0)) {
-                user.totalPoints = nextPoints;
-                changed = true;
-              }
-            }
-          } else if (event.type === 'tasbeeh_reset') {
-            if (Number(user.tasbeeh || 0) !== 0) {
-              user.tasbeeh = 0;
-              changed = true;
-            }
-            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
-              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
-              changed = true;
-            }
-          } else if (event.type === 'points_delta') {
-            const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
-            if (nextPoints !== Number(user.totalPoints || 0)) {
-              user.totalPoints = nextPoints;
-              changed = true;
-            }
-            if (typeof event.currentQuranPage !== 'undefined' && Number(event.currentQuranPage || 0) !== Number(user.currentQuranPage || 0)) {
-              user.currentQuranPage = Number(event.currentQuranPage || user.currentQuranPage || 1);
-              changed = true;
-            }
-            if (typeof event.totalPagesRead !== 'undefined' && Number(event.totalPagesRead || 0) !== Number(user.totalPagesRead || 0)) {
-              user.totalPagesRead = Number(event.totalPagesRead || 0);
-              changed = true;
-            }
-          } else if (event.type === 'prayer_done' && event.prayerKey && event.dateKey) {
-            ensurePrayerTracking(user);
-            const current = getPrayerStateForDate(user, event.dateKey);
-            if (!current[event.prayerKey]) {
-              current[event.prayerKey] = true;
-              current.pointsGranted = Number(event.pointsGranted || current.pointsGranted || 0);
-              user.prayersByDate[event.dateKey] = current;
-              const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
-              user.totalPoints = nextPoints;
-              changed = true;
-            }
-          } else if (event.type === 'prayer_toggle' && event.prayerKey && event.dateKey) {
-            ensurePrayerTracking(user);
-            const current = getPrayerStateForDate(user, event.dateKey);
-            const incomingDayState = (event.dayState && typeof event.dayState === 'object') ? event.dayState : null;
-            const nextValue = !!event.isDone;
-            if (!!current[event.prayerKey] !== nextValue) {
-              current[event.prayerKey] = nextValue;
-              changed = true;
-            }
-            if (incomingDayState) {
-              const normalized = {
-                fajr: !!incomingDayState.fajr,
-                dhuhr: !!incomingDayState.dhuhr,
-                asr: !!incomingDayState.asr,
-                maghrib: !!incomingDayState.maghrib,
-                isha: !!incomingDayState.isha
-              };
-              if (JSON.stringify(current) !== JSON.stringify(normalized)) {
-                Object.assign(current, normalized);
-                changed = true;
-              }
-            }
-            user.prayersByDate[event.dateKey] = current;
-            if (Number.isFinite(Number(event.prayersCount)) && Number(event.prayersCount) !== Number(user.prayersCount || 0)) {
-              user.prayersCount = Math.max(0, Number(event.prayersCount || 0));
-              changed = true;
-            }
-            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
-              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
-              changed = true;
-            }
-          } else if (event.type === 'page_progress') {
-            if (Number.isFinite(Number(event.totalPages)) && Number(event.totalPages) !== Number(user.totalPages || 0)) {
-              user.totalPages = Math.max(0, Number(event.totalPages || 0));
-              changed = true;
-            }
-            if (Number.isFinite(Number(event.currentQuranPage)) && Number(event.currentQuranPage) !== Number(user.currentQuranPage || 0)) {
-              user.currentQuranPage = clampQuranPage(Number(event.currentQuranPage || 1));
-              changed = true;
-            }
-            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
-              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
-              changed = true;
-            }
-          }
-
-          if (!changed) return;
-          user._updatedAt = Math.max(Number(user._updatedAt || 0), Number(event.userUpdatedAt || 0), Number(event.at || 0), Date.now());
-          state.users[idx] = user;
-          try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
-          try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
-          try { if (typeof render === 'function') render(); } catch (_) {}
-          try { showLiveEventToast(user, event); } catch (_) {}
-        } catch (e) {
-          console.warn('applyLiveEvent failed', e);
-        }
-      }
-
-      function sendLocalEvent(event) {
-        try {
-          if (window.BroadcastChannel) {
-            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
-            localEventBc.postMessage(event);
-          }
-          try { localStorage.setItem(LOCAL_EVENT_CHANNEL, JSON.stringify(event)); } catch (_) {}
-        } catch (_) {}
-      }
-
-      function publishLiveEvent(payload) {
-        try {
-          const event = {
-            ...payload,
-            clientEventId: payload.clientEventId || ('evt_' + clientId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)),
-            sender: clientId,
-            at: Date.now()
-          };
-
-          sendLocalEvent(event);
-
-          const db = getDb();
-          if (!db) return;
-          db.collection('shared_state_zero_20260308_v2').doc('quran_khatma_main_zero_20260308_v2').collection('live_events').doc(String(event.clientEventId)).set({
-            ...event,
-            createdAtClient: Number(event.at || Date.now()),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true }).catch((e) => console.warn('live event publish failed', e));
-        } catch (e) {
-          console.warn('live event publish setup failed', e);
-        }
-      }
-
-      function receiveLocalEvent(event) {
-        try {
-          if (!event || !event.type || !event.userId) return;
-          if (event.sender === clientId) return;
-          applyLiveEvent(event);
-          try {
-            if (window.__firebaseSync && typeof window.__firebaseSync.pullState === 'function') {
-              setTimeout(() => window.__firebaseSync.pullState('force'), 120);
-            }
-          } catch (_) {}
-        } catch (e) {
-          console.warn('receiveLocalEvent failed', e);
-        }
-      }
-
-      function subscribeLocalEvents() {
-        try {
-          if (window.BroadcastChannel) {
-            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
-            localEventBc.onmessage = (event) => receiveLocalEvent(event.data);
-          }
-        } catch (_) {}
-
-        window.addEventListener('storage', (event) => {
-          if (event.key !== LOCAL_EVENT_CHANNEL || !event.newValue) return;
-          try { receiveLocalEvent(JSON.parse(event.newValue)); } catch (_) {}
-        });
-      }
-
-      function subscribeLiveEvents() {
-        try {
-          const db = getDb();
-          if (!db || window.__liveEventsSubscribed) return;
-          window.__liveEventsSubscribed = true;
-          db.collection('shared_state_zero_20260308_v2').doc('quran_khatma_main_zero_20260308_v2').collection('live_events')
-            .orderBy('createdAtClient', 'desc')
-            .limit(120)
-            .onSnapshot((snap) => {
-              const docs = snap.docChanges().slice().reverse();
-              docs.forEach((change) => {
-                if (change.type !== 'added') return;
-                const data = change.doc.data() || {};
-                const id = change.doc.id;
-                if (data.sender === clientId) {
-                  rememberEventKey(String(data.clientEventId || id || ''));
-                  return;
-                }
-                applyLiveEvent({ id, ...data });
-                try {
-                  if (window.__firebaseSync && typeof window.__firebaseSync.pullState === 'function') {
-                    setTimeout(() => window.__firebaseSync.pullState('force'), 150);
-                  }
-                } catch (_) {}
-              });
-            }, (err) => console.warn('live events snapshot failed', err));
-        } catch (e) {
-          console.warn('subscribeLiveEvents failed', e);
-        }
-      }
-
-      window.__liveSync = window.__liveSync || {};
-      window.__liveSync.publishEvent = publishLiveEvent;
-      window.__liveSync.applyEvent = applyLiveEvent;
-
-      function getUsersMap() {
-        try { return new Map((state.users || []).map(u => [u.id, u])); } catch (_) { return new Map(); }
-      }
-
-      function patchAction(name, handler) {
-        try {
-          const original = window[name];
-          if (typeof original !== 'function' || original.__livePatched) return;
-          const wrapped = function(...args) {
-            const beforeUsers = getUsersMap();
-            const result = original.apply(this, args);
-            try { handler(args, beforeUsers); } catch (e) { console.warn(name + ' live handler failed', e); }
-            return result;
-          };
-          wrapped.__livePatched = true;
-          window[name] = wrapped;
-        } catch (e) {
-          console.warn('patchAction failed for ' + name, e);
-        }
-      }
-
-      function selectedUserAfter() {
-        try { return typeof getSelectedUser === 'function' ? getSelectedUser() : null; } catch (_) { return null; }
-      }
-
-      function patchAll() {
-        // تم الإبقاء على هذه الطبقة كاحتياط للتوسعات القادمة فقط.
-        // أحداث التسبيح تُنشر الآن مباشرة من الدوال الأصلية نفسها لمنع أي تأخير أو ازدواج.
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => { subscribeLocalEvents(); subscribeLiveEvents(); patchAll(); });
-      } else {
-        subscribeLocalEvents();
-        subscribeLiveEvents();
-        patchAll();
-      }
+      // Disabled intentionally: this file now uses one clear Firestore sync path only,
+      // matching the simpler reference file's storage/sync principle.
+      return;
     })();
   </script>
+
 
   <!-- Mushaf PDF Download/Open Button (center-bottom) -->
   <div id="mushafPdfFab" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;gap:8px;align-items:center;justify-content:center;">
