@@ -650,18 +650,8 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
     }
-    /* إخفاء شريط عارض الـ PDF قدر الإمكان وجعل التنقل فقط من الأزرار */
-    .viewer-frame-wrap::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 18px; /* يغطي شريط التمرير الظاهر داخل بعض عارِضات PDF */
-      height: 100%;
-      background: #fff;
-      pointer-events: none;
-      z-index: 3;
-    }
+    /* وضع الصور: لا نحتاج تغطية شريط عارض PDF */
+    .viewer-frame-wrap::after { content: none; }
     .viewer-frame-wrap::before { content: none; }
 
     .viewer-page-pill {
@@ -695,18 +685,18 @@
     }
     #mushafFrame {
       display: block;
-      width: calc(100% + 18px); /* ندفع شريط عارض الـPDF الداخلي خارج الإطار */
-      margin-right: -18px;
-      height: 1120px; /* أقصر قليلًا لإخفاء الجزء الزائد أسفل الصفحة */
-      min-height: 860px;
+      width: 100%;
+      height: auto;
+      min-height: 0;
       border: 0;
       background: #f8fafc;
-      pointer-events: none; /* نمنع التفاعل داخل العارض ونسمح بالتمرير من الحاوية الخارجية فقط */
+      pointer-events: none; /* نمنع السحب/التكبير داخل الصورة ونبقي التنقل من الأزرار */
       user-select: none;
+      object-fit: contain;
     }
     @media (max-width: 768px) {
       .viewer-frame-wrap { max-height: 56vh; }
-      #mushafFrame { height: 940px; min-height: 700px; }
+      #mushafFrame { width: 100%; height: auto; min-height: 0; }
     }
 
     .small {
@@ -1300,58 +1290,21 @@
     .hero-announce-title, .hero-announce li, .hero-announce-text, .hero-announce-note{ line-height: 2.0 !important; }
   }
 
-
-  .hero-credit-badge{
-    position:absolute;
-    top:14px;
-    left:18px;
-    z-index:3;
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 14px;
-    border-radius:999px;
-    background:rgba(255,255,255,.88);
-    border:1px solid rgba(13,148,136,.18);
-    color:#0f766e;
-    font-weight:800;
-    font-size:14px;
-    line-height:1.35;
-    box-shadow:0 8px 20px rgba(15,118,110,.10);
-    backdrop-filter: blur(4px);
-    max-width:min(92%, 440px);
-    white-space:normal;
-  }
-  @media (max-width: 900px){
-    .hero-credit-badge{
-      top:10px;
-      right:12px;
-      left:12px;
-      justify-content:center;
-      font-size:13px;
-      padding:7px 12px;
-    }
-    .hero{
-      padding-top: 52px !important;
-    }
-  }
-
-
-  .hero{
-    padding-top: 58px !important;
-  }
-  @media (max-width: 900px){
-    .hero{
-      padding-top: 62px !important;
-    }
-  }
-
 </style>
 </head>
 <body>
   <div class="wrap">
-<section class="hero">
-      <div class="hero-credit-badge">✍️ إعداد وتصميم: وفاء أبوقديري ورزان محمد</div>
+    <div style="margin:12px 0 10px; display:flex; justify-content:flex-start;">
+      <div style="
+        display:inline-flex; align-items:center; gap:8px;
+        padding:8px 14px; border-radius:999px;
+        background:rgba(255,255,255,.82);
+        border:1px solid rgba(13,148,136,.22);
+        color:#0f766e; font-weight:700; font-size:15px;
+        box-shadow:0 6px 18px rgba(15,118,110,.08);
+      ">✍️ إعداد وتصميم: وفاء أبوقديري ورزان محمد</div>
+    </div>
+    <section class="hero">
       <h1>القرآنُ ربيعُ القلوب ونورُ الدروب 🌿✨</h1>
       <p>
         ابدؤوا رحلتكم مع التلاوة والذِّكر، واغتنموا هذه الأيام المباركة بالطاعة وابتغاء الأجر من الله تعالى 💚
@@ -1517,16 +1470,16 @@
         </div>
 
         <div class="card" id="mushafViewerCard">
-          <h2 style="display:none;">🕌 المصحف داخل الصفحة (PDF رسمي)</h2>
+          <h2 style="display:none;">🕌 المصحف داخل الصفحة (صور)</h2>
           <p class="sub" style="display:none;">
-            ضعي ملف المصحف <strong>PDF</strong> في نفس المجلد باسم <strong>mushaf.pdf</strong> (أو اكتبي اسم الملف أدناه)،
+            ضعي <strong>مجلد صور المصحف</strong> في نفس المجلد باسم <strong>mushaf-pages</strong> (أو اكتبي اسم المجلد أدناه)،
             وسيتم فتح الصفحة الحالية للطالبة داخل العرض. زر <strong>التالي</strong> يحسب النقاط وينقل للصفحة التالية تلقائيًا. يمكن التمرير للأعلى/الأسفل داخل نفس الصفحة فقط، مع التنقل بين الصفحات من الأزرار.
           </p>
 
           <div class="row" id="mushafPathControlsRow" style="display:none;">
             <div>
-              <label for="mushafPdfPathInput">اسم/مسار ملف المصحف PDF</label>
-              <input id="mushafPdfPathInput" type="text" placeholder="mushaf.pdf" />
+              <label for="mushafPdfPathInput">اسم مجلد صور المصحف</label>
+              <input id="mushafPdfPathInput" type="text" placeholder="mushaf-pages" />
             </div>
             <div style="display:flex; align-items:end;">
               <button class="btn ghost" id="openMushafBtn">🔄 فتح/تحديث المصحف</button>
@@ -1534,12 +1487,12 @@
           </div>
 
           <div class="small" id="mushafStatus" style="margin-top:8px; display:none;">
-            أدخلي ملف المصحف PDF (مثل: mushaf.pdf) ثم اضغطي "فتح/تحديث المصحف".
+            أدخلي اسم مجلد الصور (مثل: mushaf-pages) ثم اضغطي "فتح/تحديث المصحف".
           </div>
 
           <div class="viewer-frame-wrap">
             <div class="viewer-page-pill" id="viewerPageBadge">📖 الصفحة: <strong>1</strong> | ⭐ 5 نقاط</div>
-            <iframe id="mushafFrame" title="عارض المصحف PDF"></iframe>
+            <img id="mushafFrame" alt="صورة صفحة المصحف" decoding="async" loading="eager" referrerpolicy="no-referrer" />
           </div>
 
           <div class="viewer-toolbar viewer-toolbar-bottom">
@@ -1623,6 +1576,20 @@
     let viewerState = { loadedPage: null, loadedPath: null };
     let sessionAuth = { unlockedUserId: null };
 
+    // Persist unlocked user in this tab so Firebase live sync doesn't force re-login
+    const SESSION_UNLOCK_KEY = STORAGE_KEY + '::unlockedUserId';
+    function loadUnlockedUserId() {
+      try { return sessionStorage.getItem(SESSION_UNLOCK_KEY); } catch (_) { return null; }
+    }
+    function saveUnlockedUserId(userId) {
+      try {
+        if (userId) sessionStorage.setItem(SESSION_UNLOCK_KEY, String(userId));
+        else sessionStorage.removeItem(SESSION_UNLOCK_KEY);
+      } catch (_) {}
+    }
+
+    try { sessionAuth.unlockedUserId = loadUnlockedUserId(); } catch (_) {}
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -1636,7 +1603,7 @@
         };
         loaded.settings.dailyPoints = 5; // تثبيت نقاط الصلاة
         loaded.settings.pagePoints = 5; // تثبيت نقاط الصفحة
-        return loaded;
+                return loaded;
       } catch (e) {
         console.error('Failed to load state:', e);
         return structuredClone(defaultState);
@@ -1671,20 +1638,64 @@
         prayersCount: Number(u.prayersCount || 0),
         prayersByDate: (u.prayersByDate && typeof u.prayersByDate === 'object' && !Array.isArray(u.prayersByDate)) ? u.prayersByDate : {},
         createdAt: u.createdAt || new Date().toISOString(),
-        history: Array.isArray(u.history) ? u.history.slice(-200) : []
+        history: Array.isArray(u.history) ? u.history.slice(-200) : [],
+        _updatedAt: Number(u._updatedAt || 0) || 0
       };
     }
 
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    function touchUser(user) {
+      if (!user || typeof user !== 'object') return;
+      try { user._updatedAt = Date.now(); } catch (_) {}
+    }
+
+    let __saveTimer = null;
+    let __lastFlushAt = 0;
+    let __dirtySinceFlush = false;
+
+    function flushStateNow() {
+      __lastFlushAt = Date.now();
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
       try {
         if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
-          window.__firebaseSync.pushState(state);
+          window.__firebaseSync.pushState(state, { immediate: true });
         }
       } catch (e) {
         console.warn('Firebase sync push skipped:', e);
       }
+      __dirtySinceFlush = false;
     }
+
+    function saveState(options = {}) {
+      // لا نرفع __clientUpdatedAt إلا عند وجود تغيير محلي فعلي
+      __dirtySinceFlush = true;
+      try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
+
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.broadcastLocal === 'function') {
+          window.__firebaseSync.broadcastLocal(state);
+        }
+      } catch (_) {}
+
+      clearTimeout(__saveTimer);
+      if (options && options.immediate) {
+        flushStateNow();
+        return;
+      }
+      __saveTimer = setTimeout(flushStateNow, 10);
+    }
+
+    // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
+    setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      if (!__dirtySinceFlush) return;
+      if (Date.now() - __lastFlushAt < 8000) return;
+      flushStateNow();
+    }, 10000);
+
+    window.addEventListener('pagehide', flushStateNow);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushStateNow();
+    });
 
     function cryptoRandomId() {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -1804,6 +1815,7 @@
       }
 
       sessionAuth.unlockedUserId = user.id;
+      saveUnlockedUserId(user.id);
       if (!options.silent) alert(`✅ تم فتح بيانات المشاركة: ${user.name}`);
       return true;
     }
@@ -1828,8 +1840,11 @@
 
 
     function normalizeMushafPath(v) {
-      const raw = String(v ?? '').trim();
-      return raw || 'mushaf.pdf';
+      let raw = String(v ?? '').trim().replace(/[\/]+$/, '');
+      if (!raw) return 'mushaf-pages';
+      // ترحيل تلقائي من النسخة القديمة (PDF) إلى مجلد الصور
+      if (/\.pdf$/i.test(raw)) return 'mushaf-pages';
+      return raw;
     }
 
     function currentMushafPath() {
@@ -1837,30 +1852,89 @@
       return state.settings.mushafPdfPath;
     }
 
-    function buildMushafPdfUrl(page) {
-      const path = currentMushafPath();
+    function getMushafImageCandidates(page, folderInput, options = {}) {
       const p = clampQuranPage(page);
-      // ملاحظة: بعض المتصفحات لا تحدّث صفحة الـPDF داخل iframe إذا تغيّر #page فقط.
-      // لذلك نضيف cache-buster صغير لإجبار العارض على إعادة التحميل عند "التالي/السابق".
-      const base = String(path).split('#')[0];
-      const sep = base.includes('?') ? '&' : '?';
-      const cb = Date.now();
-      return `${base}${sep}cb=${cb}#page=${p}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
+      const folderRaw = String(folderInput ?? currentMushafPath()).trim();
+      const folder = folderRaw.replace(/[\\/]+$/, '') || 'mushaf-pages';
+      const pageStr = String(p).padStart(3, '0');
+
+      // لو الصفحة مفتوحة محليًا file:// نتجنب query params لأن بعض المتصفحات تفشل معها في الصور المحلية
+      const isLocalFile = (() => {
+        try { return window.location && window.location.protocol === 'file:'; }
+        catch (_) { return false; }
+      })();
+      const cb = (!isLocalFile && !options.noCache) ? `?cb=${Date.now()}` : '';
+
+      // نجرب عدة صيغ لأن ويندوز قد يُخفي الامتداد وقد تكون الصور بأحرف كبيرة أو نمط تسمية مختلف
+      const exts = ['jpg','JPG','jpeg','JPEG','png','PNG','webp','WEBP'];
+      const baseNames = [
+        `mushaf_page_${pageStr}`,          // النمط الأساسي المتوقع
+        `mushaf_page_${String(p)}`,        // احتياطًا لو بدون padding
+        `mushaf-page-${pageStr}`,          // احتياطًا لو شرطات
+        `mushaf-page-${String(p)}`
+      ];
+
+      const folderVariants = [
+        folder,
+        `./${folder}`,
+        folder.replace(/\\/g, '/')
+      ];
+
+      const out = [];
+      for (const fv of folderVariants) {
+        const cleanFolder = String(fv).replace(/[\\/]+$/, '');
+        for (const base of baseNames) {
+          // احتياط نادر: ملف بدون امتداد ظاهر
+          out.push(`${cleanFolder}/${base}${cb}`);
+          for (const ext of exts) {
+            out.push(`${cleanFolder}/${base}.${ext}${cb}`);
+          }
+        }
+      }
+      return [...new Set(out)];
+    }
+
+    function buildMushafPdfUrl(page) {
+      return getMushafImageCandidates(page)[0];
     }
 
     function loadMushafAtPage(page, options = {}) {
       const p = clampQuranPage(page);
       const path = currentMushafPath();
       if (mushafPdfPathInput) mushafPdfPathInput.value = path;
-      const url = buildMushafPdfUrl(p);
 
       // عند فتح صفحة جديدة: ارجاع التمرير لأعلى نفس الصفحة أولًا
       try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
-      // إعادة تحميل قسرية للـ iframe لأن بعض عارِضات PDF المحلية تتجاهل تغيير الصفحة داخل نفس الملف
-      try { mushafFrame.src = 'about:blank'; } catch (e) {}
+
+      // إعادة التحميل القسري لصورة الصفحة
+      try { mushafFrame.removeAttribute('src'); } catch (e) {}
+
       setTimeout(() => {
         try { if (mushafViewport) mushafViewport.scrollTop = 0; } catch (e) {}
-        mushafFrame.src = url;
+
+        const candidates = getMushafImageCandidates(p, path);
+        let idx = 0;
+
+        const tryNext = () => {
+          if (idx >= candidates.length) {
+            const tried = candidates.slice(0, 4).map(u => String(u).split('?')[0]).join(' ، ');
+            mushafStatus.innerHTML = `❌ لم يتم العثور على صورة الصفحة <strong>${formatNum(p)}</strong> داخل المجلد <code style="direction:ltr">${escapeHtml(path)}</code>.<br>تأكدي من وجود الملف بنفس النمط مثل: <code style="direction:ltr">mushaf_page_${String(p).padStart(3,'0')}.jpg</code> أو <code style="direction:ltr">.JPG</code>.<br><span class="small">أمثلة تمّت تجربتها: ${escapeHtml(tried)}</span>`;
+            return;
+          }
+          const nextUrl = candidates[idx++];
+          mushafFrame.src = nextUrl;
+        };
+
+        mushafFrame.onerror = function () { tryNext(); };
+        mushafFrame.onload = function () {
+          mushafFrame.onerror = null;
+          const loadedPath = String(mushafFrame.currentSrc || mushafFrame.src || '').split('?')[0];
+          const user = getSelectedUser();
+          const userName = user ? ` • المشاركة: ${user.name}` : '';
+          mushafStatus.innerHTML = `✅ تم فتح صفحة <strong>${formatNum(p)}</strong> من مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.<br><span class="small">الملف المستخدم: <code style="direction:ltr">${escapeHtml(loadedPath)}</code></span>`;
+        };
+
+        tryNext();
       }, 20);
 
       viewerState.loadedPage = p;
@@ -1871,10 +1945,6 @@
         viewerPageBadge.innerHTML = `📖 الصفحة: <strong>${formatNum(p)}</strong> | ⭐ نقاط الصفحات: <strong>${formatNum(pagePointsTotal)}</strong>`;
       }
 
-      const user = getSelectedUser();
-      const userName = user ? ` • المشاركة: ${user.name}` : '';
-      mushafStatus.innerHTML = `📖 تم فتح صفحة <strong>${formatNum(p)}</strong> من الملف: <code style="direction:ltr">${escapeHtml(path)}</code>${userName}.
-      <br>إذا لم يظهر المصحف داخل الصفحة، استخدمي زر <strong>فتح في تبويب جديد</strong> أو تأكدي أن ملف الـPDF موجود بنفس المجلد.`;
       if (!options.silent) flash(document.getElementById('mushafViewerCard'));
     }
 
@@ -1914,6 +1984,7 @@
     }
 
     function addHistory(user, type, details = {}) {
+      touchUser(user);
       user.history.push({
         at: new Date().toISOString(),
         type,
@@ -1950,6 +2021,7 @@
         name: clean,
         password: pass,
         totalPoints: 0,
+        _updatedAt: Date.now(),
         totalPages: 0,
         currentQuranPage: 1,
         tasbeeh: 0,
@@ -1966,6 +2038,7 @@
       state.selectedUserId = user.id;
       // لا نفتح القفل تلقائيًا بعد الإنشاء حتى يطلب كلمة المرور عند الضغط على "اختيار"
       sessionAuth.unlockedUserId = null;
+      saveUnlockedUserId(null);
       saveState();
       nameInput.value = '';
       if (newUserPasswordInput) newUserPasswordInput.value = '';
@@ -2128,6 +2201,7 @@
 
       state.users = state.users.filter(u => u.id !== user.id);
       if (sessionAuth.unlockedUserId === user.id) sessionAuth.unlockedUserId = null;
+      saveUnlockedUserId(null);
       if (!state.users.length) state.selectedUserId = null;
       else state.selectedUserId = state.users[0].id;
       saveState();
@@ -2151,13 +2225,28 @@
       if (!delta) return;
 
       // ربط المسبحة بالنقاط: كل تسبيحة = 1 نقطة (و +33 = 33 نقطة)
+      touchUser(user);
       user.tasbeeh = Math.max(0, Number(user.tasbeeh || 0) + delta);
       user.totalPoints = Math.max(0, Number(user.totalPoints || 0) + delta);
 
       addHistory(user, 'tasbeeh', { delta, points: delta, total: user.tasbeeh });
-      saveState();
+      saveState({ immediate: true });
       flash(document.getElementById('tasbeehBox'));
       render();
+
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'tasbeeh_delta',
+            userId: user.id,
+            delta,
+            pointsDelta: delta,
+            tasbeeh: Number(user.tasbeeh || 0),
+            totalPoints: Number(user.totalPoints || 0),
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
     }
 
     function resetTasbeehCount() {
@@ -2165,10 +2254,26 @@
       if (!user) return alert('اختاري مشاركة أولًا.');
       const ok = confirm(`إعادة ضبط المسبحة للمشارك ${user.name} إلى 0؟`);
       if (!ok) return;
+      const previousTasbeeh = Number(user.tasbeeh || 0);
+      touchUser(user);
       user.tasbeeh = 0;
       addHistory(user, 'tasbeeh_reset');
-      saveState();
+      saveState({ immediate: true });
       render();
+
+      try {
+        if (window.__liveSync && typeof window.__liveSync.publishEvent === 'function') {
+          window.__liveSync.publishEvent({
+            type: 'tasbeeh_reset',
+            userId: user.id,
+            previousTasbeeh,
+            currentTasbeeh: 0,
+            tasbeeh: 0,
+            totalPoints: Number(user.totalPoints || 0),
+            userUpdatedAt: Number(user._updatedAt || Date.now())
+          });
+        }
+      } catch (_) {}
     }
 
     function exportData() {
@@ -2197,6 +2302,7 @@
           };
           state = next;
           sessionAuth.unlockedUserId = null;
+      saveUnlockedUserId(null);
           if (state.selectedUserId && !state.users.some(u => u.id === state.selectedUserId)) {
             state.selectedUserId = state.users[0]?.id || null;
           }
@@ -2216,6 +2322,7 @@
       if (!ok) return;
       state = structuredClone(defaultState);
       sessionAuth.unlockedUserId = null;
+      saveUnlockedUserId(null);
       saveState();
       render();
     }
@@ -2497,8 +2604,7 @@ function renderQuranPageControls() {
         // افتح أول مرة تلقائيًا على صفحة الطالبة الحالية
         loadMushafAtPage(p, { silent: true });
       } else {
-        mushafStatus.innerHTML = `📖 صفحة الطالبة الحالية: <strong>${formatNum(p)}</strong> • ملف المصحف: <code style="direction:ltr">${escapeHtml(path)}</code>.
-        <br>يمكنك الضغط على <strong>التالي</strong> لاحتساب الصفحة والانتقال تلقائيًا.`;
+        mushafStatus.innerHTML = `📖 صفحة الطالبة الحالية: <strong>${formatNum(p)}</strong> • مجلد الصور: <code style="direction:ltr">${escapeHtml(path)}</code>.\n        <br>يمكنك الضغط على <strong>التالي</strong> لاحتساب الصفحة والانتقال تلقائيًا.`;
       }
     }
 
@@ -2969,41 +3075,6 @@ function renderQuranPageControls() {
     })();
 
 
-    // Bridge for optional cloud sync (Firebase)
-    window.__quranAppBridge = {
-      getState() {
-        try { return JSON.parse(JSON.stringify(state)); }
-        catch (_) { return structuredClone(state); }
-      },
-      normalizeState(raw) {
-        try {
-          const parsed = (raw && typeof raw === 'object') ? raw : {};
-          const normalized = {
-            ...structuredClone(defaultState),
-            ...parsed,
-            settings: { ...defaultState.settings, ...(parsed.settings || {}) },
-            users: Array.isArray(parsed.users) ? parsed.users.map(sanitizeUser) : []
-          };
-          normalized.settings.dailyPoints = 5;
-          normalized.settings.pagePoints = 5;
-          return normalized;
-        } catch (e) {
-          console.warn('normalizeState fallback:', e);
-          return structuredClone(defaultState);
-        }
-      },
-      applyRemoteState(remoteState) {
-        try {
-          state = this.normalizeState(remoteState);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-          render();
-        } catch (e) {
-          console.error('Failed applying remote state:', e);
-        }
-      },
-      rerender() { try { render(); } catch (_) {} }
-    };
-
     // First render
     render();
   </script>
@@ -3060,43 +3131,7 @@ function renderQuranPageControls() {
       display: none;
     }
     body.admin-master-unlocked .admin-master-pill{ display: block; border-color:#fcd34d; background:#fffbeb; color:#92400e; }
-  
-  .hero-credit-badge{
-    position:absolute;
-    top:14px;
-    left:18px;
-    z-index:3;
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 14px;
-    border-radius:999px;
-    background:rgba(255,255,255,.88);
-    border:1px solid rgba(13,148,136,.18);
-    color:#0f766e;
-    font-weight:800;
-    font-size:14px;
-    line-height:1.35;
-    box-shadow:0 8px 20px rgba(15,118,110,.10);
-    backdrop-filter: blur(4px);
-    max-width:min(92%, 440px);
-    white-space:normal;
-  }
-  @media (max-width: 900px){
-    .hero-credit-badge{
-      top:10px;
-      right:12px;
-      left:12px;
-      justify-content:center;
-      font-size:13px;
-      padding:7px 12px;
-    }
-    .hero{
-      padding-top: 52px !important;
-    }
-  }
-
-</style>
+  </style>
 
   <script id="adminMasterControlsScript">
   (() => {
@@ -3247,6 +3282,7 @@ function renderQuranPageControls() {
             try {
               if (user && typeof sessionAuth !== 'undefined') {
                 sessionAuth.unlockedUserId = user.id;
+      saveUnlockedUserId(user.id);
               }
             } catch {}
             return true;
@@ -3282,11 +3318,113 @@ function renderQuranPageControls() {
   })();
   </script>
 
+  <script id="quranAppBridge">
+    (function(){
+      // Bridge used by Firebase live sync
+      if (window.__quranAppBridge) return;
+
+      function normalizeState(stateObj){
+        try {
+          const base = structuredClone(defaultState);
+          const s = stateObj && typeof stateObj === 'object' ? stateObj : {};
+          const out = {
+            ...base,
+            ...s,
+            settings: { ...base.settings, ...(s.settings || {}) },
+            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
+          };
+          // enforce fixed points if your app expects it
+          out.settings.dailyPoints = 5;
+          out.settings.pagePoints = 5;
+          if (out.selectedUserId && !out.users.some(u => u.id === out.selectedUserId)) {
+            out.selectedUserId = out.users[0]?.id || null;
+          }
+          return out;
+        } catch (e) {
+          console.warn('normalizeState failed:', e);
+          return stateObj;
+        }
+      }
+
+      function mergeUserRecords(remoteUser, localUser){
+        const remoteTs = Number(remoteUser && remoteUser._updatedAt || 0);
+        const localTs = Number(localUser && localUser._updatedAt || 0);
+        const chosen = localTs >= remoteTs ? localUser : remoteUser;
+        const other = chosen === localUser ? remoteUser : localUser;
+        if (!chosen) return other ? sanitizeUser(other) : null;
+        const out = sanitizeUser(chosen);
+        const otherHistory = Array.isArray(other && other.history) ? other.history : [];
+        if (otherHistory.length) {
+          const seen = new Set((out.history || []).map(item => `${item.at || ''}|${item.type || ''}|${JSON.stringify(item)}`));
+          otherHistory.forEach(item => {
+            const key = `${item.at || ''}|${item.type || ''}|${JSON.stringify(item)}`;
+            if (!seen.has(key)) out.history.push(item);
+          });
+          out.history = out.history.slice(-200);
+        }
+        out._updatedAt = Math.max(remoteTs, localTs, Number(out._updatedAt || 0));
+        return out;
+      }
+
+      function mergeStates(remoteState, localState){
+        const remote = normalizeState(remoteState || {});
+        const local = normalizeState(localState || {});
+        const merged = {
+          ...remote,
+          ...local,
+          settings: { ...remote.settings, ...local.settings },
+          users: [],
+          __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0))
+        };
+
+        const ids = new Set([
+          ...((remote.users || []).map(u => u.id)),
+          ...((local.users || []).map(u => u.id))
+        ]);
+
+        merged.users = Array.from(ids).map(id => {
+          const remoteUser = (remote.users || []).find(u => u.id === id);
+          const localUser = (local.users || []).find(u => u.id === id);
+          return mergeUserRecords(remoteUser, localUser);
+        }).filter(Boolean);
+
+        if (merged.selectedUserId && !merged.users.some(u => u.id === merged.selectedUserId)) {
+          merged.selectedUserId = merged.users[0]?.id || null;
+        }
+        return merged;
+      }
+
+      function applyRemoteState(remoteState){
+        const next = mergeStates(remoteState, state);
+        state = next;
+        try {
+          const unlocked = sessionAuth.unlockedUserId && next.users.some(u => u.id === sessionAuth.unlockedUserId)
+            ? sessionAuth.unlockedUserId
+            : null;
+          sessionAuth.unlockedUserId = unlocked;
+          saveUnlockedUserId(unlocked);
+        } catch (_) {}
+
+        // Save locally WITHOUT triggering another cloud push (Firebase code already guards loops)
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+        try { if (typeof render === 'function') render(); } catch (_) {}
+      }
+
+      window.__quranAppBridge = {
+        getState: () => state,
+        normalizeState,
+        mergeStates,
+        applyRemoteState
+      };
+    })();
+  </script>
+
   <!-- Firebase shared sync (Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script id="firebaseSharedSyncScript">
     (function () {
+      // Using the same Firebase config and shared document as the uploaded v81 file
       const firebaseConfig = {
         apiKey: "AIzaSyBOAdG9CTtJe8fxHkn1_lPjf3mesN4gmKc",
         authDomain: "razanabuqdairi-639f7.firebaseapp.com",
@@ -3324,6 +3462,49 @@ function renderQuranPageControls() {
       let lastCloudJson = null;
       let lastPushedJson = null;
       const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
+      const CROSS_TAB_CHANNEL = 'quran_khatma_live_cross_tab_v1';
+      let bc = null;
+
+      function notifyOtherTabs(stateObj) {
+        try {
+          const bridge = getBridge();
+          if (!bridge) return;
+          const normalized = bridge.normalizeState(stateObj);
+          const payload = {
+            sender: clientId,
+            at: Date.now(),
+            state: normalized
+          };
+          if (window.BroadcastChannel) {
+            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
+            bc.postMessage(payload);
+          }
+          try {
+            localStorage.setItem(CROSS_TAB_CHANNEL, JSON.stringify(payload));
+          } catch (_) {}
+        } catch (_) {}
+      }
+
+      function receiveExternalState(payload) {
+        try {
+          if (!payload || payload.sender === clientId || !payload.state) return;
+          const bridge = getBridge();
+          if (!bridge) return;
+          const incoming = bridge.normalizeState(payload.state);
+          const incomingJson = JSON.stringify(incoming);
+          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
+          if (incomingJson === localJson) return;
+          applyingRemote = true;
+          try {
+            bridge.applyRemoteState(incoming);
+            lastCloudJson = incomingJson;
+          } finally {
+            setTimeout(() => { applyingRemote = false; }, 10);
+          }
+        } catch (e) {
+          console.warn('Cross-tab sync apply failed:', e);
+        }
+      }
 
       const COLLECTION_PATH = 'shared_state';
       const DOC_ID = 'quran_khatma_main';
@@ -3333,12 +3514,30 @@ function renderQuranPageControls() {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        try { db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (_) {}
+        // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
         const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
 
+        if (window.BroadcastChannel) {
+          try {
+            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
+            bc.onmessage = (event) => receiveExternalState(event.data);
+          } catch (_) {}
+        }
+        window.addEventListener('storage', (event) => {
+          if (event.key !== CROSS_TAB_CHANNEL || !event.newValue) return;
+          try { receiveExternalState(JSON.parse(event.newValue)); } catch (_) {}
+        });
+
         window.__firebaseSync = window.__firebaseSync || {};
-        window.__firebaseSync.pushState = function (stateObj) {
+        window.__firebaseSync.broadcastLocal = function (stateObj) {
+          try {
+            const bridge = getBridge();
+            if (!bridge) return;
+            notifyOtherTabs(bridge.normalizeState(stateObj));
+          } catch (_) {}
+        };
+        window.__firebaseSync.pushState = function (stateObj, options = {}) {
           if (!ready || applyingRemote) return;
           const bridge = getBridge();
           if (!bridge) return;
@@ -3347,20 +3546,32 @@ function renderQuranPageControls() {
             try {
               const normalized = bridge.normalizeState(stateObj);
               const json = JSON.stringify(normalized);
-              if (json === lastPushedJson) return;
-              lastPushedJson = json;
-              await docRef.set({
-                state: normalized,
-                meta: {
-                  updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                  updatedBy: clientId,
-                  version: 1
-                }
-              }, { merge: true });
+              if (json === lastPushedJson && !options.immediate) return;
+
+              await db.runTransaction(async (tx) => {
+                const snap = await tx.get(docRef);
+                const remoteState = snap.exists ? ((snap.data() || {}).state || null) : null;
+                const mergedState = typeof bridge.mergeStates === 'function'
+                  ? bridge.mergeStates(remoteState, normalized)
+                  : normalized;
+                const mergedJson = JSON.stringify(mergedState);
+                if (mergedJson === lastPushedJson && !options.immediate) return;
+                lastPushedJson = mergedJson;
+                notifyOtherTabs(mergedState);
+                tx.set(docRef, {
+                  state: mergedState,
+                  meta: {
+                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                     updatedBy: clientId,
+                     version: 2,
+                     clientUpdatedAt: (mergedState && mergedState.__clientUpdatedAt) || Date.now()
+                   }
+                }, { merge: true });
+              });
             } catch (e) {
               console.error('Firebase push failed:', e);
             }
-          }, 350);
+          }, options.immediate ? 0 : 10);
         };
 
         docRef.onSnapshot((snap) => {
@@ -3393,11 +3604,22 @@ function renderQuranPageControls() {
 
           if (remoteJson === localJson) return;
 
+          // Conflict guard: don't overwrite newer local changes with older cloud snapshot
+          try {
+            const remoteMetaTs = Number((data.meta && data.meta.clientUpdatedAt) || 0);
+            const localMetaTs = Number((bridge.getState() && bridge.getState().__clientUpdatedAt) || 0);
+            if (localMetaTs && remoteMetaTs && remoteMetaTs < localMetaTs) {
+              ready = true;
+              return;
+            }
+          } catch (_) {}
+
           applyingRemote = true;
           try {
             bridge.applyRemoteState(remoteNormalized);
+            notifyOtherTabs(remoteNormalized);
           } finally {
-            setTimeout(() => { applyingRemote = false; }, 150);
+            setTimeout(() => { applyingRemote = false; }, 10);
           }
         }, (err) => {
           console.error('Firebase onSnapshot error:', err);
@@ -3407,6 +3629,312 @@ function renderQuranPageControls() {
         console.error('Firebase init failed:', e);
       }
     })();
+  </script>
+
+
+
+  <script id="firebaseRealtimeEventsPatch">
+    (function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyBOAdG9CTtJe8fxHkn1_lPjf3mesN4gmKc",
+        authDomain: "razanabuqdairi-639f7.firebaseapp.com",
+        projectId: "razanabuqdairi-639f7",
+        storageBucket: "razanabuqdairi-639f7.firebasestorage.app",
+        messagingSenderId: "148416255858",
+        appId: "1:148416255858:web:655cd6d5b31ef26db3efeb",
+        measurementId: "G-113CGQ0F7P"
+      };
+
+      const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
+      window.__liveClientId = clientId;
+      const seenEvents = new Set();
+      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v2';
+      let localEventBc = null;
+
+      function getDb() {
+        try {
+          if (!window.firebase || !firebase.apps) return null;
+          if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+          return firebase.firestore();
+        } catch (_) { return null; }
+      }
+
+      function rememberEventKey(key) {
+        if (!key) return false;
+        if (seenEvents.has(key)) return true;
+        seenEvents.add(key);
+        if (seenEvents.size > 500) {
+          const first = seenEvents.values().next().value;
+          if (first) seenEvents.delete(first);
+        }
+        return false;
+      }
+
+      function getEventKey(event) {
+        return String((event && (event.clientEventId || event.id || event.eventId)) || '');
+      }
+
+      function applyLiveEvent(event) {
+        try {
+          if (!event || !event.type || !event.userId) return;
+          const eventKey = getEventKey(event);
+          if (rememberEventKey(eventKey)) return;
+          if (!Array.isArray(state.users)) return;
+          const idx = state.users.findIndex(u => u.id === event.userId);
+          if (idx === -1) return;
+          const user = sanitizeUser(state.users[idx]);
+          let changed = false;
+
+          if (event.type === 'tasbeeh_delta') {
+            const incomingTasbeeh = Number(event.tasbeeh);
+            const incomingPoints = Number(event.totalPoints);
+            if (Number.isFinite(incomingTasbeeh)) {
+              if (incomingTasbeeh !== Number(user.tasbeeh || 0)) {
+                user.tasbeeh = Math.max(0, incomingTasbeeh);
+                changed = true;
+              }
+            } else {
+              const nextTasbeeh = Math.max(0, Number(user.tasbeeh || 0) + Number(event.delta || 0));
+              if (nextTasbeeh !== Number(user.tasbeeh || 0)) {
+                user.tasbeeh = nextTasbeeh;
+                changed = true;
+              }
+            }
+            if (Number.isFinite(incomingPoints)) {
+              if (incomingPoints !== Number(user.totalPoints || 0)) {
+                user.totalPoints = Math.max(0, incomingPoints);
+                changed = true;
+              }
+            } else {
+              const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
+              if (nextPoints !== Number(user.totalPoints || 0)) {
+                user.totalPoints = nextPoints;
+                changed = true;
+              }
+            }
+          } else if (event.type === 'tasbeeh_reset') {
+            if (Number(user.tasbeeh || 0) !== 0) {
+              user.tasbeeh = 0;
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
+              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
+              changed = true;
+            }
+          } else if (event.type === 'points_delta') {
+            const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
+            if (nextPoints !== Number(user.totalPoints || 0)) {
+              user.totalPoints = nextPoints;
+              changed = true;
+            }
+            if (typeof event.currentQuranPage !== 'undefined' && Number(event.currentQuranPage || 0) !== Number(user.currentQuranPage || 0)) {
+              user.currentQuranPage = Number(event.currentQuranPage || user.currentQuranPage || 1);
+              changed = true;
+            }
+            if (typeof event.totalPagesRead !== 'undefined' && Number(event.totalPagesRead || 0) !== Number(user.totalPagesRead || 0)) {
+              user.totalPagesRead = Number(event.totalPagesRead || 0);
+              changed = true;
+            }
+          } else if (event.type === 'prayer_done' && event.prayerKey && event.dateKey) {
+            ensurePrayerTracking(user);
+            const current = getPrayerStateForDate(user, event.dateKey);
+            if (!current[event.prayerKey]) {
+              current[event.prayerKey] = true;
+              current.pointsGranted = Number(event.pointsGranted || current.pointsGranted || 0);
+              user.prayersByDate[event.dateKey] = current;
+              const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
+              user.totalPoints = nextPoints;
+              changed = true;
+            }
+          }
+
+          if (!changed) return;
+          user._updatedAt = Math.max(Number(user._updatedAt || 0), Number(event.userUpdatedAt || 0), Number(event.at || 0), Date.now());
+          state.users[idx] = user;
+          try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+          try { if (typeof render === 'function') render(); } catch (_) {}
+        } catch (e) {
+          console.warn('applyLiveEvent failed', e);
+        }
+      }
+
+      function sendLocalEvent(event) {
+        try {
+          if (window.BroadcastChannel) {
+            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
+            localEventBc.postMessage(event);
+          }
+          try { localStorage.setItem(LOCAL_EVENT_CHANNEL, JSON.stringify(event)); } catch (_) {}
+        } catch (_) {}
+      }
+
+      function publishLiveEvent(payload) {
+        try {
+          const event = {
+            ...payload,
+            clientEventId: payload.clientEventId || ('evt_' + clientId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)),
+            sender: clientId,
+            at: Date.now()
+          };
+
+          sendLocalEvent(event);
+
+          const db = getDb();
+          if (!db) return;
+          db.collection('shared_state').doc('quran_khatma_main').collection('live_events').add({
+            ...event,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch((e) => console.warn('live event publish failed', e));
+        } catch (e) {
+          console.warn('live event publish setup failed', e);
+        }
+      }
+
+      function receiveLocalEvent(event) {
+        try {
+          if (!event || !event.type || !event.userId) return;
+          if (event.sender === clientId) return;
+          applyLiveEvent(event);
+        } catch (e) {
+          console.warn('receiveLocalEvent failed', e);
+        }
+      }
+
+      function subscribeLocalEvents() {
+        try {
+          if (window.BroadcastChannel) {
+            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
+            localEventBc.onmessage = (event) => receiveLocalEvent(event.data);
+          }
+        } catch (_) {}
+
+        window.addEventListener('storage', (event) => {
+          if (event.key !== LOCAL_EVENT_CHANNEL || !event.newValue) return;
+          try { receiveLocalEvent(JSON.parse(event.newValue)); } catch (_) {}
+        });
+      }
+
+      function subscribeLiveEvents() {
+        try {
+          const db = getDb();
+          if (!db || window.__liveEventsSubscribed) return;
+          window.__liveEventsSubscribed = true;
+          db.collection('shared_state').doc('quran_khatma_main').collection('live_events')
+            .orderBy('createdAt', 'desc')
+            .limit(80)
+            .onSnapshot((snap) => {
+              const docs = snap.docChanges().slice().reverse();
+              docs.forEach((change) => {
+                if (change.type !== 'added') return;
+                const data = change.doc.data() || {};
+                const id = change.doc.id;
+                if (data.sender === clientId) {
+                  rememberEventKey(String(data.clientEventId || id || ''));
+                  return;
+                }
+                applyLiveEvent({ id, ...data });
+              });
+            }, (err) => console.warn('live events snapshot failed', err));
+        } catch (e) {
+          console.warn('subscribeLiveEvents failed', e);
+        }
+      }
+
+      window.__liveSync = window.__liveSync || {};
+      window.__liveSync.publishEvent = publishLiveEvent;
+      window.__liveSync.applyEvent = applyLiveEvent;
+
+      function getUsersMap() {
+        try { return new Map((state.users || []).map(u => [u.id, u])); } catch (_) { return new Map(); }
+      }
+
+      function patchAction(name, handler) {
+        try {
+          const original = window[name];
+          if (typeof original !== 'function' || original.__livePatched) return;
+          const wrapped = function(...args) {
+            const beforeUsers = getUsersMap();
+            const result = original.apply(this, args);
+            try { handler(args, beforeUsers); } catch (e) { console.warn(name + ' live handler failed', e); }
+            return result;
+          };
+          wrapped.__livePatched = true;
+          window[name] = wrapped;
+        } catch (e) {
+          console.warn('patchAction failed for ' + name, e);
+        }
+      }
+
+      function selectedUserAfter() {
+        try { return typeof getSelectedUser === 'function' ? getSelectedUser() : null; } catch (_) { return null; }
+      }
+
+      function patchAll() {
+        // تم الإبقاء على هذه الطبقة كاحتياط للتوسعات القادمة فقط.
+        // أحداث التسبيح تُنشر الآن مباشرة من الدوال الأصلية نفسها لمنع أي تأخير أو ازدواج.
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => { subscribeLocalEvents(); subscribeLiveEvents(); patchAll(); });
+      } else {
+        subscribeLocalEvents();
+        subscribeLiveEvents();
+        patchAll();
+      }
+    })();
+  </script>
+
+  <!-- Mushaf PDF Download/Open Button (center-bottom) -->
+  <div id="mushafPdfFab" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;gap:8px;align-items:center;justify-content:center;">
+    <button id="openMushafPdfBtn" type="button"
+      style="padding:12px 14px;border-radius:14px;border:0;cursor:pointer;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.18);">
+      📖 فتح المصحف PDF
+    </button>
+    <a id="downloadMushafPdfLink" href="#" download
+       style="padding:12px 12px;border-radius:14px;text-decoration:none;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.18);display:inline-block;">
+       ⬇️
+    </a>
+  </div>
+
+  <script>
+  (function(){
+    function getMushafPdfUrl(){
+      var p = (window.state && state.settings && state.settings.mushafPdfPath ? String(state.settings.mushafPdfPath) : '').trim();
+      if (!p) return 'mushaf.pdf';
+      if (p.endsWith('/')) return p + 'mushaf.pdf';
+      if (!/\.pdf(\?|#|$)/i.test(p)) {
+        if (/mushaf-?pages/i.test(p)) return 'mushaf.pdf';
+        return p + '.pdf';
+      }
+      return p;
+    }
+
+    function refreshLinks(){
+      var url = getMushafPdfUrl();
+      var dl = document.getElementById('downloadMushafPdfLink');
+      if (dl) dl.href = url;
+    }
+
+    function openPdfFull(){
+      var url = getMushafPdfUrl();
+      refreshLinks();
+      var w = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!w) window.location.href = url;
+    }
+
+    function init(){
+      refreshLinks();
+      var btn = document.getElementById('openMushafPdfBtn');
+      if (btn) btn.addEventListener('click', openPdfFull, {passive:true});
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
   </script>
 
 </body>
