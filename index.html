@@ -62913,8 +62913,8 @@ function renderQuranPageControls() {
         }
       }
 
-      const COLLECTION_PATH = 'shared_state_wafa_v2';
-      const DOC_ID = 'wafaabuqdairi_main_v2';
+      const COLLECTION_PATH = 'shared_state';
+      const DOC_ID = 'quran_khatma_main';
 
       try {
         if (!window.firebase || !firebase.apps) return;
@@ -63271,7 +63271,7 @@ function renderQuranPageControls() {
 
           const db = getDb();
           if (!db) return;
-          db.collection('shared_state_wafa_v2').doc('wafaabuqdairi_main_v2').collection('live_events_v2').doc(String(event.clientEventId)).set({
+          db.collection('shared_state').doc('quran_khatma_main').collection('live_events').doc(String(event.clientEventId)).set({
             ...event,
             createdAtClient: Number(event.at || Date.now()),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -63310,7 +63310,7 @@ function renderQuranPageControls() {
           const db = getDb();
           if (!db || window.__liveEventsSubscribed) return;
           window.__liveEventsSubscribed = true;
-          db.collection('shared_state_wafa_v2').doc('wafaabuqdairi_main_v2').collection('live_events_v2')
+          db.collection('shared_state').doc('quran_khatma_main').collection('live_events')
             .orderBy('createdAtClient', 'desc')
             .limit(120)
             .onSnapshot((snap) => {
