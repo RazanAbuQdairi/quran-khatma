@@ -1530,709 +1530,903 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'khatma_local_store_detached_20260308_x91';
-    const BACKUP_STORAGE_KEY = 'khatma_local_backup_detached_20260308_x91';
-    const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v1';
-    const DURABLE_SNAPSHOTS_KEY = STORAGE_KEY + '::durable_snapshots_v1';
+    const STORAGE_KEY = 'quran_khatma_points_app_v3_isolated';
+    const BACKUP_STORAGE_KEY = 'quran_khatma_points_app_backup_v3_isolated';
+    const SESSION_STATE_KEY = STORAGE_KEY + '::session_backup_v3_isolated';
     const MUSHAF_TOTAL_PAGES = 604;
 
-    function buildSeedUsers() {
-      const createdAt = new Date().toISOString();
-      return [
-        {
-          id: 'seed-user-001',
-          name: 'رزان محمد',
-          password: '1234',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-002',
-          name: 'تولاي نايف محمد',
-          password: '2005',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-003',
-          name: 'فاطمه علي',
-          password: '1234',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-004',
-          name: 'خديجة',
-          password: '1111',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-005',
-          name: 'فاطمة الهاشمي',
-          password: '1205',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-006',
-          name: 'علياء سلطان طارش',
-          password: 'sstsst123',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-007',
-          name: 'عالية سلطان طارش',
-          password: 'sstsst123',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-008',
-          name: 'ندى نبيل',
-          password: '147147',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-009',
-          name: 'عليا أحمد حمدان المدحاني',
-          password: '1234',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-010',
-          name: 'دانه نبيل',
-          password: '192837465',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-011',
-          name: 'عنود احمد',
-          password: '12345',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-012',
-          name: 'مهرة علي',
-          password: '1245',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-013',
-          name: 'روضه عبداللطيف',
-          password: '2015',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-014',
-          name: 'هيام هزاع',
-          password: '100000',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-015',
-          name: 'ساره خالد عبدالله محمد الحاج',
-          password: '6666',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-016',
-          name: 'دانه عادل محمد',
-          password: '442015',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-017',
-          name: 'منار',
-          password: '1212',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-018',
-          name: 'مهره خالد عبدالله محمد الحاج',
-          password: '6666',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-019',
-          name: 'رحمة محسن',
-          password: '123120',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-020',
-          name: 'تسنيم احمد',
-          password: '123455',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-021',
-          name: 'تولين احمد',
-          password: '1234566',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-022',
-          name: 'عائشة عيسى نصر',
-          password: '12345',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-023',
-          name: 'شيخه شايع نصر',
-          password: '0552528009',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-024',
-          name: 'نوره شايع نصر',
-          password: '123123',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-025',
-          name: 'تولاي نايف',
-          password: '2005',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-026',
-          name: 'مريم ماجد',
-          password: '2015',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-027',
-          name: 'نادية محمد نصر',
-          password: '2015',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-028',
-          name: 'ناديه محمد',
-          password: '2015',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-029',
-          name: 'حمدة',
-          password: '1212',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-030',
-          name: 'دانه عادل',
-          password: '442015',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-031',
-          name: 'لطيفه محمد المرزوقي',
-          password: '12345678',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-032',
-          name: 'مهره علي',
-          password: '1994',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-033',
-          name: 'لطيفة محمد عبدالرحيم',
-          password: '1234',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-034',
-          name: 'عائشة عيسى نصر',
-          password: '123450',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-035',
-          name: 'حمدة عبدالعزيز',
-          password: '123123',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-036',
-          name: 'فجر مصبح',
-          password: '1234',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-037',
-          name: 'فاطمه عبدالله حبيب',
-          password: '3344',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-038',
-          name: 'روضه عبداللطيف محمد ابراهيم البناء',
-          password: '2015',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-039',
-          name: 'حمدة عبدالعزيز جمال',
-          password: '112211',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-        {
-          id: 'seed-user-040',
-          name: 'العنود احمد',
-          password: 'Abc@123456789',
-          totalPoints: 0,
-          totalPages: 0,
-          currentQuranPage: 1,
-          tasbeeh: 0,
-          morningDaysCount: 0,
-          lastMorningBonusDate: null,
-          prayersCount: 0,
-          prayersByDate: {},
-          createdAt,
-          history: [],
-          isHidden: false,
-          _updatedAt: 0
-        },
-      ];
-    }
-
     const EMBEDDED_INITIAL_STATE = {
-  settings: {
-    dailyPoints: 5,
-    pagePoints: 5,
-    mushafPdfPath: 'mushaf.pdf'
+  "settings": {
+    "dailyPoints": 5,
+    "pagePoints": 5,
+    "mushafPdfPath": "mushaf-pages"
   },
-  selectedUserId: null,
-  users: buildSeedUsers(),
-  deletedUsers: {},
-  deletedUserIds: {},
-  __clientUpdatedAt: Date.now()
+  "selectedUserId": "50f51f37-2047-47a2-a727-af1c2af4e641",
+  "users": [
+    {
+      "id": "50f51f37-2047-47a2-a727-af1c2af4e641",
+      "name": "رزان محمد",
+      "password": "1234",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:00Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:00Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000000
+    },
+    {
+      "id": "6a5f8b76-819b-4cc6-86fc-6c5210b5e328",
+      "name": "تولاي نايف محمد",
+      "password": "2005",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:01Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:01Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000001
+    },
+    {
+      "id": "53f5b38e-0dc3-4384-8beb-9e4137381715",
+      "name": "فاطمه علي",
+      "password": "1234",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:02Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:02Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000002
+    },
+    {
+      "id": "346a8a6d-0f79-4fb8-b66f-aa520f0ebb76",
+      "name": "خديجة",
+      "password": "1111",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:03Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:03Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000003
+    },
+    {
+      "id": "2cba96a3-f6b6-4bc4-b3a2-f5f57ede0805",
+      "name": "فاطمة الهاشمي",
+      "password": "1205",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:04Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:04Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000004
+    },
+    {
+      "id": "0934ac1d-0994-4634-91e7-d685557c9371",
+      "name": "علياء سلطان طارش",
+      "password": "sstsst123",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:05Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:05Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000005
+    },
+    {
+      "id": "0f922b10-8c17-44c6-a317-2a46aaa1f5f7",
+      "name": "عالية سلطان طارش",
+      "password": "sstsst123",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:06Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:06Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000006
+    },
+    {
+      "id": "73f71e53-c863-4161-aaa3-ae3c77b5cb4b",
+      "name": "ندى نبيل",
+      "password": "147147",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:07Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:07Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000007
+    },
+    {
+      "id": "0cee2293-b7ee-40f3-a5ee-2c6d48c7b80f",
+      "name": "عليا أحمد حمدان المدحاني",
+      "password": "1234",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:08Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:08Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000008
+    },
+    {
+      "id": "f5b2b964-8577-4460-816f-fa1ad96f9d16",
+      "name": "دانه نبيل",
+      "password": "192837465",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:09Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:09Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000009
+    },
+    {
+      "id": "44ed6c2a-a674-4fe3-aaa2-bb00aecb22fc",
+      "name": "عنود احمد",
+      "password": "12345",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:10Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:10Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000010
+    },
+    {
+      "id": "9c7269b4-c238-41fe-92cc-a3da628659f2",
+      "name": "مهرة علي",
+      "password": "1245",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:11Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:11Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000011
+    },
+    {
+      "id": "92d6aa9c-8046-4335-b1c3-67be5dc0d2ac",
+      "name": "روضه عبداللطيف",
+      "password": "2015",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:12Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:12Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000012
+    },
+    {
+      "id": "9f39d209-3705-46a6-bcd4-5b14f4fc3c80",
+      "name": "هيام هزاع",
+      "password": "100000",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:13Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:13Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000013
+    },
+    {
+      "id": "832362d7-9b89-4c0d-b796-1f105e52892c",
+      "name": "ساره خالد عبدالله محمد الحاج",
+      "password": "6666",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:14Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:14Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000014
+    },
+    {
+      "id": "9ee9c488-fc28-4af3-a310-20f7cdeb530c",
+      "name": "دانه عادل محمد",
+      "password": "442015",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:15Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:15Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000015
+    },
+    {
+      "id": "e156c311-eef5-44a9-af36-0754f65d11c9",
+      "name": "منار",
+      "password": "1212",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:16Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:16Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000016
+    },
+    {
+      "id": "555057ab-ee8f-4f56-8ed5-ad91d984bebf",
+      "name": "مهره خالد عبدالله محمد الحاج",
+      "password": "6666",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:17Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:17Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000017
+    },
+    {
+      "id": "d8aac550-f3ce-452d-a50c-3bdf339c27d8",
+      "name": "رحمة محسن",
+      "password": "123120",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:18Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:18Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000018
+    },
+    {
+      "id": "15e12bfa-72e1-4ff9-8aa8-174ebdcbea21",
+      "name": "تسنيم احمد",
+      "password": "123455",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:19Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:19Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000019
+    },
+    {
+      "id": "0b86e07e-73ae-40d1-96ca-f1e06499a8f7",
+      "name": "تولين احمد",
+      "password": "1234566",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:20Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:20Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000020
+    },
+    {
+      "id": "ed79b50b-062a-4f25-8f33-0caedb66f3b6",
+      "name": "عائشة عيسى نصر",
+      "password": "12345",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:21Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:21Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000021
+    },
+    {
+      "id": "4c9257d8-451a-47c4-9a7c-599b63ee070b",
+      "name": "شيخه شايع نصر",
+      "password": "0552528009",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:22Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:22Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000022
+    },
+    {
+      "id": "06440a85-d35a-4472-ac71-801429703298",
+      "name": "نوره شايع نصر",
+      "password": "123123",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:23Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:23Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000023
+    },
+    {
+      "id": "73bee95e-8f77-4dbd-8c3a-4dac9e15172f",
+      "name": "تولاي نايف",
+      "password": "2005",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:24Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:24Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000024
+    },
+    {
+      "id": "faa9a0af-bd3e-4cae-b916-12252780ee8c",
+      "name": "مريم ماجد",
+      "password": "2015",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:25Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:25Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000025
+    },
+    {
+      "id": "07d0f0ac-9b86-441c-85d7-8a287fd5614a",
+      "name": "نادية محمد نصر",
+      "password": "2015",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:26Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:26Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000026
+    },
+    {
+      "id": "3decaffa-030e-45c7-9f22-8cee3a84c176",
+      "name": "ناديه محمد",
+      "password": "2015",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:27Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:27Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000027
+    },
+    {
+      "id": "4f107a98-fae2-4082-93b0-6e1fe02f6dea",
+      "name": "حمدة",
+      "password": "1212",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:28Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:28Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000028
+    },
+    {
+      "id": "9ad9ba14-7b8d-4d63-8c44-156dd8afe595",
+      "name": "دانه عادل",
+      "password": "442015",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:29Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:29Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000029
+    },
+    {
+      "id": "e5e25ee9-0f02-4c38-9e3e-ebe223b91e56",
+      "name": "لطيفه محمد المرزوقي",
+      "password": "12345678",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:30Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:30Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000030
+    },
+    {
+      "id": "80f43dd9-23e6-475d-8b24-8fa8c9ecfe78",
+      "name": "مهره علي",
+      "password": "1994",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:31Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:31Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000031
+    },
+    {
+      "id": "5d8dd88e-36fa-4f57-8d79-5818a967b4af",
+      "name": "لطيفة محمد عبدالرحيم",
+      "password": "1234",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:32Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:32Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000032
+    },
+    {
+      "id": "19d43b39-33e5-45d5-ab59-7ab99d970284",
+      "name": "عائشة عيسى نصر",
+      "password": "123450",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:33Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:33Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000033
+    },
+    {
+      "id": "11eedd70-0bb7-41a6-b404-5dd46b21bb07",
+      "name": "حمدة عبدالعزيز",
+      "password": "123123",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:34Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:34Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000034
+    },
+    {
+      "id": "2dc464d0-025a-46d3-b5e7-62a99b03d4fc",
+      "name": "فجر مصبح",
+      "password": "1234",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:35Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:35Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000035
+    },
+    {
+      "id": "5f9c4151-ae30-4b43-bec5-8233cd9f26af",
+      "name": "فاطمه عبدالله حبيب",
+      "password": "3344",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:36Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:36Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000036
+    },
+    {
+      "id": "361a1ac9-b9a9-450a-8b10-39c59e04c768",
+      "name": "روضه عبداللطيف محمد ابراهيم البناء",
+      "password": "2015",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:37Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:37Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000037
+    },
+    {
+      "id": "e5f3a095-7caa-45ac-ab26-649a6e994f50",
+      "name": "حمدة عبدالعزيز جمال",
+      "password": "112211",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:38Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:38Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000038
+    },
+    {
+      "id": "e31847e2-9299-4ced-9c4a-76867e0ba881",
+      "name": "العنود احمد",
+      "password": "Abc@123456789",
+      "totalPoints": 0,
+      "totalPages": 0,
+      "currentQuranPage": 1,
+      "tasbeeh": 0,
+      "morningDaysCount": 0,
+      "lastMorningBonusDate": null,
+      "prayersCount": 0,
+      "prayersByDate": {},
+      "createdAt": "2026-03-08T00:00:39Z",
+      "history": [
+        {
+          "type": "create_user",
+          "at": "2026-03-08T00:00:39Z"
+        }
+      ],
+      "isHidden": false,
+      "_updatedAt": 1772928000039
+    }
+  ],
+  "deletedUsers": {},
+  "deletedUserIds": {},
+  "__clientUpdatedAt": 1772928009999
 };
 
     const defaultState = {
@@ -2242,26 +2436,8 @@
         mushafPdfPath: 'mushaf.pdf'
       },
       selectedUserId: null,
-      users: buildSeedUsers()
+      users: []
     };
-
-    const LEGACY_STORAGE_KEYS_TO_CLEAR = [
-      'quran_khatma_points_app_v1',
-      'quran_khatma_points_app_backup_v1',
-      'quran_khatma_points_app_v1_cleanreset_20260307',
-      'quran_khatma_points_app_backup_v1_cleanreset_20260307',
-      'quran_khatma_live_cross_tab_v1_cleanreset_20260307',
-      'quran_khatma_live_events_cross_tab_v2'
-    ];
-
-    (function clearLegacyClientData() {
-      try {
-        LEGACY_STORAGE_KEYS_TO_CLEAR.forEach((key) => {
-          try { localStorage.removeItem(key); } catch (_) {}
-          try { sessionStorage.removeItem(key); } catch (_) {}
-        });
-      } catch (_) {}
-    })();
 
     let state = loadState();
 
@@ -2372,89 +2548,20 @@
       return null;
     }
 
-    function readDurableSnapshots() {
-      try {
-        const raw = localStorage.getItem(DURABLE_SNAPSHOTS_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (_) {
-        return [];
-      }
-    }
-
-    function getStateFreshnessScore(candidate, fallbackSavedAt = 0) {
-      try {
-        if (!candidate || typeof candidate !== 'object') return 0;
-        return Math.max(
-          Number(candidate.__clientUpdatedAt || 0),
-          Number(fallbackSavedAt || 0),
-          ...((Array.isArray(candidate.users) ? candidate.users : []).map(u => Number((u && u._updatedAt) || 0)))
-        );
-      } catch (_) {
-        return Number(fallbackSavedAt || 0);
-      }
-    }
-
-    function readBestRecoveredState() {
-      const candidates = [];
-
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) candidates.push({ state: JSON.parse(raw), savedAt: 0, source: 'local' });
-      } catch (_) {}
-
-      try {
-        const raw = sessionStorage.getItem(SESSION_STATE_KEY);
-        if (raw) candidates.push({ state: JSON.parse(raw), savedAt: 0, source: 'session' });
-      } catch (_) {}
-
-      try {
-        const raw = localStorage.getItem(BACKUP_STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.state) candidates.push({
-            state: parsed.state,
-            savedAt: Date.parse(parsed.savedAt || '') || 0,
-            source: 'backup'
-          });
-        }
-      } catch (_) {}
-
-      try {
-        readDurableSnapshots().forEach(item => {
-          if (item && item.state) {
-            candidates.push({
-              state: item.state,
-              savedAt: Date.parse(item.savedAt || '') || 0,
-              source: 'snapshot'
-            });
-          }
-        });
-      } catch (_) {}
-
-      let best = null;
-      let bestScore = 0;
-      for (const item of candidates) {
-        const score = getStateFreshnessScore(item.state, item.savedAt);
-        if (!best || score > bestScore) {
-          best = item.state;
-          bestScore = score;
-        }
-      }
-      return best;
-    }
-
     function loadState() {
       try {
-        const recovered = readBestRecoveredState();
-        if (recovered) return hydrateLoadedState(recovered);
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return hydrateLoadedState(JSON.parse(raw));
+
+        const backupState = readBackupState();
+        if (backupState) return hydrateLoadedState(backupState);
+
         return hydrateLoadedState(EMBEDDED_INITIAL_STATE);
       } catch (e) {
         console.error('Failed to load state:', e);
         try {
-          const recovered = readBestRecoveredState();
-          if (recovered) return hydrateLoadedState(recovered);
+          const backupState = readBackupState();
+          if (backupState) return hydrateLoadedState(backupState);
         } catch (_) {}
         return hydrateLoadedState(EMBEDDED_INITIAL_STATE);
       }
@@ -2499,44 +2606,87 @@
       try { user._updatedAt = Date.now(); } catch (_) {}
     }
 
-    
-let __saveTimer = null;
-function saveState() {
-  try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
-  clearTimeout(__saveTimer);
-  __saveTimer = setTimeout(() => {
-    try { persistStateToLocalStores(); } catch (_) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
-    }
-    try {
-      if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
-        window.__firebaseSync.pushState(state);
+    let __saveTimer = null;
+    let __saveRetryTimer = null;
+    let __lastFlushAt = 0;
+    let __dirtySinceFlush = false;
+
+    function persistStateToLocalStores() {
+      try {
+        const stateJson = JSON.stringify(state);
+        localStorage.setItem(STORAGE_KEY, stateJson);
+        try { sessionStorage.setItem(SESSION_STATE_KEY, stateJson); } catch (_) {}
+        try {
+          localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
+            savedAt: new Date().toISOString(),
+            state: JSON.parse(stateJson)
+          }));
+        } catch (_) {}
+      } catch (e) {
+        console.warn('Local persistence failed:', e);
       }
-    } catch (e) {
-      console.warn('Firebase sync push skipped:', e);
     }
-  }, 140);
-}
 
-function saveStateStrong() {
-  saveState();
-}
+    function flushStateNow(options = {}) {
+      __lastFlushAt = Date.now();
+      persistStateToLocalStores();
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
+          window.__firebaseSync.pushState(state, { immediate: true });
+          if (options.retry !== false) {
+            clearTimeout(__saveRetryTimer);
+            __saveRetryTimer = setTimeout(() => {
+              try {
+                if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function') {
+                  window.__firebaseSync.pushState(state, { immediate: true });
+                }
+              } catch (_) {}
+            }, 180);
+          }
+        }
+      } catch (e) {
+        console.warn('Firebase sync push skipped:', e);
+      }
+      __dirtySinceFlush = false;
+    }
 
-window.addEventListener('pagehide', () => {
-  try { persistStateToLocalStores(); } catch (_) {}
-});
-window.addEventListener('beforeunload', () => {
-  try { persistStateToLocalStores(); } catch (_) {}
-});
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    try { persistStateToLocalStores(); } catch (_) {}
-  }
-});
+    function saveState(options = {}) {
+      // لا نرفع __clientUpdatedAt إلا عند وجود تغيير محلي فعلي
+      __dirtySinceFlush = true;
+      try { state.__clientUpdatedAt = Date.now(); } catch (_) {}
+      persistStateToLocalStores();
 
-setInterval(() => {
-      try { persistStateToLocalStores(); } catch (_) {}
-    }, 3000);
+      try {
+        if (window.__firebaseSync && typeof window.__firebaseSync.broadcastLocal === 'function') {
+          window.__firebaseSync.broadcastLocal(state);
+        }
+      } catch (_) {}
+
+      clearTimeout(__saveTimer);
+      if (options && options.immediate) {
+        flushStateNow(options);
+        return;
+      }
+      __saveTimer = setTimeout(() => flushStateNow(options), 10);
+    }
+
+    function saveStateStrong() {
+      saveState({ immediate: true, retry: true });
+    }
+
+    // حفظ احتياطي دوري كل 10 ثوانٍ بدون تزوير وقت تعديل محلي
+    setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      if (!__dirtySinceFlush) return;
+      if (Date.now() - __lastFlushAt < 8000) return;
+      flushStateNow();
+    }, 10000);
+
+    window.addEventListener('pagehide', () => flushStateNow({ retry: false }));
+    window.addEventListener('beforeunload', () => flushStateNow({ retry: false }));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushStateNow({ retry: false });
+    });
 
     function cryptoRandomId() {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -3300,11 +3450,6 @@ setInterval(() => {
           });
         }
       } catch (_) {}
-      try {
-        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function' && window.__quranAppBridge) {
-          window.__firebaseSync.pushState(window.__quranAppBridge.getState(), { immediate: true, force: true });
-        }
-      } catch (_) {}
     }
 
     function resetTasbeehCount() {
@@ -3330,11 +3475,6 @@ setInterval(() => {
             totalPoints: Number(user.totalPoints || 0),
             userUpdatedAt: Number(user._updatedAt || Date.now())
           });
-        }
-      } catch (_) {}
-      try {
-        if (window.__firebaseSync && typeof window.__firebaseSync.pushState === 'function' && window.__quranAppBridge) {
-          window.__firebaseSync.pushState(window.__quranAppBridge.getState(), { immediate: true, force: true });
         }
       } catch (_) {}
     }
@@ -4528,246 +4668,655 @@ function renderQuranPageControls() {
   })();
   </script>
 
-  
-<script id="quranAppBridge">
-  (function(){
-    if (window.__quranAppBridge) return;
+  <script id="quranAppBridge">
+    (function(){
+      // Bridge used by Firebase live sync
+      if (window.__quranAppBridge) return;
 
-    function normalizeState(stateObj){
-      try {
-        const base = structuredClone(defaultState);
-        const s = stateObj && typeof stateObj === 'object' ? stateObj : {};
-        const out = {
-          ...base,
-          ...s,
-          settings: { ...base.settings, ...(s.settings || {}) },
-          users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
-        };
-        out.settings.dailyPoints = 5;
-        if (!(Number.isFinite(Number(out.settings.pagePoints)) && Number(out.settings.pagePoints) >= 0)) {
+      function normalizeState(stateObj){
+        try {
+          const base = structuredClone(defaultState);
+          const s = stateObj && typeof stateObj === 'object' ? stateObj : {};
+          const out = {
+            ...base,
+            ...s,
+            settings: { ...base.settings, ...(s.settings || {}) },
+            users: Array.isArray(s.users) ? s.users.map(sanitizeUser) : []
+          };
+          // enforce fixed points if your app expects it
+          out.settings.dailyPoints = 5;
           out.settings.pagePoints = 5;
+          if (out.selectedUserId && !out.users.some(u => u.id === out.selectedUserId)) {
+            out.selectedUserId = out.users[0]?.id || null;
+          }
+          return out;
+        } catch (e) {
+          console.warn('normalizeState failed:', e);
+          return stateObj;
         }
-        if (out.selectedUserId && !out.users.some(u => u.id === out.selectedUserId)) {
-          out.selectedUserId = out.users[0]?.id || null;
-        }
-        return out;
-      } catch (e) {
-        console.warn('normalizeState failed:', e);
-        return stateObj;
       }
-    }
 
-    function applyRemoteState(remoteState){
-      const next = normalizeState(remoteState);
-      state = next;
-      try {
-        const unlocked = sessionAuth.unlockedUserId && next.users.some(u => u.id === sessionAuth.unlockedUserId)
-          ? sessionAuth.unlockedUserId
-          : null;
-        sessionAuth.unlockedUserId = unlocked;
-        saveUnlockedUserId(unlocked);
-      } catch (_) {}
+      function mergeUserRecords(remoteUser, localUser){
+        const remoteTs = Number(remoteUser && remoteUser._updatedAt || 0);
+        const localTs = Number(localUser && localUser._updatedAt || 0);
+        const chosen = localTs >= remoteTs ? localUser : remoteUser;
+        const other = chosen === localUser ? remoteUser : localUser;
+        if (!chosen) return other ? sanitizeUser(other) : null;
+        const out = sanitizeUser(chosen);
+        const otherHistory = Array.isArray(other && other.history) ? other.history : [];
+        if (otherHistory.length) {
+          const seen = new Set((out.history || []).map(item => `${item.at || ''}|${item.type || ''}|${JSON.stringify(item)}`));
+          otherHistory.forEach(item => {
+            const key = `${item.at || ''}|${item.type || ''}|${JSON.stringify(item)}`;
+            if (!seen.has(key)) out.history.push(item);
+          });
+          out.history = out.history.slice(-200);
+        }
+        out._updatedAt = Math.max(remoteTs, localTs, Number(out._updatedAt || 0));
+        return out;
+      }
 
-      try {
-        if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores();
-        else localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (_) {}
-      try { if (typeof render === 'function') render(); } catch (_) {}
-    }
+      function mergeStates(remoteState, localState){
+        const remote = normalizeState(remoteState || {});
+        const local = normalizeState(localState || {});
+        const merged = {
+          ...remote,
+          ...local,
+          settings: { ...remote.settings, ...local.settings },
+          users: [],
+          __clientUpdatedAt: Math.max(Number(remote.__clientUpdatedAt || 0), Number(local.__clientUpdatedAt || 0))
+        };
 
-    window.__quranAppBridge = {
-      getState: () => state,
-      normalizeState,
-      applyRemoteState
-    };
-  })();
-</script>
+        const ids = new Set([
+          ...((remote.users || []).map(u => u.id)),
+          ...((local.users || []).map(u => u.id))
+        ]);
 
+        merged.users = Array.from(ids).map(id => {
+          const remoteUser = (remote.users || []).find(u => u.id === id);
+          const localUser = (local.users || []).find(u => u.id === id);
+          return mergeUserRecords(remoteUser, localUser);
+        }).filter(Boolean);
+
+        if (merged.selectedUserId && !merged.users.some(u => u.id === merged.selectedUserId)) {
+          merged.selectedUserId = merged.users[0]?.id || null;
+        }
+        return merged;
+      }
+
+      function applyRemoteState(remoteState){
+        const next = mergeStates(remoteState, state);
+        state = next;
+        try {
+          const unlocked = sessionAuth.unlockedUserId && next.users.some(u => u.id === sessionAuth.unlockedUserId)
+            ? sessionAuth.unlockedUserId
+            : null;
+          sessionAuth.unlockedUserId = unlocked;
+          saveUnlockedUserId(unlocked);
+        } catch (_) {}
+
+        // Save locally WITHOUT triggering another cloud push (Firebase code already guards loops)
+        try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+        try { if (typeof render === 'function') render(); } catch (_) {}
+      }
+
+      window.__quranAppBridge = {
+        getState: () => state,
+        normalizeState,
+        mergeStates,
+        applyRemoteState
+      };
+    })();
+  </script>
 
   <!-- Firebase shared sync (Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  
-<script id="firebaseSharedSyncScript">
-  (function () {
-    const firebaseConfig = {
-      apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
-      authDomain: "wafaabuqdairi.firebaseapp.com",
-      projectId: "wafaabuqdairi",
-      storageBucket: "wafaabuqdairi.firebasestorage.app",
-      messagingSenderId: "147376328852",
-      appId: "1:147376328852:web:859440af34e4bb14dc6481",
-      measurementId: "G-L6QHBLNVMJ"
-    };
-
-    function getBridge() {
-      return window.__quranAppBridge || null;
-    }
-
-    function toast(msg) {
-      try {
-        const t = document.getElementById('toast');
-        if (t) {
-          t.textContent = msg;
-          t.classList.add('show');
-          clearTimeout(t._timer);
-          t._timer = setTimeout(() => t.classList.remove('show'), 2200);
-          return;
-        }
-      } catch (_) {}
-      console.log(msg);
-    }
-
-    let ready = false;
-    let applyingRemote = false;
-    let pushTimer = null;
-    let lastCloudJson = null;
-    let lastPushedJson = null;
-    const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
-
-    const COLLECTION_PATH = 'shared_state_zero_20260308_v2';
-    const DOC_ID = 'quran_khatma_main_zero_20260308_v2';
-
-    try {
-      if (!window.firebase || !firebase.apps) return;
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
-      const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
-
-      window.__firebaseSync = window.__firebaseSync || {};
-      window.__firebaseSync.pushState = function (stateObj, options = {}) {
-        if (!ready || applyingRemote) return;
-        const bridge = getBridge();
-        if (!bridge) return;
-
-        clearTimeout(pushTimer);
-        pushTimer = setTimeout(async () => {
-          try {
-            const normalized = bridge.normalizeState(stateObj);
-            const json = JSON.stringify(normalized);
-            if (json === lastPushedJson && !options.force) return;
-            lastPushedJson = json;
-
-            await docRef.set({
-              state: normalized,
-              meta: {
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedBy: clientId,
-                version: 1,
-                clientUpdatedAt: (normalized && normalized.__clientUpdatedAt) || Date.now()
-              }
-            }, { merge: true });
-          } catch (e) {
-            console.error('Firebase push failed:', e);
-          }
-        }, options.immediate ? 0 : 140);
+  <script id="firebaseSharedSyncScript">
+    (function () {
+      // Using the same Firebase config and shared document as the uploaded v81 file
+      const firebaseConfig = {
+        apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
+        authDomain: "wafaabuqdairi.firebaseapp.com",
+        projectId: "wafaabuqdairi",
+        storageBucket: "wafaabuqdairi.firebasestorage.app",
+        messagingSenderId: "147376328852",
+        appId: "1:147376328852:web:859440af34e4bb14dc6481",
+        measurementId: "G-L6QHBLNVMJ"
       };
 
-      window.__firebaseSync.pullState = async function () {
+      const FIREBASE_SYNC_ENABLED = true;
+      if (!FIREBASE_SYNC_ENABLED) return;
+
+      function getBridge() {
+        return window.__quranAppBridge || null;
+      }
+
+      function toast(msg) {
         try {
-          const snap = await docRef.get({ source: 'server' });
-          if (!snap.exists) return;
-          const bridge = getBridge();
-          if (!bridge) return;
-          const data = snap.data() || {};
-          if (!data.state) return;
-          const remoteNormalized = bridge.normalizeState(data.state);
-          const remoteJson = JSON.stringify(remoteNormalized);
-          const localState = bridge.getState();
-          const localJson = JSON.stringify(bridge.normalizeState(localState));
-          lastCloudJson = remoteJson;
-          ready = true;
-          if (remoteJson === localJson) return;
-          applyingRemote = true;
-          try {
-            bridge.applyRemoteState(remoteNormalized);
-          } finally {
-            setTimeout(() => { applyingRemote = false; }, 150);
-          }
-        } catch (err) {
-          console.warn('Firebase forced pull failed:', err);
-        }
-      };
-
-      docRef.onSnapshot((snap) => {
-        const bridge = getBridge();
-        if (!bridge) return;
-
-        if (!snap.exists) {
-          ready = true;
-          window.__firebaseSync.pushState(bridge.getState(), { force: true });
-          toast('☁️ تم تفعيل المزامنة المباشرة');
-          return;
-        }
-
-        const data = snap.data() || {};
-        if (!data.state) {
-          ready = true;
-          window.__firebaseSync.pushState(bridge.getState(), { force: true });
-          return;
-        }
-
-        const remoteNormalized = bridge.normalizeState(data.state);
-        const remoteJson = JSON.stringify(remoteNormalized);
-        if (remoteJson === lastCloudJson) {
-          ready = true;
-          return;
-        }
-
-        const localState = bridge.getState();
-        const localJson = JSON.stringify(bridge.normalizeState(localState));
-        lastCloudJson = remoteJson;
-        ready = true;
-
-        if (remoteJson === localJson) return;
-
-        try {
-          const remoteMetaTs = Number((data.meta && data.meta.clientUpdatedAt) || 0);
-          const localMetaTs = Number((localState && localState.__clientUpdatedAt) || 0);
-          if (localMetaTs && remoteMetaTs && remoteMetaTs < localMetaTs) {
-            ready = true;
+          const t = document.getElementById('toast');
+          if (t) {
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2200);
             return;
           }
         } catch (_) {}
+        console.log(msg);
+      }
 
-        applyingRemote = true;
+      let ready = false;
+      let applyingRemote = false;
+      let pushTimer = null;
+      let lastCloudJson = null;
+      let lastPushedJson = null;
+      const clientId = 'client_' + Math.random().toString(36).slice(2, 10);
+      const CROSS_TAB_CHANNEL = 'quran_khatma_points_sync_v3_isolated';
+      let bc = null;
+
+      function notifyOtherTabs(stateObj) {
         try {
-          bridge.applyRemoteState(remoteNormalized);
-        } finally {
-          setTimeout(() => { applyingRemote = false; }, 150);
+          const bridge = getBridge();
+          if (!bridge) return;
+          const normalized = bridge.normalizeState(stateObj);
+          const payload = {
+            sender: clientId,
+            at: Date.now(),
+            state: normalized
+          };
+          if (window.BroadcastChannel) {
+            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
+            bc.postMessage(payload);
+          }
+          try {
+            localStorage.setItem(CROSS_TAB_CHANNEL, JSON.stringify(payload));
+          } catch (_) {}
+        } catch (_) {}
+      }
+
+      function receiveExternalState(payload) {
+        try {
+          if (!payload || payload.sender === clientId || !payload.state) return;
+          const bridge = getBridge();
+          if (!bridge) return;
+          const incoming = bridge.normalizeState(payload.state);
+          const incomingJson = JSON.stringify(incoming);
+          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
+          if (incomingJson === localJson) return;
+          applyingRemote = true;
+          try {
+            bridge.applyRemoteState(incoming);
+            lastCloudJson = incomingJson;
+          } finally {
+            setTimeout(() => { applyingRemote = false; }, 10);
+          }
+        } catch (e) {
+          console.warn('Cross-tab sync apply failed:', e);
         }
-      }, (err) => {
-        console.error('Firebase onSnapshot error:', err);
-        toast('⚠️ فشل ربط المزامنة. افحصي قواعد Firestore');
-      });
+      }
 
-      window.addEventListener('focus', () => {
-        try { window.__firebaseSync.pullState(); } catch (_) {}
-      });
-      window.addEventListener('pageshow', () => {
-        try { window.__firebaseSync.pullState(); } catch (_) {}
-      });
-      window.addEventListener('online', () => {
-        try { window.__firebaseSync.pullState(); } catch (_) {}
-      });
-    } catch (e) {
-      console.error('Firebase init failed:', e);
-    }
-  })();
-</script>
+      const COLLECTION_PATH = 'shared_state_v3_isolated';
+      const DOC_ID = 'quran_khatma_main_v3_isolated';
 
+      try {
+        if (!window.firebase || !firebase.apps) return;
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
+        // Disabled IndexedDB tab-persistence here to avoid stale primary-tab/cache behavior in same-browser live views.
 
+        const docRef = db.collection(COLLECTION_PATH).doc(DOC_ID);
 
-  
-  <script id="firebaseRealtimeEventsPatch">
-    (function () {
-      // Disabled intentionally: this file now uses one clear Firestore sync path only,
-      // matching the simpler reference file's storage/sync principle.
-      return;
+        if (window.BroadcastChannel) {
+          try {
+            if (!bc) bc = new BroadcastChannel(CROSS_TAB_CHANNEL);
+            bc.onmessage = (event) => receiveExternalState(event.data);
+          } catch (_) {}
+        }
+        window.addEventListener('storage', (event) => {
+          if (event.key !== CROSS_TAB_CHANNEL || !event.newValue) return;
+          try { receiveExternalState(JSON.parse(event.newValue)); } catch (_) {}
+        });
+
+        window.__firebaseSync = window.__firebaseSync || {};
+        window.__firebaseSync.broadcastLocal = function (stateObj) {
+          try {
+            const bridge = getBridge();
+            if (!bridge) return;
+            notifyOtherTabs(bridge.normalizeState(stateObj));
+          } catch (_) {}
+        };
+        window.__firebaseSync.pushState = function (stateObj, options = {}) {
+          if (!ready || applyingRemote) return;
+          const bridge = getBridge();
+          if (!bridge) return;
+          clearTimeout(pushTimer);
+          pushTimer = setTimeout(async () => {
+            try {
+              const normalized = bridge.normalizeState(stateObj);
+              const json = JSON.stringify(normalized);
+              if (json === lastPushedJson && !options.immediate) return;
+
+              await db.runTransaction(async (tx) => {
+                const snap = await tx.get(docRef);
+                const remoteState = snap.exists ? ((snap.data() || {}).state || null) : null;
+                const mergedState = typeof bridge.mergeStates === 'function'
+                  ? bridge.mergeStates(remoteState, normalized)
+                  : normalized;
+                const mergedJson = JSON.stringify(mergedState);
+                if (mergedJson === lastPushedJson && !options.immediate) return;
+                lastPushedJson = mergedJson;
+                notifyOtherTabs(mergedState);
+                tx.set(docRef, {
+                  state: mergedState,
+                  meta: {
+                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                     updatedBy: clientId,
+                     version: 2,
+                     clientUpdatedAt: (mergedState && mergedState.__clientUpdatedAt) || Date.now()
+                   }
+                }, { merge: true });
+              });
+            } catch (e) {
+              console.error('Firebase push failed:', e);
+            }
+          }, options.immediate ? 0 : 10);
+        };
+
+        docRef.onSnapshot((snap) => {
+          const bridge = getBridge();
+          if (!bridge) return;
+
+          if (!snap.exists) {
+            ready = true;
+            window.__firebaseSync.pushState(bridge.getState());
+            toast('☁️ تم تفعيل المزامنة المباشرة');
+            return;
+          }
+
+          const data = snap.data() || {};
+          if (!data.state) {
+            ready = true;
+            window.__firebaseSync.pushState(bridge.getState());
+            return;
+          }
+
+          const remoteNormalized = bridge.normalizeState(data.state);
+          const remoteJson = JSON.stringify(remoteNormalized);
+          if (remoteJson === lastCloudJson) {
+            ready = true;
+            return;
+          }
+          const localJson = JSON.stringify(bridge.normalizeState(bridge.getState()));
+          lastCloudJson = remoteJson;
+          ready = true;
+
+          if (remoteJson === localJson) return;
+
+          // Conflict guard: don't overwrite newer local changes with older cloud snapshot
+          try {
+            const remoteMetaTs = Number((data.meta && data.meta.clientUpdatedAt) || 0);
+            const localMetaTs = Number((bridge.getState() && bridge.getState().__clientUpdatedAt) || 0);
+            if (localMetaTs && remoteMetaTs && remoteMetaTs < localMetaTs) {
+              ready = true;
+              return;
+            }
+          } catch (_) {}
+
+          applyingRemote = true;
+          try {
+            bridge.applyRemoteState(remoteNormalized);
+            notifyOtherTabs(remoteNormalized);
+          } finally {
+            setTimeout(() => { applyingRemote = false; }, 10);
+          }
+        }, (err) => {
+          console.error('Firebase onSnapshot error:', err);
+          toast('⚠️ فشل ربط المزامنة. افحصي قواعد Firestore');
+        });
+      } catch (e) {
+        console.error('Firebase init failed:', e);
+      }
     })();
   </script>
 
+
+
+  <script id="firebaseRealtimeEventsPatch">
+    (function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyDgXFPom5SCBxvI9uQGFKGZ5oLLctfhr34",
+        authDomain: "wafaabuqdairi.firebaseapp.com",
+        projectId: "wafaabuqdairi",
+        storageBucket: "wafaabuqdairi.firebasestorage.app",
+        messagingSenderId: "147376328852",
+        appId: "1:147376328852:web:859440af34e4bb14dc6481",
+        measurementId: "G-L6QHBLNVMJ"
+      };
+
+      const clientId = window.__liveClientId || ('client_' + Math.random().toString(36).slice(2, 10));
+      window.__liveClientId = clientId;
+      const seenEvents = new Set();
+      const LOCAL_EVENT_CHANNEL = 'quran_khatma_live_events_cross_tab_v3_isolated';
+      let localEventBc = null;
+
+      function getDb() {
+        try {
+          if (!window.firebase || !firebase.apps) return null;
+          if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+          return firebase.firestore();
+        } catch (_) { return null; }
+      }
+
+      function rememberEventKey(key) {
+        if (!key) return false;
+        if (seenEvents.has(key)) return true;
+        seenEvents.add(key);
+        if (seenEvents.size > 500) {
+          const first = seenEvents.values().next().value;
+          if (first) seenEvents.delete(first);
+        }
+        return false;
+      }
+
+      function getEventKey(event) {
+        return String((event && (event.clientEventId || event.id || event.eventId)) || '');
+      }
+
+      function formatLiveEventMessage(user, event) {
+        try {
+          const name = String((user && user.name) || 'المشاركة');
+          if (event.type === 'prayer_toggle' && event.prayerKey) {
+            const prayerName = event.prayerName || (typeof PRAYER_LABELS !== 'undefined' ? PRAYER_LABELS[event.prayerKey] : event.prayerKey);
+            return event.isDone
+              ? `🕌 ${name} صلّت ${prayerName}`
+              : `↩️ ${name} أزالت صلاة ${prayerName}`;
+          }
+          if (event.type === 'page_progress') {
+            const pagesDelta = Math.max(0, Number(event.pagesDelta || 0));
+            if (pagesDelta > 0) {
+              return pagesDelta === 1
+                ? `📖 ${name} قرأت صفحة قرآن`
+                : `📖 ${name} قرأت ${toHindiDigits(String(pagesDelta))} صفحات قرآن`;
+            }
+            if (Number.isFinite(Number(event.currentQuranPage))) {
+              return `📍 ${name} أصبحت عند صفحة ${toHindiDigits(String(event.currentQuranPage))}`;
+            }
+          }
+          if (event.type === 'tasbeeh_delta') {
+            return `📿 ${name} زاد تسبيحها`;
+          }
+          return '';
+        } catch (_) { return ''; }
+      }
+
+      function showLiveEventToast(user, event) {
+        try {
+          const msg = formatLiveEventMessage(user, event);
+          if (!msg) return;
+          if (typeof window.showToast === 'function') {
+            window.showToast(msg, 'success', 2200);
+          }
+        } catch (_) {}
+      }
+
+      function applyLiveEvent(event) {
+        try {
+          if (!event || !event.type || !event.userId) return;
+          const eventKey = getEventKey(event);
+          if (rememberEventKey(eventKey)) return;
+          if (!Array.isArray(state.users)) return;
+          const idx = state.users.findIndex(u => u.id === event.userId);
+          if (idx === -1) return;
+          const user = sanitizeUser(state.users[idx]);
+          let changed = false;
+
+          if (event.type === 'tasbeeh_delta') {
+            const incomingTasbeeh = Number(event.tasbeeh);
+            const incomingPoints = Number(event.totalPoints);
+            if (Number.isFinite(incomingTasbeeh)) {
+              if (incomingTasbeeh !== Number(user.tasbeeh || 0)) {
+                user.tasbeeh = Math.max(0, incomingTasbeeh);
+                changed = true;
+              }
+            } else {
+              const nextTasbeeh = Math.max(0, Number(user.tasbeeh || 0) + Number(event.delta || 0));
+              if (nextTasbeeh !== Number(user.tasbeeh || 0)) {
+                user.tasbeeh = nextTasbeeh;
+                changed = true;
+              }
+            }
+            if (Number.isFinite(incomingPoints)) {
+              if (incomingPoints !== Number(user.totalPoints || 0)) {
+                user.totalPoints = Math.max(0, incomingPoints);
+                changed = true;
+              }
+            } else {
+              const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
+              if (nextPoints !== Number(user.totalPoints || 0)) {
+                user.totalPoints = nextPoints;
+                changed = true;
+              }
+            }
+          } else if (event.type === 'tasbeeh_reset') {
+            if (Number(user.tasbeeh || 0) !== 0) {
+              user.tasbeeh = 0;
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
+              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
+              changed = true;
+            }
+          } else if (event.type === 'points_delta') {
+            const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
+            if (nextPoints !== Number(user.totalPoints || 0)) {
+              user.totalPoints = nextPoints;
+              changed = true;
+            }
+            if (typeof event.currentQuranPage !== 'undefined' && Number(event.currentQuranPage || 0) !== Number(user.currentQuranPage || 0)) {
+              user.currentQuranPage = Number(event.currentQuranPage || user.currentQuranPage || 1);
+              changed = true;
+            }
+            if (typeof event.totalPagesRead !== 'undefined' && Number(event.totalPagesRead || 0) !== Number(user.totalPagesRead || 0)) {
+              user.totalPagesRead = Number(event.totalPagesRead || 0);
+              changed = true;
+            }
+          } else if (event.type === 'prayer_done' && event.prayerKey && event.dateKey) {
+            ensurePrayerTracking(user);
+            const current = getPrayerStateForDate(user, event.dateKey);
+            if (!current[event.prayerKey]) {
+              current[event.prayerKey] = true;
+              current.pointsGranted = Number(event.pointsGranted || current.pointsGranted || 0);
+              user.prayersByDate[event.dateKey] = current;
+              const nextPoints = Math.max(0, Number(user.totalPoints || 0) + Number(event.pointsDelta || 0));
+              user.totalPoints = nextPoints;
+              changed = true;
+            }
+          } else if (event.type === 'prayer_toggle' && event.prayerKey && event.dateKey) {
+            ensurePrayerTracking(user);
+            const current = getPrayerStateForDate(user, event.dateKey);
+            const incomingDayState = (event.dayState && typeof event.dayState === 'object') ? event.dayState : null;
+            const nextValue = !!event.isDone;
+            if (!!current[event.prayerKey] !== nextValue) {
+              current[event.prayerKey] = nextValue;
+              changed = true;
+            }
+            if (incomingDayState) {
+              const normalized = {
+                fajr: !!incomingDayState.fajr,
+                dhuhr: !!incomingDayState.dhuhr,
+                asr: !!incomingDayState.asr,
+                maghrib: !!incomingDayState.maghrib,
+                isha: !!incomingDayState.isha
+              };
+              if (JSON.stringify(current) !== JSON.stringify(normalized)) {
+                Object.assign(current, normalized);
+                changed = true;
+              }
+            }
+            user.prayersByDate[event.dateKey] = current;
+            if (Number.isFinite(Number(event.prayersCount)) && Number(event.prayersCount) !== Number(user.prayersCount || 0)) {
+              user.prayersCount = Math.max(0, Number(event.prayersCount || 0));
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
+              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
+              changed = true;
+            }
+          } else if (event.type === 'page_progress') {
+            if (Number.isFinite(Number(event.totalPages)) && Number(event.totalPages) !== Number(user.totalPages || 0)) {
+              user.totalPages = Math.max(0, Number(event.totalPages || 0));
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.currentQuranPage)) && Number(event.currentQuranPage) !== Number(user.currentQuranPage || 0)) {
+              user.currentQuranPage = clampQuranPage(Number(event.currentQuranPage || 1));
+              changed = true;
+            }
+            if (Number.isFinite(Number(event.totalPoints)) && Number(event.totalPoints) !== Number(user.totalPoints || 0)) {
+              user.totalPoints = Math.max(0, Number(event.totalPoints || 0));
+              changed = true;
+            }
+          }
+
+          if (!changed) return;
+          user._updatedAt = Math.max(Number(user._updatedAt || 0), Number(event.userUpdatedAt || 0), Number(event.at || 0), Date.now());
+          state.users[idx] = user;
+          try { state.__clientUpdatedAt = Math.max(Number(state.__clientUpdatedAt || 0), Number(event.at || 0), Date.now()); } catch (_) {}
+          try { if (typeof persistStateToLocalStores === 'function') persistStateToLocalStores(); else localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+          try { if (typeof render === 'function') render(); } catch (_) {}
+          try { showLiveEventToast(user, event); } catch (_) {}
+        } catch (e) {
+          console.warn('applyLiveEvent failed', e);
+        }
+      }
+
+      function sendLocalEvent(event) {
+        try {
+          if (window.BroadcastChannel) {
+            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
+            localEventBc.postMessage(event);
+          }
+          try { localStorage.setItem(LOCAL_EVENT_CHANNEL, JSON.stringify(event)); } catch (_) {}
+        } catch (_) {}
+      }
+
+      function publishLiveEvent(payload) {
+        try {
+          const event = {
+            ...payload,
+            clientEventId: payload.clientEventId || ('evt_' + clientId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)),
+            sender: clientId,
+            at: Date.now()
+          };
+
+          sendLocalEvent(event);
+
+          const db = getDb();
+          if (!db) return;
+          db.collection('shared_state_v3_isolated').doc('quran_khatma_main_v3_isolated').collection('live_events_v3_isolated').doc(String(event.clientEventId)).set({
+            ...event,
+            createdAtClient: Number(event.at || Date.now()),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).catch((e) => console.warn('live event publish failed', e));
+        } catch (e) {
+          console.warn('live event publish setup failed', e);
+        }
+      }
+
+      function receiveLocalEvent(event) {
+        try {
+          if (!event || !event.type || !event.userId) return;
+          if (event.sender === clientId) return;
+          applyLiveEvent(event);
+        } catch (e) {
+          console.warn('receiveLocalEvent failed', e);
+        }
+      }
+
+      function subscribeLocalEvents() {
+        try {
+          if (window.BroadcastChannel) {
+            if (!localEventBc) localEventBc = new BroadcastChannel(LOCAL_EVENT_CHANNEL);
+            localEventBc.onmessage = (event) => receiveLocalEvent(event.data);
+          }
+        } catch (_) {}
+
+        window.addEventListener('storage', (event) => {
+          if (event.key !== LOCAL_EVENT_CHANNEL || !event.newValue) return;
+          try { receiveLocalEvent(JSON.parse(event.newValue)); } catch (_) {}
+        });
+      }
+
+      function subscribeLiveEvents() {
+        try {
+          const db = getDb();
+          if (!db || window.__liveEventsSubscribed) return;
+          window.__liveEventsSubscribed = true;
+          db.collection('shared_state_v3_isolated').doc('quran_khatma_main_v3_isolated').collection('live_events_v3_isolated')
+            .orderBy('createdAtClient', 'desc')
+            .limit(120)
+            .onSnapshot((snap) => {
+              const docs = snap.docChanges().slice().reverse();
+              docs.forEach((change) => {
+                if (change.type !== 'added') return;
+                const data = change.doc.data() || {};
+                const id = change.doc.id;
+                if (data.sender === clientId) {
+                  rememberEventKey(String(data.clientEventId || id || ''));
+                  return;
+                }
+                applyLiveEvent({ id, ...data });
+              });
+            }, (err) => console.warn('live events snapshot failed', err));
+        } catch (e) {
+          console.warn('subscribeLiveEvents failed', e);
+        }
+      }
+
+      window.__liveSync = window.__liveSync || {};
+      window.__liveSync.publishEvent = publishLiveEvent;
+      window.__liveSync.applyEvent = applyLiveEvent;
+
+      function getUsersMap() {
+        try { return new Map((state.users || []).map(u => [u.id, u])); } catch (_) { return new Map(); }
+      }
+
+      function patchAction(name, handler) {
+        try {
+          const original = window[name];
+          if (typeof original !== 'function' || original.__livePatched) return;
+          const wrapped = function(...args) {
+            const beforeUsers = getUsersMap();
+            const result = original.apply(this, args);
+            try { handler(args, beforeUsers); } catch (e) { console.warn(name + ' live handler failed', e); }
+            return result;
+          };
+          wrapped.__livePatched = true;
+          window[name] = wrapped;
+        } catch (e) {
+          console.warn('patchAction failed for ' + name, e);
+        }
+      }
+
+      function selectedUserAfter() {
+        try { return typeof getSelectedUser === 'function' ? getSelectedUser() : null; } catch (_) { return null; }
+      }
+
+      function patchAll() {
+        // تم الإبقاء على هذه الطبقة كاحتياط للتوسعات القادمة فقط.
+        // أحداث التسبيح تُنشر الآن مباشرة من الدوال الأصلية نفسها لمنع أي تأخير أو ازدواج.
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => { subscribeLocalEvents(); subscribeLiveEvents(); patchAll(); });
+      } else {
+        subscribeLocalEvents();
+        subscribeLiveEvents();
+        patchAll();
+      }
+    })();
+  </script>
 
   <!-- Mushaf PDF Download/Open Button (center-bottom) -->
   <div id="mushafPdfFab" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;gap:8px;align-items:center;justify-content:center;">
